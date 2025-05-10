@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<msg:GetMdibResponse xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+                     xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant BICEPS_ParticipantModel.xsd
+                                         http://standards.ieee.org/downloads/11073/11073-10207-2017/message BICEPS_MessageModel.xsd"
+                     SequenceId="urn:oid:1">
+  <msg:Mdib SequenceId="urn:oid:1">
+    <pm:MdDescription>
+      <pm:Mds Handle="mds0" SafetyClassification="MedA">
+        <pm:Type Code="130535">
+          <pm:ConceptDescription Lang="en-US">not settable metrics</pm:ConceptDescription>
+        </pm:Type>
+        <pm:AlertSystem SafetyClassification="MedA" Handle="asy.mds0" SelfCheckPeriod="PT5S">
+          <pm:AlertCondition Handle="ac0.mds0"
+                             xsi:type="pm:AlertConditionDescriptor"
+                             SafetyClassification="MedA" Kind="Phy" Priority="Me">
+            <pm:Type Code="262108‬">
+              <pm:ConceptDescription Lang="en-US">dummy condition</pm:ConceptDescription>
+            </pm:Type>
+            <pm:Source>mds0</pm:Source>
+          </pm:AlertCondition>
+        </pm:AlertSystem>
+        <pm:SystemContext Handle="SC.mds0">
+          <pm:PatientContext Handle="PC.mds0" />
+          <pm:LocationContext Handle="LC.mds0" />
+        </pm:SystemContext>
+        <pm:Vmd Handle="vmd0" SafetyClassification="MedA">
+          <pm:Channel Handle="ch0.vmd0" SafetyClassification="MedA">
+            <pm:Metric Handle="numeric.ch0.vmd0"
+                       SafetyClassification="MedA"
+                       xsi:type="pm:NumericMetricDescriptor"
+                       MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="150456">
+                <pm:ConceptDescription Lang="en-US">Oxygen Saturation (SpO₂)</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="262656">
+                <pm:ConceptDescription Lang="en-US">%</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="100" Lower="70" StepWidth="0.1" />
+            </pm:Metric>
+          </pm:Channel>
+        </pm:Vmd>
+        <pm:Vmd Handle="vmd1" SafetyClassification="MedA">
+          <pm:Channel Handle="ch1.vmd1" SafetyClassification="MedA">
+            <pm:Metric Handle="numeric.ch1.vmd1"
+                       SafetyClassification="MedA"
+                       xsi:type="pm:NumericMetricDescriptor"
+                       MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="147842">
+                <pm:ConceptDescription Lang="en-US">Heart Rate (BPM)</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="264864">
+                <pm:ConceptDescription Lang="en-US">beats per minute</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1" />
+            </pm:Metric>
+          </pm:Channel>
+        </pm:Vmd>
+      </pm:Mds>
+    </pm:MdDescription>
+  </msg:Mdib>
+</msg:GetMdibResponse>

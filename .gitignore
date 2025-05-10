@@ -1,8 +1,8 @@
 #Backend
 .DS_Store
 
-#Webapps
-
-
 #Config
-./config/database/*.env
+*.env
+
+#PyCache
+__pycache__/
