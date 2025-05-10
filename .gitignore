@@ -1,0 +1,8 @@
+#Backend
+.DS_Store
+
+#Webapps
+
+
+#Config
+./config/database/*.env
