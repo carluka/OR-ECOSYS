@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+
+  # Node.js / Express backend
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/node.Dockerfile
+    command: npm run dev        # ali `npm start`
+    restart: always
+    volumes:
+      - ./services/backend:/app
+    ports:
+      - "3000:3000"
+
+
+  # React frontend #1 (realtime data)
+  webapp1:
+    build:
+      context: .
+      dockerfile: infra/docker/react-display.Dockerfile
+    restart: always
+    env_file:
+      - ./config/database/postgres.env   # po potrebi (če front-end potrebuje spremenljivke)
+    volumes:
+      - ./apps/webapp1_realtime_data:/app
+      - webapp1_node_modules:/app/node_modules
+    ports:
+      - "3001:5173"
+    depends_on:
+      - backend
+
+  # React frontend #2 (device management)
+  webapp2:
+    build:
+      context: .
+      dockerfile: infra/docker/react-admin.Dockerfile
+    restart: always
+    env_file:
+      - ./config/database/postgres.env
+    volumes:
+      - ./apps/webapp2_med_devices:/app
+      - webapp2_node_modules:/app/node_modules
+    ports:
+      - "3002:5174"
+    depends_on:
+      - backend
+
+volumes:
+  webapp1_node_modules:
+  webapp2_node_modules:

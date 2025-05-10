@@ -1,0 +1,22 @@
+// models/servis.js
+const { Model, DataTypes } = require('sequelize');
+module.exports = (sequelize) => {
+  class Servis extends Model {
+    static associate(models) {
+      this.belongsTo(models.Naprava, { foreignKey: 'Naprava_idNaprava' });
+    }
+  }
+  Servis.init({
+    idServis:           { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    Naprava_idNaprava: { type: DataTypes.INTEGER, allowNull: false },
+    datum:              { type: DataTypes.DATEONLY, allowNull: false },
+    ura:                { type: DataTypes.TIME, allowNull: false },
+    komentar:           { type: DataTypes.STRING(300), allowNull: true },
+  }, {
+    sequelize,
+    modelName: 'Servis',
+    tableName: 'servis',
+    timestamps: false,
+  });
+  return Servis;
+};
