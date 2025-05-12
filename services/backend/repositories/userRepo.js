@@ -1,25 +1,29 @@
-const { models } = require('../db/database');
+const { models } = require("../db/database");
 
 class UserRepo {
-  async findAll() {
-    return models.Uporabnik.findAll({ include: models.TipUporabnika });
-  }
+	async findAll() {
+		return models.Uporabnik.findAll({ include: models.TipUporabnika });
+	}
 
-  async findById(id) {
-    return models.Uporabnik.findByPk(id, { include: models.TipUporabnika });
-  }
+	async findById(id) {
+		return models.Uporabnik.findByPk(id, { include: models.TipUporabnika });
+	}
 
-  async create(data) {
-    return models.Uporabnik.create(data);
-  }
+	async findByEmail(email) {
+		return models.Uporabnik.findOne({ where: { email } });
+	}
 
-  async update(id, data) {
-    // TODO: implement update logic
-  }
+	async create(data) {
+		return models.Uporabnik.create(data);
+	}
 
-  async delete(id) {
-    // TODO: implement delete logic
-  }
+	async update(id, data) {
+		// TODO: implement update logic
+	}
+
+	async delete(id) {
+		// TODO: implement delete logic
+	}
 }
 
 module.exports = new UserRepo();

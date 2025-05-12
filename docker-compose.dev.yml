@@ -1,19 +1,17 @@
-version: '3.8'
+version: "3.8"
 services:
-
   # Node.js / Express backend
   backend:
     build:
       context: .
       dockerfile: infra/docker/node.Dockerfile
-    command: npm run dev        # ali `npm start`
+    command: npm run dev # ali `npm start`
     restart: always
     volumes:
       - ./services/backend:/app
     ports:
       - "3000:3000"
 
-  
     # SDC provider za BPM (Heartbeat)
   bpm_provider:
     build:
@@ -23,7 +21,6 @@ services:
     volumes:
       - ./services/sdc_providers:/app/providers
     command: ["python", "providers/provider_BPM.py"]
-
 
   # SDC provider za SpO2 (Oxygen Saturation)
   spo2_provider:
@@ -35,25 +32,22 @@ services:
       - ./services/sdc_providers:/app/providers
     command: ["python", "providers/provider_SPO2.py"]
 
-
   sdc_backend:
     build:
       context: .
       dockerfile: infra/docker/fastapi.Dockerfile
-    restart: always      # če potrebuje iste .env
+    restart: always # če potrebuje iste .env
     volumes:
       - ./services/sdc_backend:/app
     ports:
       - "8000:8000"
-
-
 
   # React frontend #1 (realtime data)
   webapp1:
     build:
       context: .
       dockerfile: infra/docker/react-display.Dockerfile
-    restart: always   # po potrebi (če front-end potrebuje spremenljivke)
+    restart: always # po potrebi (če front-end potrebuje spremenljivke)
     volumes:
       - ./apps/webapp1_realtime_data:/app
       - webapp1_node_modules:/app/node_modules
