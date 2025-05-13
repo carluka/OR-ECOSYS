@@ -1,19 +1,24 @@
 const patientRepo = require('../repositories/patientRepo');
 
 // TO-DO
-//const fhirService = require('./fhirService');
+const fhirService = require('./fhirService');
 
 class PatientService {
   async listPatients() {
-    // TODO: you might merge FHIR and local data
     return patientRepo.findAll();
   }
 
   async getPatient(id) {
-    // TODO: fetch from local DB or fallback to FHIR
+
     const local = await patientRepo.findById(id);
-    if (local) return local;
-    return fhirService.getPatient(id);
+    const fhir_id = local.fhir_info; // V PRIHODNOSTI SPREMENITI NA fhir_id
+
+    const fhirPatient = await fhirService.getPatient(fhir_id);
+    if (fhirPatient) {
+      return fhirPatient;
+    }
+
+    return null; // Če ni podatkov niti v bazi niti na FHIR
   }
 
   async createPatient(payload) {
