@@ -1,4 +1,5 @@
 const patientService = require('../services/patientService');
+const fhirService = require('../services/fhirService');
 
 exports.getAll = async (req, res, next) => {
   try {
