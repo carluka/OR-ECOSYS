@@ -23,8 +23,6 @@ services:
       - ./services/sdc_providers:/app/providers
     ports:
       - "8000:8000" # FastAPI
-      - "45138:45138/udp" # BPM UDP port
-      - "45139:45139/udp" # SpO2 UDP port
     environment:
       - REF_IP=
       - REF_FAC=fac
