@@ -1,13 +1,12 @@
-version: '3.8'
+version: "3.8"
 
 services:
-
   # Node.js / Express backend
   backend:
     build:
       context: .
       dockerfile: infra/docker/node.Dockerfile
-    command: npm run dev        # ali `npm start`
+    command: npm run dev # ali `npm start`
     restart: always
     volumes:
       - ./services/backend:/app
@@ -23,7 +22,7 @@ services:
       - ./services/sdc_backend:/app/sdc_backend
       - ./services/sdc_providers:/app/providers
     ports:
-      - "8000:8000"      # FastAPI
+      - "8000:8000" # FastAPI
       - "45138:45138/udp" # BPM UDP port
       - "45139:45139/udp" # SpO2 UDP port
     environment:
