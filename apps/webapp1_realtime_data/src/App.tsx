@@ -1,11 +1,10 @@
 import "./App.css";
 import MainLayout from "./layout/MainLayout";
+import MedicalDeviceMonitor from "./components/Grafi";
 function App() {
 	return (
 		<MainLayout>
-			<div>
-				<h1>Hello World</h1>
-			</div>
+			<MedicalDeviceMonitor />
 		</MainLayout>
 	);
 }

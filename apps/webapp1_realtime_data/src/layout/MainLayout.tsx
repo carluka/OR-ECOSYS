@@ -17,7 +17,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
 	return (
 		<div>
-			<AppBar position="sticky" color="default" className="main-header">
+			<AppBar position="relative" color="default" className="main-header">
 				<Toolbar className="main-toolbar">
 					<Box className="button-group">
 						<Button className="nav-button" variant="contained" color="primary">
