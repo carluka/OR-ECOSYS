@@ -1,6 +1,5 @@
 // models/uporabnik.js
 const { Model, DataTypes } = require("sequelize");
-const bcryptjs = require("bcryptjs");
 
 module.exports = (sequelize) => {
 	class Uporabnik extends Model {
@@ -11,24 +10,6 @@ module.exports = (sequelize) => {
 			this.belongsToMany(models.Operacija, {
 				through: models.OperacijaZaposleni,
 				foreignKey: "zaposleni_idzaposleni",
-			});
-		}
-
-		// instance method za primerjavo gesla
-		async checkGeslo(pw) {
-			return bcrypt.compare(pw, this.geslo);
-		}
-
-		// instance method za generiranje JWT
-		generateJWT() {
-			const jwt = require("jsonwebtoken");
-			const payload = {
-				id: this.idUporabnik,
-				tip: this.tip_uporabnika_idtip_uporabnika,
-				email: this.email,
-			};
-			return jwt.sign(payload, process.env.JWT_SECRET, {
-				expiresIn: process.env.JWT_EXPIRES_IN || "1h",
 			});
 		}
 	}

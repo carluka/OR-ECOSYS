@@ -1,18 +1,13 @@
-// middlewares/auth.js
 const jwt = require("jsonwebtoken");
 
-module.exports = function authenticateJWT(req, res, next) {
-	const header = req.headers.authorization;
-	if (!header?.startsWith("Bearer ")) {
-		return res.status(401).json({ message: "Token manjkajoč" });
-	}
-	const token = header.split(" ")[1];
-
+exports.cookieJwtAuth = (req, res, next) => {
+	const token = req.cookies.token;
 	try {
-		const payload = jwt.verify(token, process.env.JWT_SECRET);
-		req.user = payload; // { id, tip, email, iat, exp }
+		const user = jwt.verify(token, process.env.JWT_SECRET);
+		req.user = user;
 		next();
 	} catch (err) {
-		return res.status(403).json({ message: "Neveljaven token" });
+		res.clearCookie("token");
+		return res.redirect("/login");
 	}
 };

@@ -1,13 +1,18 @@
 require("dotenv").config();
+// Set default NODE_ENV if not set
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
+console.log("Environment:", process.env.NODE_ENV);
+
 const http = require("http");
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const config = require("./config");
 const { sequelize } = require("./db/database");
 const createRoutes = require("./routes");
 const { errorHandler } = require("./middlewares/errorHandler");
-const auth = require("./middlewares/auth");
+const { cookieJwtAuth } = require("./middlewares/auth");
 const { login } = require("./controllers/userCtrl");
 
 // HTTP Express server
@@ -15,15 +20,37 @@ const app = express();
 const server = http.createServer(app);
 
 // --- MIDDLEWARES ---
-app.use(cors());
+const corsOptions = {
+	origin: function (origin, callback) {
+		const allowedOrigins = ["http://localhost:3001", "http://localhost:3002"];
+		if (!origin || allowedOrigins.includes(origin)) {
+			callback(null, true);
+		} else {
+			callback(new Error("Not allowed by CORS"));
+		}
+	},
+	credentials: true, // Omogoči pošiljanje piškotkov
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+	exposedHeaders: ["Set-Cookie"], // Piškotek mora biti vključen v odgovoru
+};
+
+console.log("CORS options:", corsOptions);
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Javno dostopna ruta
 app.post("/api/users/login", login);
 
+app.get("/api/check", cookieJwtAuth, (req, res) => {
+	res.send(true);
+});
+
 // Global authentication middleware
-app.use(auth);
+app.use(cookieJwtAuth);
 
 // --- ROUTES ---
 app.use("/api", createRoutes());

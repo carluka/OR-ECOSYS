@@ -10,7 +10,7 @@ module.exports = (sequelize) => {
 	}
 	TipUporabnika.init(
 		{
-			idTip_uporabnika: {
+			idtip_uporabnika: {
 				type: DataTypes.INTEGER,
 				primaryKey: true,
 				autoIncrement: true,

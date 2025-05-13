@@ -4,15 +4,20 @@ import App from "./App.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./components/Login.tsx";
 import NotFoundPage from "./components/NotFoundPage.tsx";
-const router = createBrowserRouter([
-	{
-		path: "/",
-		element: <App />,
-		errorElement: <NotFoundPage />,
-	},
+import { requireAuth } from "./auth.ts";
+
+export const router = createBrowserRouter([
 	{
 		path: "/login",
 		element: <Login />,
+	},
+	{
+		loader: requireAuth,
+		errorElement: <NotFoundPage />,
+		children: [
+			{ index: true, element: <App /> },
+			{ path: "*", element: <NotFoundPage /> },
+		],
 	},
 ]);
 

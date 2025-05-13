@@ -1,3 +1,4 @@
+// src/components/Login.tsx
 import {
 	Box,
 	Button,
@@ -6,8 +7,25 @@ import {
 	Stack,
 	Typography,
 } from "@mui/material";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../api";
 
-function Login() {
+export default function Login() {
+	const [email, setEmail] = useState("");
+	const [geslo, setGeslo] = useState("");
+	const navigate = useNavigate();
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		try {
+			await api.post("/users/login", { email, geslo });
+			navigate("/");
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
 	return (
 		<Box
 			sx={{
@@ -19,6 +37,8 @@ function Login() {
 			}}
 		>
 			<Box
+				component="form"
+				onSubmit={handleSubmit}
 				sx={{
 					backgroundColor: "white",
 					padding: 4,
@@ -40,6 +60,8 @@ function Login() {
 							type="email"
 							placeholder="janez.novak@gmail.com"
 							fullWidth
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
 						/>
 					</Stack>
 
@@ -51,10 +73,12 @@ function Login() {
 							type="password"
 							placeholder="Vnesite vaše geslo"
 							fullWidth
+							value={geslo}
+							onChange={(e) => setGeslo(e.target.value)}
 						/>
 					</Stack>
 
-					<Button variant="contained" color="primary">
+					<Button type="submit" variant="contained" color="primary">
 						Prijava
 					</Button>
 				</Stack>
@@ -62,5 +86,3 @@ function Login() {
 		</Box>
 	);
 }
-
-export default Login;

@@ -1,13 +1,20 @@
 // components/MainLayout.tsx
-import React, { ReactNode } from "react";
+import React from "react";
 import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import "../App.css"; // Make sure this path is correct
-
+import api from "../api";
+import { useNavigate } from "react-router-dom";
 interface MainLayoutProps {
-	children: ReactNode;
+	children: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+	const navigate = useNavigate();
+	const handleLogout = () => {
+		api.post("/users/logout");
+		navigate("/login");
+	};
+
 	return (
 		<div>
 			<AppBar position="sticky" color="default" className="main-header">
@@ -32,12 +39,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 						>
 							OPERACIJSKA SOBA
 						</Button>
-						<Button className="nav-button" variant="contained" color="primary">
-							PRIJAVA
-						</Button>
-						<Button className="nav-button" variant="contained" color="primary">
-							ODJAVA
-						</Button>
+						<Toolbar>
+							<Button onClick={handleLogout}>Odjava</Button>
+						</Toolbar>
 					</Box>
 				</Toolbar>
 			</AppBar>

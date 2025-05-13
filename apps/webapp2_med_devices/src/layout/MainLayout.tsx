@@ -1,12 +1,17 @@
 import { Box, Button } from "@mui/material";
 import Navigation from "../components/Navigation";
-import { Link } from "react-router-dom";
-
+import api from "../api";
+import { useNavigate } from "react-router-dom";
 interface MainLayoutProps {
 	children: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+	const navigate = useNavigate();
+	const handleLogout = () => {
+		api.post("/users/logout");
+		navigate("/login");
+	};
 	return (
 		<Box sx={{ display: "flex", width: "100vw", height: "100vh", margin: 0 }}>
 			{/* Sidebar - fixed width and border */}
@@ -42,15 +47,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 						boxSizing: "border-box",
 					}}
 				>
-					<Button
-						component={Link}
-						to="/login"
-						variant="outlined"
-						sx={{ mr: 2 }}
-					>
-						Prijava
-					</Button>
-					<Button variant="contained" color="error">
+					<Button onClick={handleLogout} variant="contained" color="error">
 						Odjava
 					</Button>
 				</Box>

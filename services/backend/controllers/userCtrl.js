@@ -1,4 +1,5 @@
 const userService = require("../services/userService");
+const jwt = require("jsonwebtoken");
 
 exports.getAll = async (req, res, next) => {
 	try {
@@ -58,24 +59,64 @@ exports.register = async (req, res, next) => {
 		});
 		res
 			.status(201)
-			.json({ message: "Ustvarjen novo uporabnik", id: novi.iduporabnik });
+			.json({ message: "Ustvarjen nov uporabnik", id: novi.iduporabnik });
 	} catch (err) {
 		next(err);
 	}
 };
 
+// controllers/userCtrl.js
 exports.login = async (req, res, next) => {
 	try {
 		const { email, geslo } = req.body;
+		console.log("\n=== Login Attempt ===");
+		console.log("Email:", email);
+
 		const user = await userService.getUserByEmail(email);
 		if (!user) return res.status(401).json({ message: "Napačni email" });
 
 		const ok = await userService.checkGeslo(email, geslo);
 		if (!ok) return res.status(401).json({ message: "Napačno geslo" });
 
-		const token = user.generateJWT();
-		res.json({ token });
+		const payload = { email: user.email };
+		const token = jwt.sign(payload, process.env.JWT_SECRET, {
+			expiresIn: "1h",
+		});
+
+		res.cookie("token", token, {
+			httpOnly: true,
+		});
+
+		// Pošlji odgovor
+		res.json({ message: "Prijava uspešna" });
 	} catch (err) {
+		console.error("Login error:", err);
 		next(err);
 	}
+};
+
+// controllers/userCtrl.js
+exports.logout = (req, res) => {
+	console.log("Logout request received");
+	console.log("Current cookies:", req.cookies);
+
+	const cookieOptions = {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "lax",
+		path: "/",
+		domain:
+			process.env.NODE_ENV === "production"
+				? process.env.COOKIE_DOMAIN
+				: "localhost",
+	};
+
+	console.log("Clearing cookie with options:", cookieOptions);
+
+	res.clearCookie("token", cookieOptions).json({ message: "Odjava uspešna" });
+
+	console.log(
+		"Cookie cleared in response headers:",
+		res.getHeaders()["set-cookie"]
+	);
 };
