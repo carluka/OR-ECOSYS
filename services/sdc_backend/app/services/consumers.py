@@ -44,11 +44,11 @@ def run_multi_provider_consumer():
         matching_services = []
         for epr, target in zip(TARGET_EPRS, TARGETS):
             host, port = target.split(":")
+            uuid_part = epr.replace('urn:uuid:', '')
             svc = SimpleNamespace()
             svc.epr = epr
-            # Build XAddrs for consumer to connect
-            uuid_part = epr.replace('urn:uuid:', '')
-            svc.xaddrs = [f"http://{host}:{port}/{uuid_part}"]
+            svc.x_addrs = [f"http://{host}:{port}/{uuid_part}"]
+            svc.types = [SdcV1Definitions.MedicalDeviceQNames.MedicalDevice]  # <- nujno
             matching_services.append(svc)
 
     if not matching_services:

@@ -14,54 +14,24 @@ services:
     ports:
       - "3000:3000"
 
-  # SDC provider za BPM (Heartbeat)
-  bpm_provider:
+  sdc-consumer-provider:
     build:
       context: .
-      dockerfile: infra/docker/python-provider.Dockerfile
+      dockerfile: infra/docker/provider-consumer.Dockerfile
     restart: always
     volumes:
+      - ./services/sdc_backend:/app/sdc_backend
       - ./services/sdc_providers:/app/providers
     ports:
-      - "45138:45138/udp"
-    environment:
-      - REF_IP=                   # prazen = izberi first non-loopback
-      - REF_FAC=fac
-      - REF_POC=poc
-      - REF_BED=bed
-
-  # SDC provider za SpO2 (Oxygen Saturation)
-  spo2_provider:
-    build:
-      context: .
-      dockerfile: infra/docker/python-provider.Dockerfile
-    restart: always
-    volumes:
-      - ./services/sdc_providers:/app/providers
-    ports:
-      - "45139:45139/udp"
+      - "8000:8000"      # FastAPI
+      - "45138:45138/udp" # BPM UDP port
+      - "45139:45139/udp" # SpO2 UDP port
     environment:
       - REF_IP=
       - REF_FAC=fac
       - REF_POC=poc
       - REF_BED=bed
-
-  # FastAPI consumer (SDC backend)
-  sdc_backend:
-    build:
-      context: .
-      dockerfile: infra/docker/fastapi.Dockerfile
-    restart: always
-    volumes:
-      - ./services/sdc_backend:/app
-    ports:
-      - "8000:8000"
-    environment:
-      - SDC_USE_DISCOVERY=false
-      - SDC_TARGETS=bpm_provider:45139,spo2_provider:45139
-    depends_on:
-      - bpm_provider
-      - spo2_provider
+      - SDC_USE_DISCOVERY=true
 
   # React frontend #1 (realtime data)
   webapp1:
