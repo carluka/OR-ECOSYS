@@ -32,7 +32,7 @@ const corsOptions = {
 	credentials: true, // Omogoči pošiljanje piškotkov
 	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 	allowedHeaders: ["Content-Type", "Authorization"],
-	exposedHeaders: ["Set-Cookie"], // Piškotek mora biti vključen v odgovoru
+	exposedHeaders: ["Set-Cookie"],
 };
 
 console.log("CORS options:", corsOptions);
@@ -50,6 +50,7 @@ app.get("/api/check", cookieJwtAuth, (req, res) => {
 });
 
 // Global authentication middleware
+// ======================================= ZA PRODUCTION JE TREBA ODKOMENTIRATI =======================================
 //app.use(cookieJwtAuth);
 
 // --- ROUTES ---

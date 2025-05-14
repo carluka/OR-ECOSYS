@@ -64,3 +64,13 @@ exports.removeMultiple = async (req, res, next) => {
 		next(err);
 	}
 };
+
+exports.prikaz = async (req, res, next) => {
+	try {
+		const { tip_naprave, servis } = req.query;
+		const devices = await deviceService.getDevices({ tip_naprave, servis });
+		res.json({ data: devices });
+	} catch (err) {
+		next(err);
+	}
+};
