@@ -1,4 +1,3 @@
-// src/components/Login.tsx
 import {
 	Box,
 	Button,

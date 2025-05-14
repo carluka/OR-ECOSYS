@@ -6,6 +6,8 @@ const patientRoutes = require("./patientRoutes");
 const operationRoutes = require("./operationRoutes");
 const serviceRoutes = require("./serviceRoutes");
 const userRoutes = require("./userRoutes");
+const deviceTypeRoutes = require("./deviceTypeRoutes");
+const userTypeRoutes = require("./userTypeRoutes");
 
 module.exports = () => {
 	const router = express.Router();
@@ -15,5 +17,7 @@ module.exports = () => {
 	router.use("/operations", operationRoutes);
 	router.use("/services", serviceRoutes);
 	router.use("/users", userRoutes);
+	router.use("/deviceType", deviceTypeRoutes);
+	router.use("/userType", userTypeRoutes);
 	return router;
 };

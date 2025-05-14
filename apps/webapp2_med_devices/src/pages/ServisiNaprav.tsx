@@ -7,7 +7,7 @@ const ServisiNaprav: React.FC = () => {
 			<Typography variant="h4" gutterBottom>
 				SERVISI NAPRAV
 			</Typography>
-			{/* Add table and other UI here */}
+			{/* DODAJ TABELO!!! */}
 		</MainLayout>
 	);
 };

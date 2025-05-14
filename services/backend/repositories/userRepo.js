@@ -2,7 +2,14 @@ const { models } = require("../db/database");
 
 class UserRepo {
 	async findAll() {
-		return models.Uporabnik.findAll({ include: models.TipUporabnika });
+		return models.Uporabnik.findAll({
+			include: [
+				{
+					model: models.TipUporabnika,
+					attributes: ["naziv"],
+				},
+			],
+		});
 	}
 
 	async findById(id) {
@@ -18,11 +25,22 @@ class UserRepo {
 	}
 
 	async update(id, data) {
-		// TODO: implement update logic
+		return models.Uporabnik.update(data, {
+			where: { iduporabnik: id },
+		});
 	}
 
 	async delete(id) {
 		// TODO: implement delete logic
+	}
+
+	async deleteMultiple(ids) {
+		// TODO: implement delete or soft-delete
+		return models.Uporabnik.destroy({
+			where: {
+				iduporabnik: ids,
+			},
+		});
 	}
 }
 

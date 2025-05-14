@@ -22,11 +22,10 @@ const Navigation: React.FC = () => {
 				bgcolor: "#f0f0f0",
 				display: "flex",
 				flexDirection: "column",
-				borderRight: "1px solid #ccc", // use exact value for pixel match
+				borderRight: "1px solid #ccc",
 				boxSizing: "border-box",
 			}}
 		>
-			{/* REMOVE outer padding here! */}
 			<Typography
 				variant="h6"
 				sx={{ textAlign: "center", mt: 2, mb: 2, fontWeight: "bold" }}

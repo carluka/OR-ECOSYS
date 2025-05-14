@@ -120,3 +120,13 @@ exports.logout = (req, res) => {
 		res.getHeaders()["set-cookie"]
 	);
 };
+
+exports.removeMultiple = async (req, res, next) => {
+	try {
+		const { ids } = req.body;
+		await userService.deleteUsers(ids);
+		res.status(204).end();
+	} catch (err) {
+		next(err);
+	}
+};
