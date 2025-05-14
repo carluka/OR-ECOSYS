@@ -1,7 +1,7 @@
-const patientRepo = require('../repositories/patientRepo');
+const patientRepo = require("../repositories/patientRepo");
 
 // TO-DO
-const fhirService = require('./fhirService');
+const fhirService = require("./fhirService");
 
 class PatientService {
   async listPatients() {
@@ -9,7 +9,6 @@ class PatientService {
   }
 
   async getPatient(id) {
-
     const local = await patientRepo.findById(id);
     const fhir_id = local.fhir_info; // V PRIHODNOSTI SPREMENITI NA fhir_id
 
