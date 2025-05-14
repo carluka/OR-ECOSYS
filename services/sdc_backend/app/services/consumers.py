@@ -9,15 +9,14 @@ from sdc11073.wsdiscovery import WSDiscovery
 from sdc11073.definitions_sdc import SdcV1Definitions
 from sdc11073.loghelper import basic_logging_setup
 
-# UUIDs of target providers (must match provider EPRs)
+
 TARGET_EPRS = [
     "urn:uuid:12345678-6f55-11ea-9697-123456789abc",  # BPM provider
     "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",  # SpO2 provider
 ]
 
-# Determine discovery mode from ENV: true=multicast, false=static unicast
+
 USE_DISCOVERY = os.getenv("SDC_USE_DISCOVERY", "true").lower() == "true"
-# Comma-separated list of host:port for static mode, in same order as TARGET_EPRS
 TARGETS = [t for t in os.getenv("SDC_TARGETS", "").split(",") if t]
 
 
@@ -25,13 +24,12 @@ def run_multi_provider_consumer():
     basic_logging_setup()
     logger = logging.getLogger('sdc')
 
-    # Choose first non-loopback adapter
-    adapter = next(a for a in network.get_adapters() if not a.is_loopback) #Non loopack consumer preverjamo ___???
+   
+    adapter = next(a for a in network.get_adapters() if not a.is_loopback) 
     logger.info(f'Using adapter: {adapter.ip}')
 
-    # Discover services
     if USE_DISCOVERY:
-        # Multicast WS-Discovery mode
+        
         wsd = WSDiscovery(adapter.ip)
         wsd.start()
 
@@ -39,7 +37,6 @@ def run_multi_provider_consumer():
         services = wsd.search_services(types=SdcV1Definitions.MedicalDeviceTypesFilter)
         matching_services = [s for s in services if s.epr in TARGET_EPRS]
     else:
-        # Static unicast mode
         logger.info(f"Static mode: connecting to targets {TARGETS}")
         matching_services = []
         for epr, target in zip(TARGET_EPRS, TARGETS):
@@ -71,7 +68,6 @@ def run_multi_provider_consumer():
             mdib = ConsumerMdib(client)
             mdib.init_mdib()
 
-            # Bind update handlers if provided
             if on_metric_update or on_waveform_update:
                 observableproperties.bind(
                     mdib,
@@ -84,20 +80,17 @@ def run_multi_provider_consumer():
             logger.error(f"Failed to connect to {service.epr}: {e}")
 
     try:
-        # Keep running until interrupted
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         logger.info("Stopping consumers...")
     finally:
-        # Cleanup
         for client in consumers:
             client.stop_all()
         if USE_DISCOVERY:
             wsd.stop()
 
 
-# Optionally assign custom handlers here
 on_metric_update = None
 on_waveform_update = None
 
