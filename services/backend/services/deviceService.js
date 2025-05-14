@@ -33,6 +33,10 @@ class DeviceService {
 		// TODO: check for active operations before delete
 		return deviceRepo.deleteMultiple(ids);
 	}
+
+	async getDevices(filters = {}) {
+		return deviceRepo.getDevices(filters);
+	}
 }
 
 module.exports = new DeviceService();

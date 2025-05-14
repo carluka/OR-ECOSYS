@@ -67,7 +67,6 @@ function EditDevice({ device, onDeviceUpdated }: Props) {
 			tip_naprave_idtip_naprave: parseInt(tipNaprave),
 			stanje: "Aktivno", // Stanje je trenutno vedno Aktivno
 			soba_idsoba: 1, // Lokacija je trenutno vedno 1
-			servisiran: true,
 		};
 
 		console.log(updatedDevice);
@@ -156,17 +155,6 @@ function EditDevice({ device, onDeviceUpdated }: Props) {
 							id="lokacija"
 							name="lokacija"
 							value={1} // lokacija je trenutno vedno 1
-							disabled
-							fullWidth
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="servisiran">Servisiran</InputLabel>
-						<OutlinedInput
-							id="servisiran"
-							name="servisiran"
-							value="true"
 							disabled
 							fullWidth
 						/>

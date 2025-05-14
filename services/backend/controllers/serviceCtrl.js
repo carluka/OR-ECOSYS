@@ -1,46 +1,74 @@
-const servisService = require('../services/serviceService');
+const servisService = require("../services/serviceService");
 
 exports.getAll = async (req, res, next) => {
-  try {
-    const services = await servisService.listServices();
-    res.json({ data: services });
-  } catch (err) {
-    next(err);
-  }
+	try {
+		const services = await servisService.listServices();
+		res.json({ data: services });
+	} catch (err) {
+		next(err);
+	}
 };
 
 exports.getById = async (req, res, next) => {
-  try {
-    const service = await servisService.getService(req.params.id);
-    res.json({ data: service });
-  } catch (err) {
-    next(err);
-  }
+	try {
+		const service = await servisService.getService(req.params.id);
+		res.json({ data: service });
+	} catch (err) {
+		next(err);
+	}
 };
 
 exports.create = async (req, res, next) => {
-  try {
-    const newService = await servisService.createService(req.body);
-    res.status(201).json({ data: newService });
-  } catch (err) {
-    next(err);
-  }
+	try {
+		const newService = await servisService.createService(req.body);
+		res.status(201).json({ data: newService });
+	} catch (err) {
+		next(err);
+	}
 };
 
 exports.update = async (req, res, next) => {
-  try {
-    await servisService.updateService(req.params.id, req.body);
-    res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
+	try {
+		await servisService.updateService(req.params.id, req.body);
+		res.status(204).end();
+	} catch (err) {
+		next(err);
+	}
 };
 
 exports.remove = async (req, res, next) => {
-  try {
-    await servisService.deleteService(req.params.id);
-    res.status(204).end();
-  } catch (err) {
-    next(err);
-  }
+	try {
+		await servisService.deleteService(req.params.id);
+		res.status(204).end();
+	} catch (err) {
+		next(err);
+	}
+};
+
+exports.getByDeviceId = async (req, res, next) => {
+	try {
+		const services = await servisService.getServicesByDeviceId(req.params.id);
+		res.json({ data: services });
+	} catch (err) {
+		next(err);
+	}
+};
+
+exports.removeMultiple = async (req, res, next) => {
+	try {
+		const { ids } = req.body;
+		await servisService.deleteServices(ids);
+		res.status(204).end();
+	} catch (err) {
+		next(err);
+	}
+};
+
+exports.getBooleanServices = async (req, res, next) => {
+	try {
+		const services = await servisService.getBooleanServices();
+		res.json({ data: services });
+	} catch (err) {
+		next(err);
+	}
 };
