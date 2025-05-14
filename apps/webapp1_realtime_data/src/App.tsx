@@ -6,6 +6,7 @@ import NotFoundPage from "./pages/notFound/NotFoundPage";
 import { requireAuth } from "./auth";
 import OperationRoomPage from "./pages/operationRoom/OperationRoomPage";
 import "./App.css";
+import PatientsPage from "./pages/patients/PatientsPage";
 import PatientDetailsPage from "./pages/patientDetail/PatientDetailsPage";
 
 const router = createBrowserRouter([
