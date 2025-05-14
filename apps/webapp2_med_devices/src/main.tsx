@@ -10,6 +10,8 @@ import OperacijskeSobe from "./pages/OperacijskeSobe";
 import UpravljanjeZOsebjem from "./pages/UpravljanjeZOsebjem";
 import { requireAuth } from "./auth";
 
+// Ustvarjene poti na frontendu
+
 export const router = createBrowserRouter([
 	{
 		path: "/login",

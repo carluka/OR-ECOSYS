@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainLayout from "../layout/MainLayout";
 import {
 	TableBody,
@@ -19,20 +19,94 @@ import {
 	IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { zaposleniData } from "../data/zaposleni";
-import AddUser from "../components/AddUser"; // Update path if needed
+import AddUser from "../components/users/AddUser";
+import EditUser from "../components/users/EditUser";
+import api from "../api";
 
 const UpravljanjeZOsebjem: React.FC = () => {
 	const [open, setOpen] = useState(false);
 	const [formKey, setFormKey] = useState(0);
+	const [users, setUsers] = useState<any[]>([]);
+	const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+	const [userToEdit, setUserToEdit] = useState<any | null>(null);
 
+	// Pridobivanje podatkov o uporabnikih
+	const fetchUsers = () => {
+		api
+			.get("/users")
+			.then((response) => {
+				console.log("API Response:", response.data.data);
+				setUsers(response.data.data);
+			})
+			.catch((error) => {
+				console.error("Error fetching user data:", error);
+			});
+	};
+
+	useEffect(() => {
+		fetchUsers();
+	}, []);
+
+	// Odpri modalno okno za dodajanje ali urejanje uporabnika
 	const handleOpen = () => {
-		setFormKey((prev) => prev + 1); // Force form reset
+		setFormKey((prev) => prev + 1);
 		setOpen(true);
 	};
 
+	// Zapri modalno okno
 	const handleClose = () => {
 		setOpen(false);
+		setUserToEdit(null);
+	};
+
+	const handleCheckboxChange = (id: number) => {
+		setSelectedUsers((prevSelectedUsers) => {
+			if (prevSelectedUsers.includes(id)) {
+				// Remove user if already selected
+				return prevSelectedUsers.filter((userId) => userId !== id);
+			} else {
+				// Add user if not already selected
+				return [...prevSelectedUsers, id];
+			}
+		});
+	};
+
+	// Izbriši izbrane uporabnike
+	const handleDeleteUsers = () => {
+		if (selectedUsers.length === 0) {
+			console.log("No users selected for deletion.");
+			return;
+		}
+		console.log("Deleting users with IDs:", selectedUsers);
+
+		api
+			.delete("/users/deleteMultiple", { data: { ids: selectedUsers } })
+			.then((response) => {
+				console.log(response.data);
+
+				setUsers((prevUsers) =>
+					prevUsers.filter((user) => !selectedUsers.includes(user.iduporabnik))
+				);
+				setSelectedUsers([]);
+			})
+			.catch((error) => {
+				console.error("Failed to delete users:", error);
+			});
+	};
+
+	// Odpri modalno okno za urejanje uporabnika z izbranim uporabnikom
+	const handleEditUser = () => {
+		if (selectedUsers.length !== 1) {
+			alert("Please select exactly one user to edit.");
+			return;
+		}
+		const selectedUser = users.find(
+			(user) => user.iduporabnik === selectedUsers[0]
+		);
+		if (selectedUser) {
+			setUserToEdit(selectedUser);
+			setOpen(true);
+		}
 	};
 
 	return (
@@ -45,7 +119,18 @@ const UpravljanjeZOsebjem: React.FC = () => {
 				<Table>
 					<TableHead>
 						<TableRow>
-							<TableCell padding="checkbox"></TableCell>
+							<TableCell padding="checkbox">
+								<Checkbox
+									checked={users.length === selectedUsers.length}
+									onChange={() =>
+										setSelectedUsers(
+											selectedUsers.length === users.length
+												? []
+												: users.map((u) => u.iduporabnik)
+										)
+									}
+								/>
+							</TableCell>
 							<TableCell>Ime</TableCell>
 							<TableCell>Priimek</TableCell>
 							<TableCell>Email</TableCell>
@@ -53,38 +138,44 @@ const UpravljanjeZOsebjem: React.FC = () => {
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{zaposleniData.map((zaposleni, index) => (
+						{users.map((user, index) => (
 							<TableRow key={index}>
 								<TableCell padding="checkbox">
-									<Checkbox />
+									<Checkbox
+										checked={selectedUsers.includes(user.iduporabnik)}
+										onChange={() => handleCheckboxChange(user.iduporabnik)}
+									/>
 								</TableCell>
-								<TableCell>{zaposleni.ime}</TableCell>
-								<TableCell>{zaposleni.priimek}</TableCell>
-								<TableCell>{zaposleni.email}</TableCell>
-								<TableCell>{zaposleni.tip_zaposlenega}</TableCell>
+								<TableCell>{user.ime}</TableCell>
+								<TableCell>{user.priimek}</TableCell>
+								<TableCell>{user.email}</TableCell>
+								<TableCell>{user.TipUporabnika.naziv}</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 			</TableContainer>
 
-			{/* Buttons */}
 			<Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
 				<Stack direction="row" spacing={3}>
-					<Button variant="outlined">Uredi uporabnika</Button>
+					<Button variant="outlined" onClick={handleEditUser}>
+						Uredi uporabnika
+					</Button>
 					<Button variant="outlined" onClick={handleOpen}>
 						Dodaj uporabnika
 					</Button>
-					<Button variant="outlined" color="error">
+					<Button variant="outlined" color="error" onClick={handleDeleteUsers}>
 						Odstrani uporabnika
 					</Button>
 				</Stack>
 			</Box>
 
-			{/* Add User Modal */}
+			{/* Modal za urejanje uporabnika in dodajanje uporabnikov */}
 			<Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
 				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Dodaj novega uporabnika
+					{userToEdit
+						? `Uredi uporabnika: ${userToEdit.ime} ${userToEdit.priimek}`
+						: "Dodaj uporabnika"}
 					<IconButton
 						aria-label="close"
 						onClick={handleClose}
@@ -94,7 +185,11 @@ const UpravljanjeZOsebjem: React.FC = () => {
 					</IconButton>
 				</DialogTitle>
 				<DialogContent dividers>
-					<AddUser key={formKey} />
+					{userToEdit ? (
+						<EditUser user={userToEdit} onUserUpdated={fetchUsers} />
+					) : (
+						<AddUser onUserAdded={fetchUsers} />
+					)}
 				</DialogContent>
 			</Dialog>
 		</MainLayout>

@@ -32,12 +32,20 @@ class UserService {
 		if (payload.geslo) {
 			payload.geslo = await bcryptjs.hash(payload.geslo, 10);
 		}
-		return userRepo.update(id, payload);
+
+		const result = await userRepo.update(id, payload);
+		console.log("User update completed");
+		return result;
 	}
 
 	async deleteUser(id) {
 		// TODO: check if user has pending operations
 		return userRepo.delete(id);
+	}
+
+	async deleteUsers(ids) {
+		// TODO: check if users have pending operations
+		return userRepo.deleteMultiple(ids);
 	}
 }
 

@@ -14,7 +14,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 	};
 	return (
 		<Box sx={{ display: "flex", width: "100vw", height: "100vh", margin: 0 }}>
-			{/* Sidebar - fixed width and border */}
 			<Box
 				sx={{
 					width: 240,
@@ -26,7 +25,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 				<Navigation />
 			</Box>
 
-			{/* Right content area */}
 			<Box
 				sx={{
 					flexGrow: 1,
@@ -35,7 +33,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 					height: "100%",
 				}}
 			>
-				{/* Top bar */}
 				<Box
 					sx={{
 						height: 65,
@@ -52,7 +49,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 					</Button>
 				</Box>
 
-				{/* Main content */}
 				<Box sx={{ flexGrow: 1, p: 4 }}>{children}</Box>
 			</Box>
 		</Box>

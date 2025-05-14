@@ -7,6 +7,7 @@ const {
 	register,
 	login,
 	logout,
+	removeMultiple,
 } = require("../controllers/userCtrl");
 const { cookieJwtAuth } = require("../middlewares/auth");
 const router = require("express").Router();
@@ -27,6 +28,7 @@ router.get("/", getAll);
 router.get("/:id", getById);
 router.post("/", create);
 router.put("/:id", update);
+router.delete("/deleteMultiple", removeMultiple);
 router.delete("/:id", remove);
 router.post("/register", register);
 

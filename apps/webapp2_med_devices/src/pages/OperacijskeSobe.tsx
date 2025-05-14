@@ -7,7 +7,7 @@ const OperacijskeSobe: React.FC = () => {
 			<Typography variant="h4" gutterBottom>
 				OPERACIJSKE SOBE
 			</Typography>
-			{/* Add table and other UI here */}
+			{/* DODAJ TABELO!!! */}
 		</MainLayout>
 	);
 };
