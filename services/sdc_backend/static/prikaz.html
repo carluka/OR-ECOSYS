@@ -142,9 +142,30 @@
         document.getElementById("hrChart")
       );
       const spo2Chart = new uPlot(
-        spo2Opts,
+        {
+          width: 800,
+          height: 300,
+          title: "SPO₂ (%)",
+          scales: { x: { time: true }, y: { range: [80, 100] } },
+          series: [{}, { label: "SPO₂", stroke: "blue" }],
+        },
         spo2Data,
         document.getElementById("spo2Chart")
+      );
+
+      const ecgChart = new uPlot(
+        {
+          width: 800,
+          height: 300,
+          title: "ECG Waveform (Last 1s)",
+          scales: {
+            x: { time: false },
+            y: { auto: true },
+          },
+          series: [{}, { label: "ECG", stroke: "green" }],
+        },
+        [[], []],
+        document.getElementById("ecgChart")
       );
 
       function updateStatus(connected) {
@@ -170,15 +191,24 @@
         const { timestamp, metrics, device_id } = data;
         const value = Object.values(metrics)[0];
         const ts = new Date(timestamp).getTime();
+        const value = Object.values(metrics)[0];
 
-        if (device_id === "numeric.ch0.vmd0") {
+        if (device_id === "heart_rate.ch0.ekg_modul") {
           currentHrSpan.textContent = value;
           addData(hrChart, hrData, ts, value);
-        } else if (device_id === "numeric.ch1.vmd1") {
+        } else if (device_id === "oxygen_saturation.ch0.spo2") {
           currentSpo2Span.textContent = value;
           addData(spo2Chart, spo2Data, ts, value);
+        } else if (device_id === "ecgWaveform.ch0.ecg_module2") {
+          try {
+            const ecgArray = JSON.parse(value);
+            const x = ecgArray.map((_, i) => i);
+            ecgChart.setData([x, ecgArray]);
+          } catch (err) {
+            console.error("Failed to parse ECG waveform:", err);
+          }
         } else {
-          console.warn("Unknown device:", device_id);
+          console.warn("Unknown device_id:", device_id);
         }
       }
 
@@ -190,9 +220,11 @@
 
         ws.onmessage = (e) => {
           try {
-            const d = JSON.parse(e.data);
-            if (d.metrics) handleMetric(d);
-          } catch {}
+            const data = JSON.parse(e.data);
+            if (data.metrics) handleMetric(data);
+          } catch (err) {
+            console.error("WebSocket message error:", err);
+          }
         };
 
         ws.onclose = () => {
