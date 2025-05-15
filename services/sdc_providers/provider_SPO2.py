@@ -69,7 +69,7 @@ def run_provider():
         prov = create_provider()
         set_provider_data(prov)
 
-        metric = prov.mdib.descriptions.handle.get_one('numeric.ch1.vmd1')
+        metric = prov.mdib.descriptions.handle.get_one('oxygen_saturation.ch0.spo2')
 
         unit = metric.Unit.ConceptDescription[0].text if metric.Unit and metric.Unit.ConceptDescription else "no unit"
 

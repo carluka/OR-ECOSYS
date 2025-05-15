@@ -191,6 +191,7 @@
         ws.onmessage = (e) => {
           try {
             const d = JSON.parse(e.data);
+            console.log(d);
             if (d.metrics) handleMetric(d);
           } catch {}
         };

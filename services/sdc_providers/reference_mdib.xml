@@ -25,9 +25,10 @@
           <pm:PatientContext Handle="PC.mds0" />
           <pm:LocationContext Handle="LC.mds0" />
         </pm:SystemContext>
-        <pm:Vmd Handle="vmd0" SafetyClassification="MedA">
-          <pm:Channel Handle="ch0.vmd0" SafetyClassification="MedA">
-            <pm:Metric Handle="numeric.ch0.vmd0"
+
+        <pm:Vmd Handle="spo2" SafetyClassification="MedA">
+          <pm:Channel Handle="ch0.spo2" SafetyClassification="MedA">
+            <pm:Metric Handle="oxygen_saturation.ch0.spo2"
                        SafetyClassification="MedA"
                        xsi:type="pm:NumericMetricDescriptor"
                        MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
@@ -41,9 +42,10 @@
             </pm:Metric>
           </pm:Channel>
         </pm:Vmd>
-        <pm:Vmd Handle="vmd1" SafetyClassification="MedA">
-          <pm:Channel Handle="ch1.vmd1" SafetyClassification="MedA">
-            <pm:Metric Handle="numeric.ch1.vmd1"
+
+        <pm:Vmd Handle="ekg_modul" SafetyClassification="MedA">
+          <pm:Channel Handle="ch0.ekg_modul" SafetyClassification="MedA">
+            <pm:Metric Handle="heart_rate.ch0.ekg_modul"
                        SafetyClassification="MedA"
                        xsi:type="pm:NumericMetricDescriptor"
                        MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
@@ -57,6 +59,53 @@
             </pm:Metric>
           </pm:Channel>
         </pm:Vmd>
+
+         <pm:Vmd Handle="nibp_module" SafetyClassification="MedA">
+          <pm:Channel Handle="ch0.nibp_module" SafetyClassification="MedA">
+
+            <pm:Metric Handle="bps.ch0.nibp_module"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="147842">
+                <pm:ConceptDescription Lang="en-US">Blood Pressure Systolic</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="264864">
+                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+            </pm:Metric>
+
+            <pm:Metric Handle="bpd.ch0.nibp_module"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="147841">
+                <pm:ConceptDescription Lang="en-US">Blood Pressure Diastolic</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="264864">
+                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+            </pm:Metric>
+
+            <pm:Metric Handle="bpa.ch0.nibp_module"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="147848">
+                <pm:ConceptDescription Lang="en-US">Mean Arterial Pressure</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="264864">
+                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+            </pm:Metric>
+
+          </pm:Channel>
+        </pm:Vmd>
+
+
       </pm:Mds>
     </pm:MdDescription>
   </msg:Mdib>

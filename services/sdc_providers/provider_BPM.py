@@ -17,7 +17,7 @@ REF_POC_ENV = 'REF_POC'
 REF_BED_ENV = 'REF_BED'
 
 # Default metric handle
-METRIC_HANDLE = 'numeric.ch0.vmd0'
+METRIC_HANDLE = 'heart_rate.ch0.ekg_modul'
 
 
 def get_network_adapter() -> network.NetworkAdapter:
