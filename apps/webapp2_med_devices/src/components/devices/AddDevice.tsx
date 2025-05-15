@@ -55,7 +55,6 @@ function AddDevice({ onDeviceAdded }: Props) {
 			tip_naprave_idtip_naprave: parseInt(tipNaprave),
 			stanje: "Aktivno", // Stanje je trenutno vedno Aktivno
 			soba_idsoba: 1, // Lokacija je trenutno vedno 1
-			servisiran: true,
 		};
 		console.log(newDevice);
 
@@ -145,18 +144,6 @@ function AddDevice({ onDeviceAdded }: Props) {
 							id="lokacija"
 							name="lokacija"
 							value={1} // Lokacija je vedno 1
-							disabled
-							fullWidth
-						/>
-					</Stack>
-
-					{/* Servisiran (privzeto true) */}
-					<Stack spacing={1}>
-						<InputLabel htmlFor="servisiran">Servisiran</InputLabel>
-						<OutlinedInput
-							id="servisiran"
-							name="servisiran"
-							value="true" // Servisiran je vedno true
 							disabled
 							fullWidth
 						/>
