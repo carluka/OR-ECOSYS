@@ -75,72 +75,62 @@
   </head>
   <body>
     <h1>SDC WebSocket Test</h1>
-
+ 
     <div id="status" class="disconnected">Status: Disconnected</div>
     <button id="connectBtn">Connect</button>
     <button id="disconnectBtn" disabled>Disconnect</button>
-
+ 
     <h2>Current Heart Rate</h2>
     <div id="heart-display">
       <span class="heart">❤️</span>
       <span id="current-hr">--</span> bpm
     </div>
-
+ 
     <div class="chart-box">
       <h2>Heart Rate Over Time</h2>
       <div id="hrChart"></div>
     </div>
-
-    <h2>Current SPO2</h2>
+ 
+    <h2>Current SPO₂</h2>
     <div style="font-size: 2em; margin: 20px 0">
       <span id="current-spo2">--</span> %
     </div>
-
+ 
     <div class="chart-box">
-      <h2>SPO2 Over Time</h2>
+      <h2>SPO₂ Over Time</h2>
       <div id="spo2Chart"></div>
     </div>
-
+ 
+    <div class="chart-box">
+      <h2>ECG Waveform</h2>
+      <div id="ecgChart"></div>
+    </div>
+ 
     <script>
       let ws = null;
       const MAX_POINTS = 60;
-
+ 
       const statusDiv = document.getElementById("status");
       const connectBtn = document.getElementById("connectBtn");
       const disconnectBtn = document.getElementById("disconnectBtn");
       const currentHrSpan = document.getElementById("current-hr");
       const currentSpo2Span = document.getElementById("current-spo2");
-
+ 
       const hrData = [[], []]; // [timestamps, hr values]
       const spo2Data = [[], []]; // [timestamps, spo2 values]
-
-      const hrOpts = {
-        width: 800,
-        height: 300,
-        title: "Heart Rate (BPM)",
-        scales: {
-          x: { time: true },
-          y: { range: [50, 120] },
-        },
-        series: [{}, { label: "BPM", stroke: "red" }],
-      };
-
-      const spo2Opts = {
-        width: 800,
-        height: 300,
-        title: "SPO2 (%)",
-        scales: {
-          x: { time: true },
-          y: { range: [80, 100] },
-        },
-        series: [{}, { label: "SPO2", stroke: "blue" }],
-      };
-
+ 
       const hrChart = new uPlot(
-        hrOpts,
+        {
+          width: 800,
+          height: 300,
+          title: "Heart Rate (BPM)",
+          scales: { x: { time: true }, y: { range: [50, 120] } },
+          series: [{}, { label: "BPM", stroke: "red" }],
+        },
         hrData,
         document.getElementById("hrChart")
       );
+ 
       const spo2Chart = new uPlot(
         {
           width: 800,
@@ -152,7 +142,7 @@
         spo2Data,
         document.getElementById("spo2Chart")
       );
-
+ 
       const ecgChart = new uPlot(
         {
           width: 800,
@@ -167,7 +157,7 @@
         [[], []],
         document.getElementById("ecgChart")
       );
-
+ 
       function updateStatus(connected) {
         statusDiv.textContent = `Status: ${
           connected ? "Connected" : "Disconnected"
@@ -176,7 +166,7 @@
         connectBtn.disabled = connected;
         disconnectBtn.disabled = !connected;
       }
-
+ 
       function addData(chart, dataArray, timestamp, value) {
         dataArray[0].push(timestamp / 1000); // seconds
         dataArray[1].push(value);
@@ -186,13 +176,12 @@
         }
         chart.setData(dataArray);
       }
-
+ 
       function handleMetric(data) {
         const { timestamp, metrics, device_id } = data;
-        const value = Object.values(metrics)[0];
         const ts = new Date(timestamp).getTime();
         const value = Object.values(metrics)[0];
-
+ 
         if (device_id === "heart_rate.ch0.ekg_modul") {
           currentHrSpan.textContent = value;
           addData(hrChart, hrData, ts, value);
@@ -211,13 +200,13 @@
           console.warn("Unknown device_id:", device_id);
         }
       }
-
+ 
       function connect() {
         if (ws) ws.close();
         ws = new WebSocket("ws://localhost:8000/ws/medical-device");
-
+ 
         ws.onopen = () => updateStatus(true);
-
+ 
         ws.onmessage = (e) => {
           try {
             const data = JSON.parse(e.data);
@@ -226,17 +215,17 @@
             console.error("WebSocket message error:", err);
           }
         };
-
+ 
         ws.onclose = () => {
           updateStatus(false);
           ws = null;
         };
       }
-
+ 
       function disconnect() {
         if (ws) ws.close();
       }
-
+ 
       connectBtn.addEventListener("click", connect);
       disconnectBtn.addEventListener("click", disconnect);
     </script>
