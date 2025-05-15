@@ -12,7 +12,9 @@ from sdc11073.loghelper import basic_logging_setup
 
 TARGET_EPRS = [
     "urn:uuid:12345678-6f55-11ea-9697-123456789abc",  # BPM provider
-    "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",  # SpO2 provider
+    "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",# SpO2 provider
+    "urn:uuid:abcdefff-cdef-1234-5678-abcdefabcdef",  
+    "urn:uuid:abcdefaa-cdef-1234-5678-abcdefabcdef",
 ]
 
 
