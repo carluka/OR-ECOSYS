@@ -90,6 +90,67 @@
 
             </pm:Channel>
             </pm:Vmd>
+
+
+
+            <pm:Vmd Handle="ecg_module" SafetyClassification="MedA">
+                <pm:Channel Handle="ch0.ecg_module" SafetyClassification="MedA">
+                    <pm:Metric Handle="heartRate.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:NumericMetricDescriptor"
+                            MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+                    <pm:Type Code="147842">
+                        <pm:ConceptDescription Lang="en-US">Heart Rate</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:Unit Code="264864">
+                        <pm:ConceptDescription Lang="en-US">beats per minute</pm:ConceptDescription>
+                    </pm:Unit>
+                    <pm:TechnicalRange Upper="220" Lower="30" StepWidth="1" />
+                    </pm:Metric>
+                    <pm:Metric Handle="rrInterval.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:NumericMetricDescriptor"
+                            MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+                    <pm:Type Code="200010">
+                        <pm:ConceptDescription Lang="en-US">RR Interval</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:Unit Code="264192">
+                        <pm:ConceptDescription Lang="en-US">ms</pm:ConceptDescription>
+                    </pm:Unit>
+                    <pm:TechnicalRange Upper="2000" Lower="300" StepWidth="1" />
+                    </pm:Metric>
+                    <pm:Metric Handle="qrsDuration.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:NumericMetricDescriptor"
+                            MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+                    <pm:Type Code="200011">
+                        <pm:ConceptDescription Lang="en-US">QRS Duration</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:Unit Code="264192">
+                        <pm:ConceptDescription Lang="en-US">ms</pm:ConceptDescription>
+                    </pm:Unit>
+                    <pm:TechnicalRange Upper="200" Lower="50" StepWidth="1" />
+                    </pm:Metric>
+
+                </pm:Channel>
+                </pm:Vmd>
+
+                <pm:Vmd Handle="ecg_module2" SafetyClassification="MedA">
+  <pm:Channel Handle="ch0.ecg_module2" SafetyClassification="MedA">
+    <pm:Metric Handle="ecgWaveform.ch0.ecg_module2"
+               SafetyClassification="MedA"
+               xsi:type="pm:StringMetricDescriptor"
+               MetricCategory="Msrmt"
+               MetricAvailability="Cont">
+      <pm:Type Code="200100">
+        <pm:ConceptDescription Lang="en-US">ECG Waveform</pm:ConceptDescription>
+      </pm:Type>
+      <pm:Unit Code="200000">
+        <pm:ConceptDescription Lang="en-US">JSON</pm:ConceptDescription>
+      </pm:Unit>
+    </pm:Metric>
+  </pm:Channel>
+</pm:Vmd>
       </pm:Mds>
     </pm:MdDescription>
   </msg:Mdib>

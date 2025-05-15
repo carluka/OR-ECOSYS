@@ -15,6 +15,8 @@ TARGET_EPRS = [
     "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",# SpO2 provider
     "urn:uuid:abcdefff-cdef-1234-5678-abcdefabcdef",  
     "urn:uuid:abcdefaa-cdef-1234-5678-abcdefabcdef",
+    "urn:uuid:abcdefbb-cdef-1234-5678-abcdefabcdef",
+    "urn:uuid:abcdefcc-cdef-1234-5678-abcdefabcdef",
 ]
 
 

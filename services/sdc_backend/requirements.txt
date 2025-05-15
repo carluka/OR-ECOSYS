@@ -6,3 +6,5 @@ websockets>=10.0
 python-multipart>=0.0.5
 sdc11073>=2.0.0 
 confluent_kafka
+neurokit2
+pywavelets
