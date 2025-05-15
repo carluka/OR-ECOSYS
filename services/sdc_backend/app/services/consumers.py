@@ -14,6 +14,7 @@ TARGET_EPRS = [
     "urn:uuid:12345678-6f55-11ea-9697-123456789abc",  # BPM provider
     "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",  # SpO2 provider
     "urn:uuid:adbfacaa-cdef-1234-5678-abcdefabcdef",  # NIBP provider
+    "urn:uuid:adfadfcc-cdef-1234-5678-abcdefabcdef",  # Capnograph provider
 ]
 
 

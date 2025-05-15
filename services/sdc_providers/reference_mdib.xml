@@ -105,6 +105,38 @@
           </pm:Channel>
         </pm:Vmd>
 
+         <pm:Vmd Handle="capnograph" SafetyClassification="MedA">
+          <pm:Channel Handle="ch0.capnograph" SafetyClassification="MedA">
+
+            <pm:Metric Handle="co2.ch0.capnograph"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="147841">
+                <pm:ConceptDescription Lang="en-US">CO2 Concentration in breath</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="264864">
+                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+            </pm:Metric>
+
+            <pm:Metric Handle="rf.ch0.capnograph"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+              <pm:Type Code="147848">
+                <pm:ConceptDescription Lang="en-US">Respitory frequency</pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="264864">
+                <pm:ConceptDescription Lang="en-US">breaths/min</pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+            </pm:Metric>
+
+          </pm:Channel>
+        </pm:Vmd>
+
 
       </pm:Mds>
     </pm:MdDescription>
