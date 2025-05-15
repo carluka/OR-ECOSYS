@@ -108,7 +108,7 @@
 
     <script>
       let ws = null;
-      const MAX_POINTS = 1500; // 3 seconds * 500Hz
+      const MAX_POINTS = 60;
 
       const statusDiv = document.getElementById("status");
       const connectBtn = document.getElementById("connectBtn");
@@ -116,9 +116,8 @@
       const currentHrSpan = document.getElementById("current-hr");
       const currentSpo2Span = document.getElementById("current-spo2");
 
-      const hrData = [[], []];
-      const spo2Data = [[], []];
-      const ecgData = [[], []];
+      const hrData = [[], []]; // [timestamps, hr values]
+      const spo2Data = [[], []]; // [timestamps, spo2 values]
 
       const hrChart = new uPlot(
         {
@@ -136,9 +135,9 @@
         {
           width: 800,
           height: 300,
-          title: "SPO2 (%)",
+          title: "SPO₂ (%)",
           scales: { x: { time: true }, y: { range: [80, 100] } },
-          series: [{}, { label: "SPO2", stroke: "blue" }],
+          series: [{}, { label: "SPO₂", stroke: "blue" }],
         },
         spo2Data,
         document.getElementById("spo2Chart")
@@ -148,14 +147,14 @@
         {
           width: 800,
           height: 300,
-          title: "Live ECG Waveform",
+          title: "ECG Waveform (Last 1s)",
           scales: {
-            x: { time: false, range: [0, 3] },
+            x: { time: false },
             y: { auto: true },
           },
           series: [{}, { label: "ECG", stroke: "green" }],
         },
-        ecgData,
+        [[], []],
         document.getElementById("ecgChart")
       );
 
@@ -169,9 +168,9 @@
       }
 
       function addData(chart, dataArray, timestamp, value) {
-        dataArray[0].push(timestamp / 1000);
+        dataArray[0].push(timestamp / 1000); // seconds
         dataArray[1].push(value);
-        if (dataArray[0].length > 60) {
+        if (dataArray[0].length > MAX_POINTS) {
           dataArray[0].shift();
           dataArray[1].shift();
         }
@@ -181,33 +180,24 @@
       function handleMetric(data) {
         const { timestamp, metrics, device_id } = data;
         const ts = new Date(timestamp).getTime();
+        const value = Object.values(metrics)[0];
 
-        for (const [metricName, value] of Object.entries(metrics)) {
-          if (metricName === "ecgWaveform.ch0.ecg_module2") {
-            const samples = JSON.parse(value); // array of floats
-            const samplingRate = 500;
-            const start =
-              ecgData[0].length > 0 ? ecgData[0][ecgData[0].length - 1] : 0;
-
-            for (let i = 0; i < samples.length; i++) {
-              const time = start + 1 / samplingRate;
-              ecgData[0].push(time);
-              ecgData[1].push(samples[i]);
-              if (ecgData[0].length > MAX_POINTS) {
-                ecgData[0].shift();
-                ecgData[1].shift();
-              }
-            }
-            ecgChart.setData(ecgData);
-          } else if (device_id === "numeric.ch0.vmd0") {
-            currentHrSpan.textContent = value;
-            addData(hrChart, hrData, ts, value);
-          } else if (device_id === "numeric.ch1.vmd1") {
-            currentSpo2Span.textContent = value;
-            addData(spo2Chart, spo2Data, ts, value);
-          } else {
-            console.warn("Unknown metric:", metricName);
+        if (device_id === "heart_rate.ch0.ekg_modul") {
+          currentHrSpan.textContent = value;
+          addData(hrChart, hrData, ts, value);
+        } else if (device_id === "oxygen_saturation.ch0.spo2") {
+          currentSpo2Span.textContent = value;
+          addData(spo2Chart, spo2Data, ts, value);
+        } else if (device_id === "ecgWaveform.ch0.ecg_module2") {
+          try {
+            const ecgArray = JSON.parse(value);
+            const x = ecgArray.map((_, i) => i);
+            ecgChart.setData([x, ecgArray]);
+          } catch (err) {
+            console.error("Failed to parse ECG waveform:", err);
           }
+        } else {
+          console.warn("Unknown device_id:", device_id);
         }
       }
 
@@ -219,11 +209,10 @@
 
         ws.onmessage = (e) => {
           try {
-            const d = JSON.parse(e.data);
-            console.log(d);
-            if (d.metrics) handleMetric(d);
+            const data = JSON.parse(e.data);
+            if (data.metrics) handleMetric(data);
           } catch (err) {
-            console.error("Invalid message:", err);
+            console.error("WebSocket message error:", err);
           }
         };
 
