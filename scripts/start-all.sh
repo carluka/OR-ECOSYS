@@ -9,6 +9,7 @@ python /app/providers/provider_ECG.py &
 python /app/providers/provider_test.py &
 python /app/providers/provider_NIBP.py &
 python /app/providers/provider_Capnograph.py &
+python /app/providers/provider_Mech_Vent.py &
 
 # Zaženi FastAPI consumer
 exec python /app/sdc_backend/run.py --host 0.0.0.0 --reload

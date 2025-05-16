@@ -19,6 +19,7 @@ TARGET_EPRS = [
     "urn:uuid:abcdefcc-cdef-1234-5678-abcdefabcdef",
     "urn:uuid:adbfacaa-cdef-1234-5678-abcdefabcdef",  # NIBP provider
     "urn:uuid:adfadfcc-cdef-1234-5678-abcdefabcdef",  # Capnograph provider
+    "urn:uuid:adddccaa-cdef-1234-5678-abcdefabcdef",  # Mechanical Ventilator provider
 ]
 
 
