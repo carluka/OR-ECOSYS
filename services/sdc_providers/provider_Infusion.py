@@ -36,7 +36,7 @@ def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvid
         serial_number='54321'
     )
 
-    mdib = ProviderMdib.from_mdib_file(str(mdib_path or pathlib.Path(__file__).parent.joinpath('reference2_mdib.xml')))
+    mdib = ProviderMdib.from_mdib_file(str(mdib_path or pathlib.Path(__file__).parent.joinpath('reference_mdib.xml')))
     
     prov = provider.SdcProvider(
         ws_discovery=ws_discovery,

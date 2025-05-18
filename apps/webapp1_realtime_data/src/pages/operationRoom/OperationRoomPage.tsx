@@ -82,8 +82,8 @@ const OperationRoomPage: React.FC = () => {
   };
 
   const waveformRaw =
-    deviceData["ecgWaveform.ch0.ecg_module2"]?.metrics[
-      "ecgWaveform.ch0.ecg_module2"
+    deviceData["ecgWaveform.ch0.ecg_module"]?.metrics[
+      "ecgWaveform.ch0.ecg_module"
     ];
   const ecgWaveform =
     typeof waveformRaw === "string"

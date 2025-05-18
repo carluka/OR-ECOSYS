@@ -3,6 +3,8 @@ import logging
 import os
 import pathlib
 import time
+import json
+import neurokit2 as nk
 import uuid
 import random
 import math
@@ -36,7 +38,7 @@ def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvid
         serial_number='54321'
     )
 
-    mdib = ProviderMdib.from_mdib_file(str(mdib_path or pathlib.Path(__file__).parent.joinpath('reference2_mdib.xml')))
+    mdib = ProviderMdib.from_mdib_file(str(mdib_path or pathlib.Path(__file__).parent.joinpath('reference_mdib.xml')))
     
     prov = provider.SdcProvider(
         ws_discovery=ws_discovery,
@@ -69,54 +71,58 @@ def run_provider():
         prov = create_provider()
         set_provider_data(prov)
 
-        # ECG metrics
         metric_hr = prov.mdib.descriptions.handle.get_one('heartRate.ch0.ecg_module')
         metric_rr = prov.mdib.descriptions.handle.get_one('rrInterval.ch0.ecg_module')
         metric_qrs = prov.mdib.descriptions.handle.get_one('qrsDuration.ch0.ecg_module')
+        metric_ecg = prov.mdib.descriptions.handle.get_one('ecgWaveform.ch0.ecg_module')
 
-        # Init all metric states
-        for metric in [metric_hr, metric_rr, metric_qrs]:
+        for metric in [metric_hr, metric_rr, metric_qrs, metric_ecg]:
             with prov.mdib.metric_state_transaction() as mgr:
                 state = mgr.get_state(metric.Handle)
                 if not state.MetricValue:
                     state.mk_metric_value()
 
-        current_hr = 75  # bpm
+        current_hr = 75  
         t = 0
+        sampling_rate = 500
+        duration = 1 
 
         while True:
             try:
-                # === Heart Rate (bpm) ===
                 hr_noise = random.gauss(0, 1.5)
                 current_hr += (75 - current_hr) * 0.05 + hr_noise
                 current_hr = max(50, min(120, current_hr))
                 hr_decimal = decimal.Decimal(current_hr).quantize(decimal.Decimal('1'))
 
-                # RR interval = 60,000 / HR
                 rr_value = 60000.0 / float(hr_decimal)
                 rr_decimal = decimal.Decimal(rr_value).quantize(decimal.Decimal('1'))
 
-                # QRS duration — small fluctuations
                 qrs_value = 90 + math.sin(t / 30.0) * 10 + random.gauss(0, 3)
                 qrs_value = max(60, min(140, qrs_value))
                 qrs_decimal = decimal.Decimal(qrs_value).quantize(decimal.Decimal('1'))
 
-                # Update heart rate
+                ecg_signal = nk.ecg_simulate(duration=duration, sampling_rate=sampling_rate, method="ecgsyn")
+                rounded_signal = [round(float(x), 4) for x in ecg_signal[:int(sampling_rate * duration)]]
+                ecg_json = json.dumps(rounded_signal)
+
                 with prov.mdib.metric_state_transaction() as mgr:
                     state = mgr.get_state(metric_hr.Handle)
                     state.MetricValue.Value = hr_decimal
 
-                # Update RR interval
                 with prov.mdib.metric_state_transaction() as mgr:
                     state = mgr.get_state(metric_rr.Handle)
                     state.MetricValue.Value = rr_decimal
 
-                # Update QRS duration
                 with prov.mdib.metric_state_transaction() as mgr:
                     state = mgr.get_state(metric_qrs.Handle)
                     state.MetricValue.Value = qrs_decimal
 
+                with prov.mdib.metric_state_transaction() as mgr:
+                    state = mgr.get_state(metric_ecg.Handle)
+                    state.MetricValue.Value = ecg_json
+
                 logger.info(f'HR: {hr_decimal} bpm | RR: {rr_decimal} ms | QRS: {qrs_decimal} ms')
+                logger.info(f"Sent ECG waveform with {len(rounded_signal)} samples")
 
                 time.sleep(1)
                 t += 1

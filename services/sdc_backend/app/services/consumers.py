@@ -11,12 +11,10 @@ from sdc11073.loghelper import basic_logging_setup
 
 
 TARGET_EPRS = [
-    "urn:uuid:12345678-6f55-11ea-9697-123456789abc",  # BPM provider
-    "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",# SpO2 provider
-    "urn:uuid:abcdefff-cdef-1234-5678-abcdefabcdef",  
-    "urn:uuid:abcdefaa-cdef-1234-5678-abcdefabcdef",
-    "urn:uuid:abcdefbb-cdef-1234-5678-abcdefabcdef",
-    "urn:uuid:abcdefcc-cdef-1234-5678-abcdefabcdef",
+    "urn:uuid:abcdefab-cdef-1234-5678-abcdefabcdef",  # SpO2 provider
+    "urn:uuid:abcdefff-cdef-1234-5678-abcdefabcdef",  # Temperature provider
+    "urn:uuid:abcdefaa-cdef-1234-5678-abcdefabcdef",  # Infusion provider
+    "urn:uuid:abcdefbb-cdef-1234-5678-abcdefabcdef",  # ECG provider 
     "urn:uuid:adbfacaa-cdef-1234-5678-abcdefabcdef",  # NIBP provider
     "urn:uuid:adfadfcc-cdef-1234-5678-abcdefabcdef",  # Capnograph provider
     "urn:uuid:adddccaa-cdef-1234-5678-abcdefabcdef",  # Mechanical Ventilator provider

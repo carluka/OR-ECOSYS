@@ -1,216 +1,287 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<msg:GetMdibResponse xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
-                     xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant"
-                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<msg:GetMdibResponse
+	xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+	xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                      xsi:schemaLocation="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant BICEPS_ParticipantModel.xsd
                                          http://standards.ieee.org/downloads/11073/11073-10207-2017/message BICEPS_MessageModel.xsd"
                      SequenceId="urn:oid:1">
-  <msg:Mdib SequenceId="urn:oid:1">
-    <pm:MdDescription>
-      <pm:Mds Handle="mds0" SafetyClassification="MedA">
-        <pm:Type Code="130535">
-          <pm:ConceptDescription Lang="en-US">not settable metrics</pm:ConceptDescription>
-        </pm:Type>
-        <pm:AlertSystem SafetyClassification="MedA" Handle="asy.mds0" SelfCheckPeriod="PT5S">
-          <pm:AlertCondition Handle="ac0.mds0"
+	<msg:Mdib SequenceId="urn:oid:1">
+		<pm:MdDescription>
+			<pm:Mds Handle="mds0" SafetyClassification="MedA">
+				<pm:Type Code="130535">
+					<pm:ConceptDescription Lang="en-US">not settable metrics</pm:ConceptDescription>
+				</pm:Type>
+				<pm:AlertSystem SafetyClassification="MedA" Handle="asy.mds0" SelfCheckPeriod="PT5S">
+					<pm:AlertCondition Handle="ac0.mds0"
                              xsi:type="pm:AlertConditionDescriptor"
                              SafetyClassification="MedA" Kind="Phy" Priority="Me">
-            <pm:Type Code="262108‬">
-              <pm:ConceptDescription Lang="en-US">dummy condition</pm:ConceptDescription>
-            </pm:Type>
-            <pm:Source>mds0</pm:Source>
-          </pm:AlertCondition>
-        </pm:AlertSystem>
-        <pm:SystemContext Handle="SC.mds0">
-          <pm:PatientContext Handle="PC.mds0" />
-          <pm:LocationContext Handle="LC.mds0" />
-        </pm:SystemContext>
-
-        <pm:Vmd Handle="spo2" SafetyClassification="MedA">
-          <pm:Channel Handle="ch0.spo2" SafetyClassification="MedA">
-            <pm:Metric Handle="oxygen_saturation.ch0.spo2"
+						<pm:Type Code="262108‬">
+							<pm:ConceptDescription Lang="en-US">dummy condition</pm:ConceptDescription>
+						</pm:Type>
+						<pm:Source>mds0</pm:Source>
+					</pm:AlertCondition>
+				</pm:AlertSystem>
+				<pm:SystemContext Handle="SC.mds0">
+					<pm:PatientContext Handle="PC.mds0" />
+					<pm:LocationContext Handle="LC.mds0" />
+				</pm:SystemContext>
+				<pm:Vmd Handle="spo2" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.spo2" SafetyClassification="MedA">
+						<pm:Metric Handle="oxygen_saturation.ch0.spo2"
                        SafetyClassification="MedA"
                        xsi:type="pm:NumericMetricDescriptor"
                        MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="150456">
-                <pm:ConceptDescription Lang="en-US">Oxygen Saturation (SpO₂)</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="262656">
-                <pm:ConceptDescription Lang="en-US">%</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="100" Lower="70" StepWidth="0.1" />
-            </pm:Metric>
-          </pm:Channel>
-        </pm:Vmd>
-
-        <pm:Vmd Handle="ekg_modul" SafetyClassification="MedA">
-          <pm:Channel Handle="ch0.ekg_modul" SafetyClassification="MedA">
-            <pm:Metric Handle="heart_rate.ch0.ekg_modul"
+							<pm:Type Code="150456">
+								<pm:ConceptDescription Lang="en-US">Oxygen Saturation (SpO₂)</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="262656">
+								<pm:ConceptDescription Lang="en-US">%</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="100" Lower="70" StepWidth="0.1" />
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+				<pm:Vmd Handle="nibp_module" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.nibp_module" SafetyClassification="MedA">
+						<pm:Metric Handle="bps.ch0.nibp_module"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147842">
+								<pm:ConceptDescription Lang="en-US">Blood Pressure Systolic</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="bpd.ch0.nibp_module"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147841">
+								<pm:ConceptDescription Lang="en-US">Blood Pressure Diastolic</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="bpa.ch0.nibp_module"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147848">
+								<pm:ConceptDescription Lang="en-US">Mean Arterial Pressure</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+				<pm:Vmd Handle="capnograph" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.capnograph" SafetyClassification="MedA">
+						<pm:Metric Handle="co2.ch0.capnograph"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147841">
+								<pm:ConceptDescription Lang="en-US">CO2 Concentration in breath</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="rf.ch0.capnograph"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147848">
+								<pm:ConceptDescription Lang="en-US">Respitory frequency</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">breaths/min</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+				<pm:Vmd Handle="mechanical_ventilator" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.mechanical_ventilator" SafetyClassification="MedA">
+						<pm:Metric Handle="vol.ch0.mechanical_ventilator"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147841">
+								<pm:ConceptDescription Lang="en-US">Volume of breath</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">ml</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="rf.ch0.mechanical_ventilator"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147848">
+								<pm:ConceptDescription Lang="en-US">Respitory frequency</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">1/min</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="ox_con.ch0.mechanical_ventilator"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147848">
+								<pm:ConceptDescription Lang="en-US">Oxygen Saturation</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">%</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="peep.ch0.mechanical_ventilator"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147848">
+								<pm:ConceptDescription Lang="en-US">Pressure on breath out</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">cmH20</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+						<pm:Metric Handle="pip.ch0.mechanical_ventilator"
+                      SafetyClassification="MedA"
+                      xsi:type="pm:NumericMetricDescriptor"
+                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="147848">
+								<pm:ConceptDescription Lang="en-US">Inspiration Pressure</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">cmH20</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+				<pm:Vmd Handle="temperature_gauge" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.temperature_gauge" SafetyClassification="MedA">
+						<pm:Metric Handle="temperature.ch0.temperature_gauge"
                        SafetyClassification="MedA"
                        xsi:type="pm:NumericMetricDescriptor"
                        MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147842">
-                <pm:ConceptDescription Lang="en-US">Heart Rate (BPM)</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">beats per minute</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1" />
-            </pm:Metric>
-          </pm:Channel>
-        </pm:Vmd>
-
-         <pm:Vmd Handle="nibp_module" SafetyClassification="MedA">
-          <pm:Channel Handle="ch0.nibp_module" SafetyClassification="MedA">
-
-            <pm:Metric Handle="bps.ch0.nibp_module"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147842">
-                <pm:ConceptDescription Lang="en-US">Blood Pressure Systolic</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="bpd.ch0.nibp_module"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147841">
-                <pm:ConceptDescription Lang="en-US">Blood Pressure Diastolic</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="bpa.ch0.nibp_module"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147848">
-                <pm:ConceptDescription Lang="en-US">Mean Arterial Pressure</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-          </pm:Channel>
-        </pm:Vmd>
-
-         <pm:Vmd Handle="capnograph" SafetyClassification="MedA">
-          <pm:Channel Handle="ch0.capnograph" SafetyClassification="MedA">
-
-            <pm:Metric Handle="co2.ch0.capnograph"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147841">
-                <pm:ConceptDescription Lang="en-US">CO2 Concentration in breath</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">mmHg</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="rf.ch0.capnograph"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147848">
-                <pm:ConceptDescription Lang="en-US">Respitory frequency</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">breaths/min</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-          </pm:Channel>
-        </pm:Vmd>
-
-
-        <pm:Vmd Handle="mechanical_ventilator" SafetyClassification="MedA">
-          <pm:Channel Handle="ch0.mechanical_ventilator" SafetyClassification="MedA">
-
-            <pm:Metric Handle="vol.ch0.mechanical_ventilator"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147841">
-                <pm:ConceptDescription Lang="en-US">Volume of breath</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">ml</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="rf.ch0.mechanical_ventilator"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147848">
-                <pm:ConceptDescription Lang="en-US">Respitory frequency</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">1/min</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="ox_con.ch0.mechanical_ventilator"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147848">
-                <pm:ConceptDescription Lang="en-US">Oxygen Saturation</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">%</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="peep.ch0.mechanical_ventilator"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147848">
-                <pm:ConceptDescription Lang="en-US">Pressure on breath out</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">cmH20</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-            <pm:Metric Handle="pip.ch0.mechanical_ventilator"
-                      SafetyClassification="MedA"
-                      xsi:type="pm:NumericMetricDescriptor"
-                      MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
-              <pm:Type Code="147848">
-                <pm:ConceptDescription Lang="en-US">Inspiration Pressure</pm:ConceptDescription>
-              </pm:Type>
-              <pm:Unit Code="264864">
-                <pm:ConceptDescription Lang="en-US">cmH20</pm:ConceptDescription>
-              </pm:Unit>
-              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="0.1"/>
-            </pm:Metric>
-
-
-          </pm:Channel>
-        </pm:Vmd>
-
-      </pm:Mds>
-    </pm:MdDescription>
-  </msg:Mdib>
+							<pm:Type Code="150456">
+								<pm:ConceptDescription Lang="en-US">Body temperature</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="262656">
+								<pm:ConceptDescription Lang="en-US">°C</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="43.0" Lower="30.0" StepWidth="0.1" />
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+				<pm:Vmd Handle="infusion_pump" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.infusion_pump" SafetyClassification="MedA">
+						<pm:Metric Handle="drugName.ch0.infusion_pump"
+                        SafetyClassification="MedA"
+                        xsi:type="pm:StringMetricDescriptor"
+                        MetricCategory="Set" MetricAvailability="Intr">
+							<pm:Type Code="200001">
+								<pm:ConceptDescription Lang="en-US">Drug Name</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="200000">
+								<pm:ConceptDescription Lang="en-US">n/a</pm:ConceptDescription>
+							</pm:Unit>
+						</pm:Metric>
+						<pm:Metric Handle="flowRate.ch0.infusion_pump"
+                        SafetyClassification="MedA"
+                        xsi:type="pm:NumericMetricDescriptor"
+                        MetricCategory="Set" MetricAvailability="Intr" Resolution="0.1">
+							<pm:Type Code="200002">
+								<pm:ConceptDescription Lang="en-US">Infusion Rate</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="263873">
+								<pm:ConceptDescription Lang="en-US">ml/h</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="1200.0" Lower="0.0" StepWidth="0.1" />
+						</pm:Metric>
+						<pm:Metric Handle="volumeTotal.ch0.infusion_pump"
+                        SafetyClassification="MedA"
+                        xsi:type="pm:NumericMetricDescriptor"
+                        MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+							<pm:Type Code="200003">
+								<pm:ConceptDescription Lang="en-US">Total Volume Infused</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="263872">
+								<pm:ConceptDescription Lang="en-US">ml</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="10000.0" Lower="0.0" StepWidth="1" />
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+				<pm:Vmd Handle="ecg_module" SafetyClassification="MedA">
+					<pm:Channel Handle="ch0.ecg_module" SafetyClassification="MedA">
+						<pm:Metric Handle="heartRate.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:NumericMetricDescriptor"
+                            MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+							<pm:Type Code="147842">
+								<pm:ConceptDescription Lang="en-US">Heart Rate</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264864">
+								<pm:ConceptDescription Lang="en-US">beats per minute</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="220" Lower="30" StepWidth="1" />
+						</pm:Metric>
+						<pm:Metric Handle="rrInterval.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:NumericMetricDescriptor"
+                            MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+							<pm:Type Code="200010">
+								<pm:ConceptDescription Lang="en-US">RR Interval</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264192">
+								<pm:ConceptDescription Lang="en-US">ms</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="2000" Lower="300" StepWidth="1" />
+						</pm:Metric>
+						<pm:Metric Handle="qrsDuration.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:NumericMetricDescriptor"
+                            MetricCategory="Set" MetricAvailability="Intr" Resolution="1">
+							<pm:Type Code="200011">
+								<pm:ConceptDescription Lang="en-US">QRS Duration</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="264192">
+								<pm:ConceptDescription Lang="en-US">ms</pm:ConceptDescription>
+							</pm:Unit>
+							<pm:TechnicalRange Upper="200" Lower="50" StepWidth="1" />
+						</pm:Metric>
+						<pm:Metric Handle="ecgWaveform.ch0.ecg_module"
+                            SafetyClassification="MedA"
+                            xsi:type="pm:StringMetricDescriptor"
+                            MetricCategory="Msrmt"
+                            MetricAvailability="Cont">
+							<pm:Type Code="200100">
+								<pm:ConceptDescription Lang="en-US">ECG Waveform</pm:ConceptDescription>
+							</pm:Type>
+							<pm:Unit Code="200000">
+								<pm:ConceptDescription Lang="en-US">JSON</pm:ConceptDescription>
+							</pm:Unit>
+						</pm:Metric>
+					</pm:Channel>
+				</pm:Vmd>
+			</pm:Mds>
+		</pm:MdDescription>
+	</msg:Mdib>
 </msg:GetMdibResponse>
