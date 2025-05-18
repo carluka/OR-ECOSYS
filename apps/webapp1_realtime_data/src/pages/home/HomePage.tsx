@@ -42,15 +42,15 @@ const HomePage = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Seznam sob
+        Operation Rooms
       </Typography>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Naziv</TableCell>
-              <TableCell>Lokacija</TableCell>
+              <TableCell>Room Name</TableCell>
+              <TableCell>Location</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

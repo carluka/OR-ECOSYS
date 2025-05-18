@@ -1,0 +1,54 @@
+.ventilator-module {
+  width: 100%;
+}
+
+.ventilator-module .module-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.ventilator-module .module-badge {
+  font-size: 0.75rem;
+  background-color: #e0e7ff;
+  color: #4338ca;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+.ventilator-module .ventilator-values {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.ventilator-module .value-card {
+  background-color: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.ventilator-module .value-card.full-width {
+  grid-column: span 2;
+}
+
+.ventilator-module .value-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.ventilator-module .value-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.ventilator-module .value-unit {
+  font-size: 0.75rem;
+  color: #64748b;
+}

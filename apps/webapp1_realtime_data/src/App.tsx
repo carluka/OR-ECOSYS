@@ -8,6 +8,7 @@ import OperationRoomPage from "./pages/operationRoom/OperationRoomPage";
 import "./App.css";
 import PatientsPage from "./pages/patients/PatientsPage";
 import PatientDetailsPage from "./pages/patientDetail/PatientDetailsPage";
+import { DeviceProvider } from "./context/DeviceContext";
 
 const router = createBrowserRouter([
   {
@@ -22,7 +23,14 @@ const router = createBrowserRouter([
         element: <Layout />,
         children: [
           { index: true, element: <HomePage /> },
-          { path: "/operation", element: <OperationRoomPage /> },
+          {
+            path: "/operation",
+            element: (
+              <DeviceProvider>
+                <OperationRoomPage />
+              </DeviceProvider>
+            ),
+          },
           { path: "/patients", element: <PatientsPage /> },
           { path: "/patients/:id", element: <PatientDetailsPage /> },
           { path: "*", element: <NotFoundPage /> },

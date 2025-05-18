@@ -47,15 +47,15 @@ const PatientsPage = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Seznam pacientov
+        Patient List
       </Typography>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Ime</TableCell>
-              <TableCell>Priimek</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Surname</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

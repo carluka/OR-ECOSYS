@@ -1,0 +1,130 @@
+.spo2-module {
+  width: 100%;
+}
+
+.spo2-module .module-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.spo2-module .module-badge {
+  font-size: 0.75rem;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+.spo2-module .spo2-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.spo2-module .spo2-gauge {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  border: 4px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spo2-module .spo2-gauge.no-data {
+  border-color: #64748b;
+  background-color: #f1f5f9;
+}
+
+.spo2-module .spo2-gauge.normal {
+  border-color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.spo2-module .spo2-gauge.caution {
+  border-color: #ca8a04;
+  background-color: #fef9c3;
+}
+
+.spo2-module .spo2-gauge.critical {
+  border-color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.spo2-module .spo2-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.spo2-module .spo2-gauge.no-data .spo2-value {
+  color: #64748b;
+}
+
+.spo2-module .spo2-gauge.normal .spo2-value {
+  color: #16a34a;
+}
+
+.spo2-module .spo2-gauge.caution .spo2-value {
+  color: #ca8a04;
+}
+
+.spo2-module .spo2-gauge.critical .spo2-value {
+  color: #dc2626;
+}
+
+.spo2-module .spo2-unit {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.spo2-module .spo2-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spo2-module .status-badge {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.spo2-module .status-badge.no-data {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.spo2-module .status-badge.normal {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.spo2-module .status-badge.caution {
+  background-color: #fef9c3;
+  color: #ca8a04;
+}
+
+.spo2-module .status-badge.critical {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.spo2-module .pulse-info {
+  font-size: 0.875rem;
+}
+
+.spo2-module .pulse-label {
+  color: #64748b;
+}
+
+.spo2-module .pulse-value {
+  font-weight: 500;
+  margin-left: 0.25rem;
+}

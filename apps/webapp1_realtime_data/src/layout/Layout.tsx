@@ -24,14 +24,11 @@ const Layout = () => {
             Patients
           </Link>
         </nav>
-        <Button onClick={handleLogout}>Odjava</Button>
+        <Button onClick={handleLogout}>Sign out</Button>
       </header>
       <main className="main-content">
         <Outlet />
       </main>
-      <footer className="footer">
-        <p>&copy; 2024 Your Website. All rights reserved.</p>
-      </footer>
     </div>
   );
 };

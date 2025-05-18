@@ -47,7 +47,7 @@ export default function Login() {
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Prijava
+          Sign in
         </Typography>
 
         <Stack spacing={2}>
@@ -65,12 +65,12 @@ export default function Login() {
           </Stack>
 
           <Stack spacing={1}>
-            <InputLabel htmlFor="password">Geslo</InputLabel>
+            <InputLabel htmlFor="password">Password</InputLabel>
             <OutlinedInput
               id="password"
               name="password"
               type="password"
-              placeholder="Vnesite vaše geslo"
+              placeholder="Enter your password"
               fullWidth
               value={geslo}
               onChange={(e) => setGeslo(e.target.value)}
@@ -78,7 +78,7 @@ export default function Login() {
           </Stack>
 
           <Button type="submit" variant="contained" color="primary">
-            Prijava
+            Sign in
           </Button>
         </Stack>
       </Box>
