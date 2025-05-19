@@ -46,38 +46,62 @@ class DeviceRepo {
 	async getDevices(filters = {}) {
 		try {
 			const { tip_naprave, servis } = filters;
-			const filterConditions = [];
+			const whereConditions = [];
+			const havingConditions = [];
+
+			// simple WHERE on device type
 			if (tip_naprave) {
-				filterConditions.push(`tn.naziv = :tip_naprave`);
+				whereConditions.push(`tn.naziv = :tip_naprave`);
 			}
+
+			// filter on the aggregated "servis" flag
 			if (servis !== undefined) {
-				filterConditions.push(
-					`(sv.datum >= CURRENT_DATE - INTERVAL '2 months') = :servis`
+				havingConditions.push(
+					`COALESCE(bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'), FALSE) = :servis`
 				);
 			}
-			const whereSQL = filterConditions.length
-				? "WHERE " + filterConditions.join(" AND ")
+
+			const whereSQL = whereConditions.length
+				? "WHERE " + whereConditions.join(" AND ")
+				: "";
+
+			const havingSQL = havingConditions.length
+				? "HAVING " + havingConditions.join(" AND ")
 				: "";
 
 			const sql = `
-				SELECT
-					n.idnaprava,
-					n.naziv       AS naprava,
-					tn.naziv      AS tip_naprave,
-					(sb.naziv || ' ' || sb.lokacija) AS soba,
-					bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months') AS servis
-				FROM naprava n
-				JOIN tip_naprave tn ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
-				JOIN soba sb ON n.soba_idsoba = sb.idsoba
-				LEFT JOIN servis sv ON sv.naprava_idnaprava = n.idnaprava
-				${whereSQL}
-				GROUP BY n.idnaprava, n.naziv, tn.naziv, sb.naziv, sb.lokacija
-				ORDER BY n.naziv;
-			`;
+			SELECT
+			  n.idnaprava,
+			  n.naziv              AS naprava,
+			  tn.naziv             AS tip_naprave,
+			  (sb.naziv || ' ' || sb.lokacija) AS soba,
+			  -- default to false if no servis rows at all
+			  COALESCE(
+				bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'),
+				FALSE
+			  ) AS servis
+			FROM naprava n
+			JOIN tip_naprave tn
+			  ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
+			JOIN soba sb
+			  ON n.soba_idsoba = sb.idsoba
+			LEFT JOIN servis sv
+			  ON sv.naprava_idnaprava = n.idnaprava
+			${whereSQL}
+			GROUP BY
+			  n.idnaprava,
+			  n.naziv,
+			  tn.naziv,
+			  sb.naziv,
+			  sb.lokacija
+			${havingSQL}
+			ORDER BY n.naziv;
+		  `;
 
 			const results = await sequelize.query(sql, {
 				replacements: {
 					tip_naprave,
+					// ensure boolean
 					servis: servis === "true",
 				},
 				type: QueryTypes.SELECT,
