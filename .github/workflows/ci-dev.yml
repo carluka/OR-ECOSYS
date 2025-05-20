@@ -34,10 +34,10 @@ jobs:
         run: |
           docker build \
             --build-arg DEVICE_NAME=${{ matrix.device }} \
-            -t $REGISTRY/$DOCKERHUB_REPO/provider_${{ matrix.device }}:latest \
+             -t ${{ env.REGISTRY }}/${{ env.DOCKERHUB_REPO }}/provider_${{ matrix.device }}:latest \
             -f infra/docker/python-provider.Dockerfile \
             ./services/sdc_providers
-          docker push $REGISTRY/$DOCKERHUB_REPO/provider-${{ matrix.device }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.DOCKERHUB_REPO }}/provider_${{ matrix.device }}:latest
 
   build-backend:
     runs-on: ubuntu-latest
