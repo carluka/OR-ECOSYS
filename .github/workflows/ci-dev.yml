@@ -4,7 +4,7 @@ name: CI - Development
 on:
   push:
     branches:
-      - main
+      - development
 
 env:
   REGISTRY: docker.io
