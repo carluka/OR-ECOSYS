@@ -16,7 +16,8 @@ class UserService {
 
 	async checkGeslo(email, geslo) {
 		const user = await this.getUserByEmail(email);
-		return user && (await bcryptjs.compare(geslo, user.geslo));
+		if (!user) return false;
+		return await bcryptjs.compare(geslo, user.geslo);
 	}
 
 	async createUser(payload) {
