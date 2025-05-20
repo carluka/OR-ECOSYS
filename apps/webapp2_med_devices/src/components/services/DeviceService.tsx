@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import api from "../../api";
-import AddService from "./addService";
+import AddService from "./AddService";
 
 interface Service {
 	idservis: number;

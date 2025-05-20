@@ -19,7 +19,7 @@ import {
 	Stack,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import DeviceService from "../components/services/deviceService";
+import DeviceService from "../components/services/DeviceService";
 import api from "../api";
 
 const ServisiNaprav: React.FC = () => {
