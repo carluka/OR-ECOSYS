@@ -1,0 +1,12 @@
+#Backend
+.DS_Store
+
+#Config
+*.env
+.env.*
+
+
+#PyCache
+__pycache__/
+
+infra/k8s/

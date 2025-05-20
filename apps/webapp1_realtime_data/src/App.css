@@ -1,0 +1,69 @@
+body,
+html,
+#root {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+
+.login-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-color: lightgrey;
+	padding: 2rem;
+	box-shadow: 5px 5px 5px grey;
+	border-radius: 5px;
+	width: fit-content;
+	height: fit-content;
+}
+
+.login-form {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+	gap: 10px;
+}
+
+.login-form > label {
+	gap: 10px;
+	display: flex;
+}
+
+.not-found-page {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	height: 100vh;
+}
+
+.return-button {
+	background-color: lightgrey;
+	padding: 10px;
+	border-radius: 5px;
+	text-decoration: none;
+	color: black;
+	border: 1px solid black;
+	cursor: pointer;
+	font-size: 18px;
+	font-weight: bold;
+	box-shadow: 5px 5px 5px grey;
+}
+
+.nav-button {
+	white-space: normal !important;
+	text-align: center;
+	width: 200px !important;
+	height: 80px !important;
+	padding: 8px 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.nav-button.large {
+	width: 200px !important;
+}

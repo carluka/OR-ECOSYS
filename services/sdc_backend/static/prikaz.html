@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Operacijska soba 1</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/uplot@1.6.24/dist/uPlot.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.24/dist/uPlot.iife.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+      #heart-display {
+        display: flex;
+        align-items: center;
+        font-size: 2.5em;
+        margin: 20px 0;
+      }
+      .heart {
+        color: red;
+        margin-right: 10px;
+        animation: beat 1s infinite;
+      }
+      @keyframes beat {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+      .chart-box {
+        margin-top: 20px;
+      }
+      .uplot {
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SDC WebSocket Test</h1>
+
+    <div id="status" class="disconnected">Status: Disconnected</div>
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+
+    <h2>Current Heart Rate</h2>
+    <div id="heart-display">
+      <span class="heart">❤️</span>
+      <span id="current-hr">--</span> bpm
+    </div>
+
+    <div class="chart-box">
+      <h2>Heart Rate Over Time</h2>
+      <div id="hrChart"></div>
+    </div>
+
+    <h2>Current SPO₂</h2>
+    <div style="font-size: 2em; margin: 20px 0">
+      <span id="current-spo2">--</span> %
+    </div>
+
+    <div class="chart-box">
+      <h2>SPO₂ Over Time</h2>
+      <div id="spo2Chart"></div>
+    </div>
+
+    <div class="chart-box">
+      <h2>ECG Waveform</h2>
+      <div id="ecgChart"></div>
+    </div>
+
+    <script>
+      let ws = null;
+      const MAX_POINTS = 60;
+
+      const statusDiv = document.getElementById("status");
+      const connectBtn = document.getElementById("connectBtn");
+      const disconnectBtn = document.getElementById("disconnectBtn");
+      const currentHrSpan = document.getElementById("current-hr");
+      const currentSpo2Span = document.getElementById("current-spo2");
+
+      const hrData = [[], []];
+      const spo2Data = [[], []];
+
+      const hrChart = new uPlot(
+        {
+          width: 800,
+          height: 300,
+          title: "Heart Rate (BPM)",
+          scales: { x: { time: true }, y: { range: [50, 120] } },
+          series: [{}, { label: "BPM", stroke: "red" }],
+        },
+        hrData,
+        document.getElementById("hrChart")
+      );
+
+      const spo2Chart = new uPlot(
+        {
+          width: 800,
+          height: 300,
+          title: "SPO₂ (%)",
+          scales: { x: { time: true }, y: { range: [80, 100] } },
+          series: [{}, { label: "SPO₂", stroke: "blue" }],
+        },
+        spo2Data,
+        document.getElementById("spo2Chart")
+      );
+
+      const ecgChart = new uPlot(
+        {
+          width: 800,
+          height: 300,
+          title: "ECG Waveform (Last 1s)",
+          scales: {
+            x: { time: false },
+            y: { auto: true },
+          },
+          series: [{}, { label: "ECG", stroke: "green" }],
+        },
+        [[], []],
+        document.getElementById("ecgChart")
+      );
+
+      function updateStatus(connected) {
+        statusDiv.textContent = `Status: ${
+          connected ? "Connected" : "Disconnected"
+        }`;
+        statusDiv.className = connected ? "connected" : "disconnected";
+        connectBtn.disabled = connected;
+        disconnectBtn.disabled = !connected;
+      }
+
+      function addData(chart, dataArray, timestamp, value) {
+        dataArray[0].push(timestamp / 1000); // seconds
+        dataArray[1].push(value);
+        if (dataArray[0].length > MAX_POINTS) {
+          dataArray[0].shift();
+          dataArray[1].shift();
+        }
+        chart.setData(dataArray);
+      }
+
+      function handleMetric(data) {
+        const { timestamp, metrics, device_id } = data;
+        const ts = new Date(timestamp).getTime();
+        const value = Object.values(metrics)[0];
+
+        if (device_id === "heart_rate.ch0.ekg_modul") {
+          currentHrSpan.textContent = value;
+          addData(hrChart, hrData, ts, value);
+        } else if (device_id === "oxygen_saturation.ch0.spo2") {
+          currentSpo2Span.textContent = value;
+          addData(spo2Chart, spo2Data, ts, value);
+        } else if (device_id === "ecgWaveform.ch0.ecg_module2") {
+          try {
+            const ecgArray = JSON.parse(value);
+            const x = ecgArray.map((_, i) => i);
+            ecgChart.setData([x, ecgArray]);
+          } catch (err) {
+            console.error("Failed to parse ECG waveform:", err);
+          }
+        } else {
+          console.warn("Unknown device_id:", device_id);
+        }
+      }
+
+      function connect() {
+        if (ws) ws.close();
+        ws = new WebSocket("ws://localhost:8000/ws/medical-device");
+
+        ws.onopen = () => updateStatus(true);
+
+        ws.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data.metrics) handleMetric(data);
+          } catch (err) {
+            console.error("WebSocket message error:", err);
+          }
+        };
+
+        ws.onclose = () => {
+          updateStatus(false);
+          ws = null;
+        };
+      }
+
+      function disconnect() {
+        if (ws) ws.close();
+      }
+
+      connectBtn.addEventListener("click", connect);
+      disconnectBtn.addEventListener("click", disconnect);
+    </script>
+  </body>
+</html>

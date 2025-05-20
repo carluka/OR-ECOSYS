@@ -1,0 +1,50 @@
+.nibp-module {
+  width: 100%;
+}
+
+.nibp-module .module-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.nibp-module .module-badge {
+  font-size: 0.75rem;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+.nibp-module .nibp-values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.nibp-module .value-card {
+  background-color: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.nibp-module .value-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.nibp-module .value-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0ea5e9;
+}
+
+.nibp-module .value-unit {
+  font-size: 0.75rem;
+  color: #64748b;
+}

@@ -1,0 +1,126 @@
+.temperature-module {
+  width: 100%;
+}
+
+.temperature-module .module-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.temperature-module .module-badge {
+  font-size: 0.75rem;
+  background-color: #ffedd5;
+  color: #c2410c;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+}
+
+.temperature-module .temperature-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.temperature-module .temperature-gauge {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 4px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.temperature-module .temperature-gauge.no-data {
+  border-color: #64748b;
+  background-color: #f1f5f9;
+}
+
+.temperature-module .temperature-gauge.elevated {
+  border-color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.temperature-module .temperature-gauge.slightly-elevated {
+  border-color: #ca8a04;
+  background-color: #fef9c3;
+}
+
+.temperature-module .temperature-gauge.normal {
+  border-color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.temperature-module .temperature-gauge.low {
+  border-color: #2563eb;
+  background-color: #dbeafe;
+}
+
+.temperature-module .temperature-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.temperature-module .temperature-gauge.no-data .temperature-value {
+  color: #64748b;
+}
+
+.temperature-module .temperature-gauge.elevated .temperature-value {
+  color: #dc2626;
+}
+
+.temperature-module .temperature-gauge.slightly-elevated .temperature-value {
+  color: #ca8a04;
+}
+
+.temperature-module .temperature-gauge.normal .temperature-value {
+  color: #16a34a;
+}
+
+.temperature-module .temperature-gauge.low .temperature-value {
+  color: #2563eb;
+}
+
+.temperature-module .temperature-unit {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.temperature-module .temperature-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-align: center;
+}
+
+.temperature-module .temperature-status.no-data {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.temperature-module .temperature-status.elevated {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.temperature-module .temperature-status.slightly-elevated {
+  background-color: #fef9c3;
+  color: #ca8a04;
+}
+
+.temperature-module .temperature-status.normal {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.temperature-module .temperature-status.low {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
