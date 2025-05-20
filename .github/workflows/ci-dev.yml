@@ -36,7 +36,7 @@ jobs:
             --build-arg DEVICE_NAME=${{ matrix.device }} \
              -t ${{ env.REGISTRY }}/${{ env.DOCKERHUB_REPO }}/provider_${{ matrix.device }}:latest \
             -f infra/docker/python-provider.Dockerfile \
-            ./services/sdc_providers
+            .
           docker push ${{ env.REGISTRY }}/${{ env.DOCKERHUB_REPO }}/provider_${{ matrix.device }}:latest
 
   build-backend:
