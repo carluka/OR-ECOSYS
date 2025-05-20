@@ -18,7 +18,7 @@ services:
   kafka:
     image: wurstmeister/kafka:latest
     environment:
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://83.212.126.60:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_OPTS: "-Djava.net.preferIPv4Stack=true"
