@@ -1,16 +1,8 @@
 FROM node:18-alpine
-
-# 1) delovni dir
 WORKDIR /app
-
-# 2) kopiraj definicijo paketov in lockfile
+ARG JWT_SECRET
+ENV JWT_SECRET=${JWT_SECRET}
 COPY services/backend/package*.json ./
-
-# 3) namestitev in rebuild native modulov
-RUN npm install 
-
-# 4) kopiraj celotno kodo
+RUN npm install
 COPY services/backend/ ./
-
-# 5) razvojni zagon
 CMD ["npm", "run", "dev"]
