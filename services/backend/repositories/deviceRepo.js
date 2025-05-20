@@ -74,7 +74,8 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv              AS naprava,
 			  tn.naziv             AS tip_naprave,
-			  (sb.naziv || ' ' || sb.lokacija) AS soba,
+			  -- Use COALESCE to show empty string if no room assigned
+			  COALESCE(sb.naziv || ' ' || sb.lokacija, 'BREZ SOBE') AS soba,
 			  -- default to false if no servis rows at all
 			  COALESCE(
 				bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'),
@@ -83,7 +84,7 @@ class DeviceRepo {
 			FROM naprava n
 			JOIN tip_naprave tn
 			  ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
-			JOIN soba sb
+			LEFT JOIN soba sb
 			  ON n.soba_idsoba = sb.idsoba
 			LEFT JOIN servis sv
 			  ON sv.naprava_idnaprava = n.idnaprava
@@ -101,7 +102,6 @@ class DeviceRepo {
 			const results = await sequelize.query(sql, {
 				replacements: {
 					tip_naprave,
-					// ensure boolean
 					servis: servis === "true",
 				},
 				type: QueryTypes.SELECT,

@@ -80,11 +80,8 @@ const AddRoom: React.FC<Props> = ({ onClose, onAdded }) => {
 						/>
 					</Stack>
 
-					<Button variant="outlined" color="primary" onClick={handleAdd}>
+					<Button variant="contained" color="primary" onClick={handleAdd}>
 						Shrani sobo
-					</Button>
-					<Button variant="text" onClick={onClose}>
-						Prekliči
 					</Button>
 				</Stack>
 			</Box>

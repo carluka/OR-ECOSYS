@@ -54,7 +54,7 @@ function AddDevice({ onDeviceAdded }: Props) {
 			naziv: nazivNaprave,
 			tip_naprave_idtip_naprave: parseInt(tipNaprave),
 			stanje: "Aktivno", // Stanje je trenutno vedno Aktivno
-			soba_idsoba: 1, // Lokacija je trenutno vedno 1
+			soba_idsoba: null, // Lokacija je trenutno vedno null
 		};
 		console.log(newDevice);
 
@@ -137,7 +137,7 @@ function AddDevice({ onDeviceAdded }: Props) {
 						/>
 					</Stack>
 
-					{/* Lokacija (privzeto 1) */}
+					{/* Lokacija (privzeto 1) 
 					<Stack spacing={1}>
 						<InputLabel htmlFor="lokacija">Lokacija</InputLabel>
 						<OutlinedInput
@@ -148,6 +148,7 @@ function AddDevice({ onDeviceAdded }: Props) {
 							fullWidth
 						/>
 					</Stack>
+					*/}
 
 					{/* Gumb za dodajanje naprave */}
 					<Button variant="contained" color="primary" onClick={handleAddDevice}>

@@ -22,7 +22,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeviceService from "../components/services/DeviceService";
 import api from "../api";
 
-const ServisiNaprav: React.FC = () => {
+const DeviceServices: React.FC = () => {
 	const [devices, setDevices] = useState<any[]>([]);
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [openService, setOpenService] = useState(false);
@@ -125,4 +125,4 @@ const ServisiNaprav: React.FC = () => {
 	);
 };
 
-export default ServisiNaprav;
+export default DeviceServices;

@@ -30,10 +30,9 @@ interface RoomWithDeviceCount {
 	st_naprav: string;
 }
 
-const OperacijskeSobe: React.FC = () => {
+const OperationRooms: React.FC = () => {
 	const [rooms, setRooms] = useState<RoomWithDeviceCount[]>([]);
 	const [selected, setSelected] = useState<number[]>([]);
-
 
 	const [openAddRoom, setOpenAddRoom] = useState(false);
 	const [openAddDeviceRoom, setOpenAddDeviceRoom] = useState(false);
@@ -66,7 +65,7 @@ const OperacijskeSobe: React.FC = () => {
 		);
 
 	const handleDelete = () => {
-		if (!selected.length) return alert("Izberi vsaj eno sobo.");
+		if (!selected.length) return alert("Choose at least one room.");
 		api
 			.delete("/rooms/deleteMultiple", { data: { ids: selected } })
 			.then(() => {
@@ -74,15 +73,14 @@ const OperacijskeSobe: React.FC = () => {
 				fetchRooms();
 			})
 			.catch((err) => {
-				console.error("Napaka pri brisanju sob:", err);
-				alert("Napaka pri brisanju sob.");
+				console.error("Error deleting rooms:", err);
+				alert("Error deleting rooms.");
 			});
 	};
 
-
 	const openAddDevice = () => {
 		if (selected.length !== 1) {
-			alert("Izberi natanko eno sobo za dodajanje naprave.");
+			alert("Choose exactly one room.");
 			return;
 		}
 		setOpenAddDeviceRoom(true);
@@ -104,7 +102,7 @@ const OperacijskeSobe: React.FC = () => {
 	return (
 		<MainLayout>
 			<Typography variant="h4" gutterBottom>
-				OPERACIJSKE SOBE
+				OPERATION ROOMS
 			</Typography>
 
 			<TableContainer component={Paper}>
@@ -120,9 +118,9 @@ const OperacijskeSobe: React.FC = () => {
 									onChange={toggleAll}
 								/>
 							</TableCell>
-							<TableCell>Naziv</TableCell>
-							<TableCell>Lokacija</TableCell>
-							<TableCell align="right">Število naprav</TableCell>
+							<TableCell>Room Name</TableCell>
+							<TableCell>Location</TableCell>
+							<TableCell align="right">Device Count</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
@@ -146,10 +144,14 @@ const OperacijskeSobe: React.FC = () => {
 			<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
 				<Stack direction="row" spacing={2}>
 					<Button variant="outlined" onClick={() => setOpenAddRoom(true)}>
-						Dodaj sobo
+						Add room
 					</Button>
-					<Button variant="outlined" onClick={openAddDevice}>
-						Dodaj napravo v sobo
+					<Button
+						variant="outlined"
+						onClick={openAddDevice}
+						disabled={selected.length !== 1}
+					>
+						Add devices to room
 					</Button>
 					<Button
 						variant="outlined"
@@ -157,14 +159,15 @@ const OperacijskeSobe: React.FC = () => {
 						onClick={handleDelete}
 						disabled={selected.length === 0}
 					>
-						Odstrani sobo
+						Delete room
 					</Button>
 				</Stack>
 			</Box>
 
+			{/* Modal */}
 			<Dialog open={openAddRoom} onClose={closeAddRoom} fullWidth maxWidth="sm">
 				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Dodaj novo sobo
+					Create new room
 					<IconButton
 						aria-label="close"
 						onClick={closeAddRoom}
@@ -178,7 +181,6 @@ const OperacijskeSobe: React.FC = () => {
 				</DialogContent>
 			</Dialog>
 
-
 			<Dialog
 				open={openAddDeviceRoom}
 				onClose={closeAddDeviceRoom}
@@ -186,7 +188,7 @@ const OperacijskeSobe: React.FC = () => {
 				maxWidth="sm"
 			>
 				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Dodaj napravo v sobo
+					Add devices to room
 					<IconButton
 						aria-label="close"
 						onClick={closeAddDeviceRoom}
@@ -197,7 +199,7 @@ const OperacijskeSobe: React.FC = () => {
 				</DialogTitle>
 				<DialogContent dividers>
 					<AddDeviceRoom
-						roomId={selected[0]}/ pass the selected room id
+						roomId={selected[0]}
 						onClose={closeAddDeviceRoom}
 						onAdded={onDeviceAdded}
 					/>
@@ -207,4 +209,4 @@ const OperacijskeSobe: React.FC = () => {
 	);
 };
 
-export default OperacijskeSobe;
+export default OperationRooms;

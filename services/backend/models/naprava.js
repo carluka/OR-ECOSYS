@@ -17,7 +17,7 @@ module.exports = (sequelize) => {
 				primaryKey: true,
 				autoIncrement: true,
 			},
-			soba_idsoba: { type: DataTypes.INTEGER, allowNull: false },
+			soba_idsoba: { type: DataTypes.INTEGER, allowNull: true },
 			tip_naprave_idtip_naprave: { type: DataTypes.INTEGER, allowNull: false },
 			naziv: { type: DataTypes.STRING(45), allowNull: false },
 			serijska_stevilka: { type: DataTypes.STRING(45), allowNull: true },
