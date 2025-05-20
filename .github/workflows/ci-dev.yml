@@ -52,7 +52,7 @@ jobs:
           docker build \
             -t $REGISTRY/$DOCKERHUB_REPO/node-backend:latest \
             -f infra/docker/node.Dockerfile \
-            ./services/backend
+            .
           docker push $REGISTRY/$DOCKERHUB_REPO/node-backend:latest
 
   build-fastapi:
@@ -66,7 +66,7 @@ jobs:
       - name: Build and push FastAPI consumer
         uses: docker/build-push-action@v3
         with:
-          context: ./services/fastapi
+          context: .
           file: infra/docker/fastapi.Dockerfile
           push: true
           tags: $REGISTRY/$DOCKERHUB_REPO/fastapi:latest
@@ -88,7 +88,7 @@ jobs:
       - name: Build and push frontend1
         uses: docker/build-push-action@v3
         with:
-          context: ./apps/webapp1_realtime_data
+          context: .
           file: infra/docker/react-display.Dockerfile
           push: true
           tags: $REGISTRY/$DOCKERHUB_REPO/frontend1-data:latest
@@ -110,7 +110,7 @@ jobs:
       - name: Build and push frontend2
         uses: docker/build-push-action@v3
         with:
-          context: ./apps/webapp2_med_devices
+          context: .
           file: infra/docker/react-admin.Dockerfile
           push: true
           tags: $REGISTRY/$DOCKERHUB_REPO/frontend2-admin:latest
