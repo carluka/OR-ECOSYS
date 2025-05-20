@@ -49,7 +49,7 @@ const OperationRoomPage: React.FC = () => {
 
   const connect = () => {
     wsRef.current?.close();
-    const ws = new WebSocket("ws://localhost:8000/ws/medical-device");
+    const ws = new WebSocket("ws://data.or-ecosystem.eu/ws/medical-device");
     wsRef.current = ws;
 
     ws.onopen = () => setConnected(true);
