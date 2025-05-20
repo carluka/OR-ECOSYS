@@ -56,8 +56,7 @@ app.get("/api/check", cookieJwtAuth, (req, res) => {
 });
 
 // Global authentication middleware
-// ======================================= ZA PRODUCTION JE TREBA ODKOMENTIRATI =======================================
-//app.use(cookieJwtAuth);
+app.use(cookieJwtAuth);
 
 // --- ROUTES ---
 app.use("/api", createRoutes());
