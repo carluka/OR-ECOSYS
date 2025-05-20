@@ -45,17 +45,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create .env.production
-        run: |
-          cat <<EOF > apps/webapp1_realtime_data/.env.production
-          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-          EOF
-
-      # Gradnja in potiskanje frontend1 (React - realtime data) slike
       - name: Build and push frontend1
         uses: docker/build-push-action@v3
         with:
-          context: ./apps/webapp1_realtime_data
+          context: .
           file: infra/docker/react-display.Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.DOCKERHUB_REPO }}/frontend1-data:latest
