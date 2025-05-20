@@ -21,18 +21,24 @@ const server = http.createServer(app);
 
 // --- MIDDLEWARES ---
 const corsOptions = {
-	origin: function (origin, callback) {
-		const allowedOrigins = ["http://localhost:3001", "http://localhost:3002"];
-		if (!origin || allowedOrigins.includes(origin)) {
-			callback(null, true);
-		} else {
-			callback(new Error("Not allowed by CORS"));
-		}
-	},
-	credentials: true, // Omogoči pošiljanje piškotkov
-	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-	allowedHeaders: ["Content-Type", "Authorization"],
-	exposedHeaders: ["Set-Cookie"],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:3001",
+      "http://localhost:3002",
+      "http://or-ecosystem.eu",
+      "http://data.or-ecosystem.eu",
+      "http://admin.or-ecosystem.eu",
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Set-Cookie"],
 };
 
 console.log("CORS options:", corsOptions);
@@ -46,7 +52,7 @@ app.use(cookieParser());
 app.post("/api/users/login", login);
 
 app.get("/api/check", cookieJwtAuth, (req, res) => {
-	res.send(true);
+  res.send(true);
 });
 
 // Global authentication middleware
@@ -61,15 +67,15 @@ app.use(errorHandler);
 
 // --- DATABASE & SERVER STARTUP ---
 (async () => {
-	try {
-		await sequelize.authenticate();
-		console.log("Database connected");
+  try {
+    await sequelize.authenticate();
+    console.log("Database connected");
 
-		server.listen(config.port, () => {
-			console.log(`Server listening on port ${config.port}`);
-		});
-	} catch (err) {
-		console.error("Database connection error", err);
-		process.exit(1);
-	}
+    server.listen(config.port, () => {
+      console.log(`Server listening on port ${config.port}`);
+    });
+  } catch (err) {
+    console.error("Database connection error", err);
+    process.exit(1);
+  }
 })();
