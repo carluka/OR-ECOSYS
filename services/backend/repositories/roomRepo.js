@@ -1,6 +1,7 @@
 const { models, sequelize } = require("../db/database");
 const { QueryTypes } = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
+const path = require("path");
 const K8sTemplateGenerator = require("./K8sTemplateGenerator");
 
 class RoomRepo {
