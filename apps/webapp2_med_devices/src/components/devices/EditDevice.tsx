@@ -66,7 +66,6 @@ function EditDevice({ device, onDeviceUpdated }: Props) {
 			naziv: nazivNaprave,
 			tip_naprave_idtip_naprave: parseInt(tipNaprave),
 			stanje: "Aktivno", // Stanje je trenutno vedno Aktivno
-			soba_idsoba: 1, // Lokacija je trenutno vedno 1
 		};
 
 		console.log(updatedDevice);

@@ -43,7 +43,7 @@ interface FullUser {
 	tip_uporabnika_idtip_uporabnika: number;
 }
 
-const UpravljanjeZOsebjem: React.FC = () => {
+const UserHandling: React.FC = () => {
 	const [users, setUsers] = useState<UserOverview[]>([]);
 	const [selected, setSelected] = useState<number[]>([]);
 	const [openModal, setOpenModal] = useState(false);
@@ -199,4 +199,4 @@ const UpravljanjeZOsebjem: React.FC = () => {
 	);
 };
 
-export default UpravljanjeZOsebjem;
+export default UserHandling;

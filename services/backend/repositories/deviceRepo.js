@@ -26,16 +26,47 @@ class DeviceRepo {
 	}
 
 	async update(id, data) {
-		return models.Naprava.update(data, { where: { idnaprava: id } });
-	}
+		const device = await models.Naprava.findByPk(id);
 
-	async delete(id) {
-		// TODO: implement delete or soft-delete
-		return models.Naprava.destroy({ where: { idnaprava: id } });
+		await models.Naprava.update(data, { where: { idnaprava: id } });
+
+		const sobaId = data.hasOwnProperty("soba_idsoba")
+			? data.soba_idsoba
+			: device.soba_idsoba;
+
+		if (sobaId !== null && sobaId !== undefined) {
+			await models.Soba.update(
+				{ unsaved_changes: true },
+				{ where: { idsoba: sobaId } }
+			);
+		}
+
+		return;
 	}
 
 	async deleteMultiple(ids) {
-		// TODO: implement delete or soft-delete
+		const devices = await models.Naprava.findAll({
+			where: {
+				idnaprava: ids,
+			},
+			attributes: ["soba_idsoba"],
+		});
+
+		const sobaIds = [
+			...new Set(
+				devices
+					.map((d) => d.soba_idsoba)
+					.filter((id) => id !== null && id !== undefined)
+			),
+		];
+
+		if (sobaIds.length > 0) {
+			await models.Soba.update(
+				{ unsaved_changes: true },
+				{ where: { idsoba: sobaIds } }
+			);
+		}
+
 		return models.Naprava.destroy({
 			where: {
 				idnaprava: ids,
@@ -74,7 +105,9 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv              AS naprava,
 			  tn.naziv             AS tip_naprave,
-			  (sb.naziv || ' ' || sb.lokacija) AS soba,
+			  n.soba_idsoba,
+			  -- Use COALESCE to show empty string if no room assigned
+			  COALESCE(sb.naziv || ' ' || sb.lokacija, 'BREZ SOBE') AS soba,
 			  -- default to false if no servis rows at all
 			  COALESCE(
 				bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'),
@@ -83,7 +116,7 @@ class DeviceRepo {
 			FROM naprava n
 			JOIN tip_naprave tn
 			  ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
-			JOIN soba sb
+			LEFT JOIN soba sb
 			  ON n.soba_idsoba = sb.idsoba
 			LEFT JOIN servis sv
 			  ON sv.naprava_idnaprava = n.idnaprava
@@ -92,6 +125,7 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv,
 			  tn.naziv,
+			  n.soba_idsoba,
 			  sb.naziv,
 			  sb.lokacija
 			${havingSQL}
@@ -101,7 +135,6 @@ class DeviceRepo {
 			const results = await sequelize.query(sql, {
 				replacements: {
 					tip_naprave,
-					// ensure boolean
 					servis: servis === "true",
 				},
 				type: QueryTypes.SELECT,

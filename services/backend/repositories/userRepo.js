@@ -20,6 +20,19 @@ class UserRepo {
 		return models.Uporabnik.findOne({ where: { email } });
 	}
 
+	async findByEmailAndType(email) {
+		return models.Uporabnik.findOne({
+			where: { email },
+			include: [
+				{
+					model: models.TipUporabnika,
+					where: { naziv: "Administrator" },
+					required: true,
+				},
+			],
+		});
+	}
+
 	async create(data) {
 		return models.Uporabnik.create(data);
 	}

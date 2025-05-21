@@ -45,7 +45,7 @@ interface FullDevice {
 	servisiran: boolean;
 }
 
-const PregledVsehNaprav: React.FC = () => {
+const Devices: React.FC = () => {
 	const [devices, setDevices] = useState<DeviceOverview[]>([]);
 	const [selected, setSelected] = useState<number[]>([]);
 	const [openModal, setOpenModal] = useState(false);
@@ -83,10 +83,7 @@ const PregledVsehNaprav: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error(
-					"Napaka pri pridobivanju podatkov o tipih naprav:",
-					error
-				);
+				console.error("Error fetching device types:", error);
 			});
 	}, []);
 
@@ -231,7 +228,18 @@ const PregledVsehNaprav: React.FC = () => {
 								<TableCell>{d.naprava}</TableCell>
 								<TableCell>{d.tip_naprave}</TableCell>
 								<TableCell>Aktivno</TableCell>
-								<TableCell>{d.soba}</TableCell>
+								<TableCell>
+									{d.soba === "BREZ SOBE" ? (
+										<Typography
+											component="span"
+											sx={{ fontWeight: "bold", color: "red" }}
+										>
+											{d.soba}
+										</Typography>
+									) : (
+										d.soba
+									)}
+								</TableCell>
 								<TableCell>{d.servis ? "✓" : "X"}</TableCell>
 							</TableRow>
 						))}
@@ -283,4 +291,4 @@ const PregledVsehNaprav: React.FC = () => {
 	);
 };
 
-export default PregledVsehNaprav;
+export default Devices;

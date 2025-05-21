@@ -3,11 +3,13 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./components/Login";
 import NotFoundPage from "./pages/NotFoundPage";
+import { createTheme } from "@mui/material/styles";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 
-import PregledVsehNaprav from "./pages/PregledVsehNaprav";
-import ServisiNaprav from "./pages/ServisiNaprav";
-import OperacijskeSobe from "./pages/OperacijskeSobe";
-import UpravljanjeZOsebjem from "./pages/UpravljanjeZOsebjem";
+import Devices from "./pages/Devices";
+import DeviceServices from "./pages/DeviceServices";
+import OperationRooms from "./pages/OperationRooms";
+import UserHandling from "./pages/UserHandling";
 import { requireAuth } from "./auth";
 
 // Ustvarjene poti na frontendu
@@ -21,17 +23,26 @@ export const router = createBrowserRouter([
 		loader: requireAuth,
 		errorElement: <NotFoundPage />,
 		children: [
-			{ index: true, element: <PregledVsehNaprav /> },
-			{ path: "servisiNaprav", element: <ServisiNaprav /> },
-			{ path: "operacijskeSobe", element: <OperacijskeSobe /> },
-			{ path: "upravljanjeZOsebjem", element: <UpravljanjeZOsebjem /> },
+			{ index: true, element: <Devices /> },
+			{ path: "deviceServices", element: <DeviceServices /> },
+			{ path: "operationRooms", element: <OperationRooms /> },
+			{ path: "userHandling", element: <UserHandling /> },
 			{ path: "*", element: <NotFoundPage /> },
 		],
 	},
 ]);
 
+const theme = createTheme({
+	typography: {
+		fontFamily: `'Public Sans', sans-serif`,
+	},
+});
+
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
-		<RouterProvider router={router} />
+		<ThemeProvider theme={theme}>
+			<CssBaseline />
+			<RouterProvider router={router} />
+		</ThemeProvider>
 	</StrictMode>
 );

@@ -13,15 +13,23 @@ import api from "../api";
 export default function Login() {
 	const [email, setEmail] = useState("");
 	const [geslo, setGeslo] = useState("");
+	const [error, setError] = useState<string | null>(null); // <-- error state
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setError(null); // clear previous error on new submit
 		try {
-			await api.post("/users/login", { email, geslo });
+			await api.post("/users/loginAdmin", { email, geslo });
 			navigate("/");
-		} catch (err) {
+		} catch (err: any) {
 			console.error(err);
+			// Check if error response has message
+			if (err.response && err.response.data && err.response.data.message) {
+				setError(err.response.data.message);
+			} else {
+				setError("Prišlo je do napake pri prijavi."); // generic error fallback
+			}
 		}
 	};
 
@@ -76,6 +84,13 @@ export default function Login() {
 							onChange={(e) => setGeslo(e.target.value)}
 						/>
 					</Stack>
+
+					{/* Display error message if exists */}
+					{error && (
+						<Typography color="error" variant="body2" sx={{ mt: 1 }}>
+							{error}
+						</Typography>
+					)}
 
 					<Button type="submit" variant="contained" color="primary">
 						Prijava
