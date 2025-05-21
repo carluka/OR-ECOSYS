@@ -1,34 +1,37 @@
 const { models, sequelize } = require("../db/database");
 const { QueryTypes } = require("sequelize");
+const { v4: uuidv4 } = require("uuid");
 
 class RoomRepo {
-	async findAll() {
-		return models.Soba.findAll(); // TODO: add pagination
-	}
+  async findAll() {
+    return models.Soba.findAll(); // TODO: add pagination
+  }
 
-	async findById(id) {
-		return models.Soba.findByPk(id);
-	}
+  async findById(id) {
+    return models.Soba.findByPk(id);
+  }
 
-	async create(data) {
-		return models.Soba.create(data);
-	}
+  async create(data) {
+    data.uuid = uuidv4();
 
-	async update(id, data) {
-		// TODO: implement update logic
-	}
+    return models.Soba.create(data);
+  }
 
-	async deleteMultiple(ids) {
-		return models.Soba.destroy({
-			where: {
-				idsoba: ids,
-			},
-		});
-	}
+  async update(id, data) {
+    // TODO: implement update logic
+  }
 
-	async getRoomsWithDevicesCount() {
-		try {
-			const sql = `
+  async deleteMultiple(ids) {
+    return models.Soba.destroy({
+      where: {
+        idsoba: ids,
+      },
+    });
+  }
+
+  async getRoomsWithDevicesCount() {
+    try {
+      const sql = `
         SELECT
           s.idsoba,
           s.naziv,
@@ -41,23 +44,23 @@ class RoomRepo {
         ORDER BY s.idsoba, s.naziv, s.lokacija, s.unsaved_changes;
       `;
 
-			const results = await sequelize.query(sql, {
-				type: QueryTypes.SELECT,
-			});
+      const results = await sequelize.query(sql, {
+        type: QueryTypes.SELECT,
+      });
 
-			return results;
-		} catch (err) {
-			console.error("Error in getRoomsWithDeviceCount:", err);
-			throw err;
-		}
-	}
+      return results;
+    } catch (err) {
+      console.error("Error in getRoomsWithDeviceCount:", err);
+      throw err;
+    }
+  }
 
-	async commitChanges(id) {
-		return models.Soba.update(
-			{ unsaved_changes: false },
-			{ where: { idsoba: id } }
-		);
-	}
+  async commitChanges(id) {
+    return models.Soba.update(
+      { unsaved_changes: false },
+      { where: { idsoba: id } }
+    );
+  }
 }
 
 module.exports = new RoomRepo();

@@ -9,7 +9,7 @@ from confluent_kafka import Producer
 from app.services import consumers
 
 logger = logging.getLogger(__name__)
-producer = Producer({'bootstrap.servers': '83.212.126.60:9092'})
+producer = Producer({'bootstrap.servers': '127.0.0.1:9092'})
 
 class SDCConsumerService:
     def __init__(self):
