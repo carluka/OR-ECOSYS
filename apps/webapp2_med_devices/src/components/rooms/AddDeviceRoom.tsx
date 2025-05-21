@@ -24,7 +24,8 @@ interface Props {
 interface Device {
 	idnaprava: number;
 	naprava: string;
-	soba?: string; // assigned room name, optional
+	soba?: string; // display name of the room or undefined/null
+	soba_idsoba: number | null; // actual room ID or null if no room assigned
 }
 
 const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
@@ -32,10 +33,9 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 	const [selectedDevices, setSelectedDevices] = useState<number[]>([]);
 	const [loading, setLoading] = useState(false);
 
-	// Fetch devices on mount
 	useEffect(() => {
 		api
-			.get("/devices/prikaz") // Adjust endpoint if needed
+			.get("/devices/prikaz")
 			.then((res) => {
 				if (Array.isArray(res.data.data)) {
 					setDevices(res.data.data);
@@ -48,7 +48,6 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 
 	const handleSelectChange = (event: SelectChangeEvent<number[]>) => {
 		const value = event.target.value;
-		// Handle string or number[] depending on multiple select mode
 		setSelectedDevices(
 			typeof value === "string" ? value.split(",").map(Number) : value
 		);
@@ -62,7 +61,6 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 
 		setLoading(true);
 		try {
-			// Update each device with new soba_idsoba = roomId
 			await Promise.all(
 				selectedDevices.map((deviceId) =>
 					api.put(`/devices/${deviceId}`, { soba_idsoba: roomId })
@@ -120,21 +118,29 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 									.join(", ")
 							}
 						>
-							{devices.map((device) => (
-								<MenuItem key={device.idnaprava} value={device.idnaprava}>
-									<Checkbox
-										checked={selectedDevices.indexOf(device.idnaprava) > -1}
-									/>
-									<ListItemText primary={device.naprava} />
-									<Typography
-										variant="body2"
-										color="text.secondary"
-										sx={{ ml: 2, fontStyle: "italic" }}
+							{devices.map((device) => {
+								const isAssignedToRoom = device.soba_idsoba === roomId;
+								return (
+									<MenuItem
+										key={device.idnaprava}
+										value={device.idnaprava}
+										disabled={isAssignedToRoom}
 									>
-										{device.soba ?? "Brez sobe"}
-									</Typography>
-								</MenuItem>
-							))}
+										<Checkbox
+											checked={selectedDevices.includes(device.idnaprava)}
+											disabled={isAssignedToRoom}
+										/>
+										<ListItemText primary={device.naprava} />
+										<Typography
+											variant="body2"
+											color="text.secondary"
+											sx={{ ml: 2, fontStyle: "italic" }}
+										>
+											{device.soba ?? "Brez sobe"}
+										</Typography>
+									</MenuItem>
+								);
+							})}
 						</Select>
 					</FormControl>
 

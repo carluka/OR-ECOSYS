@@ -28,6 +28,7 @@ interface RoomWithDeviceCount {
 	naziv: string;
 	lokacija: string;
 	st_naprav: string;
+	unsaved_changes: boolean;
 }
 
 const OperationRooms: React.FC = () => {
@@ -99,6 +100,19 @@ const OperationRooms: React.FC = () => {
 		closeAddDeviceRoom();
 	};
 
+	const handleCommit = (roomId: number) => {
+		api
+			.post("/rooms/commitChanges", { id: roomId })
+			.then(() => {
+				// Refresh the list to update unsaved_changes flag
+				fetchRooms();
+			})
+			.catch((err) => {
+				console.error("Error committing changes for room:", err);
+				alert("Failed to commit changes.");
+			});
+	};
+
 	return (
 		<MainLayout>
 			<Typography variant="h4" gutterBottom>
@@ -121,11 +135,19 @@ const OperationRooms: React.FC = () => {
 							<TableCell>Room Name</TableCell>
 							<TableCell>Location</TableCell>
 							<TableCell align="right">Device Count</TableCell>
+							<TableCell align="center">Actions</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
 						{rooms.map((room) => (
-							<TableRow key={room.idsoba}>
+							<TableRow
+								key={room.idsoba}
+								sx={{
+									backgroundColor: room.unsaved_changes
+										? "rgba(255, 179, 71, 0.15)" // light orange
+										: "inherit",
+								}}
+							>
 								<TableCell padding="checkbox">
 									<Checkbox
 										checked={selected.includes(room.idsoba)}
@@ -135,6 +157,18 @@ const OperationRooms: React.FC = () => {
 								<TableCell>{room.naziv}</TableCell>
 								<TableCell>{room.lokacija}</TableCell>
 								<TableCell align="right">{room.st_naprav}</TableCell>
+								<TableCell align="center">
+									{room.unsaved_changes && (
+										<Button
+											variant="contained"
+											color="primary"
+											size="small"
+											onClick={() => handleCommit(room.idsoba)}
+										>
+											Commit
+										</Button>
+									)}
+								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>

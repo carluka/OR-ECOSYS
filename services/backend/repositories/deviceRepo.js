@@ -26,16 +26,47 @@ class DeviceRepo {
 	}
 
 	async update(id, data) {
-		return models.Naprava.update(data, { where: { idnaprava: id } });
-	}
+		const device = await models.Naprava.findByPk(id);
 
-	async delete(id) {
-		// TODO: implement delete or soft-delete
-		return models.Naprava.destroy({ where: { idnaprava: id } });
+		await models.Naprava.update(data, { where: { idnaprava: id } });
+
+		const sobaId = data.hasOwnProperty("soba_idsoba")
+			? data.soba_idsoba
+			: device.soba_idsoba;
+
+		if (sobaId !== null && sobaId !== undefined) {
+			await models.Soba.update(
+				{ unsaved_changes: true },
+				{ where: { idsoba: sobaId } }
+			);
+		}
+
+		return;
 	}
 
 	async deleteMultiple(ids) {
-		// TODO: implement delete or soft-delete
+		const devices = await models.Naprava.findAll({
+			where: {
+				idnaprava: ids,
+			},
+			attributes: ["soba_idsoba"],
+		});
+
+		const sobaIds = [
+			...new Set(
+				devices
+					.map((d) => d.soba_idsoba)
+					.filter((id) => id !== null && id !== undefined)
+			),
+		];
+
+		if (sobaIds.length > 0) {
+			await models.Soba.update(
+				{ unsaved_changes: true },
+				{ where: { idsoba: sobaIds } }
+			);
+		}
+
 		return models.Naprava.destroy({
 			where: {
 				idnaprava: ids,
@@ -74,6 +105,7 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv              AS naprava,
 			  tn.naziv             AS tip_naprave,
+			  n.soba_idsoba,
 			  -- Use COALESCE to show empty string if no room assigned
 			  COALESCE(sb.naziv || ' ' || sb.lokacija, 'BREZ SOBE') AS soba,
 			  -- default to false if no servis rows at all
@@ -93,6 +125,7 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv,
 			  tn.naziv,
+			  n.soba_idsoba,
 			  sb.naziv,
 			  sb.lokacija
 			${havingSQL}

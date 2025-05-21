@@ -14,6 +14,10 @@ class UserService {
 		return userRepo.findByEmail(email);
 	}
 
+	async getUserByEmailAndType(email) {
+		return userRepo.findByEmailAndType(email);
+	}
+
 	async checkGeslo(email, geslo) {
 		const user = await this.getUserByEmail(email);
 		if (!user) return false;

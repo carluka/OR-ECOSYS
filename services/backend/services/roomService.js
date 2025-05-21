@@ -32,6 +32,10 @@ class RoomService {
 		// TODO: check for active operations before delete
 		return roomRepo.deleteMultiple(ids);
 	}
+
+	async commitChanges(id) {
+		return roomRepo.commitChanges(id);
+	}
 }
 
 module.exports = new RoomService();

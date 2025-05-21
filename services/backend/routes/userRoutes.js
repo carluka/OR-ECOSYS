@@ -6,6 +6,7 @@ const {
 	remove,
 	register,
 	login,
+	loginAdmin,
 	logout,
 	removeMultiple,
 } = require("../controllers/userCtrl");
@@ -14,6 +15,7 @@ const router = require("express").Router();
 
 // 1) Javne rute – brez potrebe po JWT:
 router.post("/login", login);
+router.post("/loginAdmin", loginAdmin);
 
 // 2) Zdaj zaščitimo vse nadaljnje rute:
 router.use(cookieJwtAuth);

@@ -6,11 +6,13 @@ const {
 	remove,
 	getRoomsDeviceCount,
 	removeMultiple,
+	commitChanges,
 } = require("../controllers/roomCtrl");
 const router = require("express").Router();
 
 router.get("/roomsDeviceCount", getRoomsDeviceCount);
 router.delete("/deleteMultiple", removeMultiple);
+router.post("/commitChanges", commitChanges);
 router.get("/", getAll);
 router.get("/:id", getById);
 router.post("/", create);

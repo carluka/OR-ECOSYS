@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./components/Login";
 import NotFoundPage from "./pages/NotFoundPage";
+import { createTheme } from "@mui/material/styles";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import Devices from "./pages/Devices";
 import DeviceServices from "./pages/DeviceServices";
@@ -30,8 +32,17 @@ export const router = createBrowserRouter([
 	},
 ]);
 
+const theme = createTheme({
+	typography: {
+		fontFamily: `'Public Sans', sans-serif`,
+	},
+});
+
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
-		<RouterProvider router={router} />
+		<ThemeProvider theme={theme}>
+			<CssBaseline />
+			<RouterProvider router={router} />
+		</ThemeProvider>
 	</StrictMode>
 );

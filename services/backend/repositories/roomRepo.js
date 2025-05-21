@@ -33,11 +33,12 @@ class RoomRepo {
           s.idsoba,
           s.naziv,
           s.lokacija,
+		  s.unsaved_changes,
           COUNT(n.idnaprava) AS st_naprav
         FROM soba s
         LEFT JOIN naprava n ON s.idsoba = n.soba_idsoba
-        GROUP BY s.idsoba, s.naziv, s.lokacija
-        ORDER BY s.idsoba, s.naziv, s.lokacija;
+        GROUP BY s.idsoba, s.naziv, s.lokacija, s.unsaved_changes
+        ORDER BY s.idsoba, s.naziv, s.lokacija, s.unsaved_changes;
       `;
 
 			const results = await sequelize.query(sql, {
@@ -49,6 +50,13 @@ class RoomRepo {
 			console.error("Error in getRoomsWithDeviceCount:", err);
 			throw err;
 		}
+	}
+
+	async commitChanges(id) {
+		return models.Soba.update(
+			{ unsaved_changes: false },
+			{ where: { idsoba: id } }
+		);
 	}
 }
 

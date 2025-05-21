@@ -83,10 +83,7 @@ const Devices: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error(
-					"Napaka pri pridobivanju podatkov o tipih naprav:",
-					error
-				);
+				console.error("Error fetching device types:", error);
 			});
 	}, []);
 

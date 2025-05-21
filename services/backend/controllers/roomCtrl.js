@@ -63,3 +63,13 @@ exports.getRoomsDeviceCount = async (req, res, next) => {
 		next(err);
 	}
 };
+
+exports.commitChanges = async (req, res, next) => {
+	try {
+		const { id } = req.body;
+		await roomService.commitChanges(id);
+		res.status(204).end();
+	} catch (err) {
+		next(err);
+	}
+};
