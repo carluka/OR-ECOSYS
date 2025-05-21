@@ -1,6 +1,7 @@
 const { models, sequelize } = require("../db/database");
 const { QueryTypes } = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
+const K8sTemplateGenerator = require("./K8sTemplateGenerator");
 
 class RoomRepo {
   async findAll() {
@@ -55,10 +56,44 @@ class RoomRepo {
     }
   }
 
-  async commitChanges(id) {
-    return models.Soba.update(
+  async commitChanges(roomId) {
+    const room = await models.Soba.findByPk(roomId);
+    if (!room) {
+      throw new Error(`Room with id ${roomId} not found`);
+    }
+
+    const devices = await sequelize.query(
+      `SELECT n.idnaprava, n.uuid, t.naziv_k8s AS tipnaprave
+      FROM naprava n
+      JOIN tip_naprave t ON n.tip_naprave_idtip_naprave = t.idtip_naprave
+      WHERE n.soba_idsoba = :roomId`,
+      {
+        replacements: { roomId },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    const consumerDeviceUuids = devices.map((d) => d.uuid);
+
+    const providers = devices.map((d) => ({
+      type: d.tipnaprave,
+      uuid: d.uuid,
+    }));
+
+    const generator = new K8sTemplateGenerator(
+      path.resolve("/mnt/k8s-templates/templates"),
+      path.resolve("/mnt/k8s-templates/generated")
+    );
+
+    await generator.generateDeployment(
+      room.uuid,
+      consumerDeviceUuids,
+      providers
+    );
+
+    await models.Soba.update(
       { unsaved_changes: false },
-      { where: { idsoba: id } }
+      { where: { idsoba: roomId } }
     );
   }
 }
