@@ -1,14 +1,10 @@
-networks:
-  app-network:
-    driver: bridge
+version: '3.8'
 
 services:
   zookeeper:
     image: wurstmeister/zookeeper:latest
-    ports:
-      - "2181:2181"
-    networks:
-      - app-network
+    network_mode: "host"
+    restart: always
     environment:
       ZOOKEEPER_TICK_TIME: 2000
       ZOOKEEPER_INIT_LIMIT: 5
@@ -17,49 +13,44 @@ services:
 
   kafka:
     image: wurstmeister/kafka:latest
+    network_mode: "host"
+    restart: always
+    depends_on:
+      - zookeeper
     environment:
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://83.212.126.60:9092
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
       KAFKA_OPTS: "-Djava.net.preferIPv4Stack=true"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_CREATE_TOPICS: "medical-device-data:1:1"
-    ports:
-      - "9092:9092"  
-    depends_on:
-      - zookeeper
-    networks:
-      - app-network
 
-  telegraf:
-    image: telegraf:1.28
-    restart: always
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - INFLUXDB_HOST=influxdb:8086
-    volumes:
-      - /home/user/telegraf/telegraph.conf:/etc/telegraf/telegraph.conf:ro
-    depends_on:
-      - kafka
-      - influxdb
-    networks:
-      - app-network
-
-  # Obstoječi InfluxDB na strežniku
   influxdb:
     image: influxdb:2.7
-    container_name: influxdb
-    ports:
-      - "8086:8086"
-    networks:
-      - app-network
+    network_mode: "host"
+    restart: always
     volumes:
       - influxdb-data:/var/lib/influxdb2
       - influxdb-config:/etc/influxdb2
 
+  telegraf:
+    image: telegraf:1.28
+    network_mode: "host"
+    restart: always
+    depends_on:
+      - kafka
+      - influxdb
+    environment:
+      - KAFKA_BROKER=127.0.0.1:9092
+      - INFLUXDB_HOST=127.0.0.1:8086
+      - INFLUX_BUCKET=vital_signs
+      - INFLUX_ORG=OR-ECOSYSTEM
+      - "INFLUX_TOKEN=sP-2s9DTbHuVS9l_JJgmpNZHBN4U3DJT4vVZQlVaLHyDrr1CfmSoqtSgs0byGz99AxMriCQPXFCtKp3OIGKm0w=="
+    volumes:
+      - /home/user/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
 volumes:
   influxdb-data:
   influxdb-config:
-
