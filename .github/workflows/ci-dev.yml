@@ -1,9 +1,9 @@
-name: CI - Development
+name: CI - Main
 
 on:
   push:
     branches:
-      - development
+      - main
 
 env:
   REGISTRY: docker.io

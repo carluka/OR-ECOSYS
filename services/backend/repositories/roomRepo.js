@@ -3,6 +3,7 @@ const { QueryTypes } = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const K8sTemplateGenerator = require("./K8sTemplateGenerator");
+const { kubectlApply } = require("./kubectl");
 
 class RoomRepo {
   async findAll() {
@@ -86,11 +87,18 @@ class RoomRepo {
       path.resolve("/mnt/k8s-templates/generated")
     );
 
-    await generator.generateDeployment(
-      room.uuid,
-      consumerDeviceUuids,
-      providers
-    );
+    const { consumerYamlPath, providerYamlPaths } =
+      await generator.generateDeployment(
+        room.uuid,
+        consumerDeviceUuids,
+        providers
+      );
+
+    await kubectlApply(consumerYamlPath, "or-ecosys");
+
+    for (const yamlPath of providerYamlPaths) {
+      await kubectlApply(yamlPath, "or-ecosys");
+    }
 
     await models.Soba.update(
       { unsaved_changes: false },

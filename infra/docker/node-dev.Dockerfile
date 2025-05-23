@@ -5,9 +5,7 @@ RUN curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubect
  && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
  && rm kubectl
 WORKDIR /app
-ARG JWT_SECRET
-ENV JWT_SECRET=${JWT_SECRET}
 COPY services/backend/package*.json ./
-RUN npm install
+RUN npm install 
 COPY services/backend/ ./
 CMD ["npm", "run", "dev"]
