@@ -3,7 +3,7 @@ name: CI - Main
 on:
   push:
     branches:
-      - main
+      - development
 
 env:
   REGISTRY: docker.io

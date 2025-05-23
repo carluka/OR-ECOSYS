@@ -53,17 +53,16 @@ const OperationRoomPage: React.FC = () => {
       });
     }
   };
-
-  const connect = async () => {
-    wsRef.current?.close();
-    await api.post<MessageResponse>(`/rooms/${roomId}/deploy`);
-    await api.post<MessageResponse>(`/rooms/${roomId}/connect`);
+  const openSocket = () => {
     const ws = new WebSocket(
       "ws://data.or-ecosystem.eu:8000/ws/medical-device"
     );
     wsRef.current = ws;
 
-    ws.onopen = () => setConnected(true);
+    ws.onopen = () => {
+      setConnected(true);
+    };
+
     ws.onmessage = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data);
@@ -77,6 +76,25 @@ const OperationRoomPage: React.FC = () => {
       setConnected(false);
       wsRef.current = null;
     };
+
+    ws.onerror = () => {
+      ws.close();
+    };
+
+    ws.onclose = () => {
+      if (!connected) {
+        setTimeout(openSocket, 1000);
+      }
+    };
+  };
+
+  const connect = async () => {
+    if (connected) return;
+
+    await api.post(`/rooms/${roomId}/deploy`);
+    await api.post(`/rooms/${roomId}/connect`);
+
+    openSocket();
   };
 
   const disconnect = async () => {
