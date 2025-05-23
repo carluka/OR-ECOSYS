@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import MainLayout from "../layout/MainLayout";
 import {
 	Typography,
@@ -11,14 +12,17 @@ import {
 	Checkbox,
 	Box,
 	Button,
-	Stack,
 	Dialog,
 	DialogTitle,
 	DialogContent,
 	IconButton,
+	Stack,
+	Collapse,
+	TablePagination,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState, useEffect } from "react";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import api from "../api";
 import AddRoom from "../components/rooms/AddRoom";
 import AddDeviceRoom from "../components/rooms/AddDeviceRoom";
@@ -31,12 +35,27 @@ interface RoomWithDeviceCount {
 	unsaved_changes: boolean;
 }
 
+interface Device {
+	idnaprava: number;
+	naprava: string;
+	soba_idsoba: number | null;
+}
+
 const OperationRooms: React.FC = () => {
 	const [rooms, setRooms] = useState<RoomWithDeviceCount[]>([]);
 	const [selected, setSelected] = useState<number[]>([]);
-
 	const [openAddRoom, setOpenAddRoom] = useState(false);
 	const [openAddDeviceRoom, setOpenAddDeviceRoom] = useState(false);
+
+	const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
+	const [allDevices, setAllDevices] = useState<Device[]>([]);
+	const [loadingRemoving, setLoadingRemoving] = useState<
+		Record<number, boolean>
+	>({});
+
+	// Pagination state
+	const [page, setPage] = useState(0);
+	const [rowsPerPage, setRowsPerPage] = useState(5);
 
 	const fetchRooms = () => {
 		api
@@ -51,8 +70,22 @@ const OperationRooms: React.FC = () => {
 			.catch(console.error);
 	};
 
+	const fetchDevices = () => {
+		api
+			.get("/devices/prikaz")
+			.then((res) => {
+				if (Array.isArray(res.data.data)) {
+					setAllDevices(res.data.data);
+				} else {
+					console.error("Devices response is not array:", res.data);
+				}
+			})
+			.catch(console.error);
+	};
+
 	useEffect(() => {
 		fetchRooms();
+		fetchDevices();
 	}, []);
 
 	const toggleAll = () =>
@@ -64,6 +97,24 @@ const OperationRooms: React.FC = () => {
 		setSelected((sel) =>
 			sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]
 		);
+
+	const toggleRow = (id: number) => {
+		setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
+	};
+
+	const handleRemoveDevice = async (deviceId: number) => {
+		setLoadingRemoving((prev) => ({ ...prev, [deviceId]: true }));
+		try {
+			await api.put(`/devices/${deviceId}`, { soba_idsoba: null });
+			await fetchDevices();
+			await fetchRooms();
+		} catch (error) {
+			console.error("Error removing device from room", error);
+			alert("Failed to remove device from room.");
+		} finally {
+			setLoadingRemoving((prev) => ({ ...prev, [deviceId]: false }));
+		}
+	};
 
 	const handleDelete = () => {
 		if (!selected.length) return alert("Choose at least one room.");
@@ -97,6 +148,7 @@ const OperationRooms: React.FC = () => {
 
 	const onDeviceAdded = () => {
 		fetchRooms();
+		fetchDevices();
 		closeAddDeviceRoom();
 	};
 
@@ -104,7 +156,6 @@ const OperationRooms: React.FC = () => {
 		api
 			.post("/rooms/commitChanges", { id: roomId })
 			.then(() => {
-				// Refresh the list to update unsaved_changes flag
 				fetchRooms();
 			})
 			.catch((err) => {
@@ -113,66 +164,174 @@ const OperationRooms: React.FC = () => {
 			});
 	};
 
+	// Pagination handlers
+	const handleChangePage = (event: unknown, newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleChangeRowsPerPage = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		setRowsPerPage(parseInt(event.target.value, 10));
+		setPage(0);
+	};
+
+	// Paginate rooms for current page
+	const paginatedRooms = rooms.slice(
+		page * rowsPerPage,
+		page * rowsPerPage + rowsPerPage
+	);
+
 	return (
 		<MainLayout>
-			<Typography variant="h4" gutterBottom>
+			<Typography variant="h4" gutterBottom sx={{ fontWeight: "600" }}>
 				OPERATION ROOMS
 			</Typography>
 
 			<TableContainer component={Paper}>
 				<Table>
-					<TableHead>
+					<TableHead sx={{ bgcolor: "#2C2D2D" }}>
 						<TableRow>
-							<TableCell padding="checkbox">
+							<TableCell padding="checkbox" sx={{ color: "white" }}>
 								<Checkbox
 									indeterminate={
 										selected.length > 0 && selected.length < rooms.length
 									}
 									checked={rooms.length > 0 && selected.length === rooms.length}
 									onChange={toggleAll}
+									sx={{ color: "white" }}
 								/>
 							</TableCell>
-							<TableCell>Room Name</TableCell>
-							<TableCell>Location</TableCell>
-							<TableCell align="right">Device Count</TableCell>
-							<TableCell align="center">Actions</TableCell>
+							<TableCell sx={{ color: "white" }} />
+							<TableCell sx={{ color: "white" }}>Room Name</TableCell>
+							<TableCell sx={{ color: "white" }}>Location</TableCell>
+							<TableCell align="right" sx={{ color: "white" }}>
+								Device Count
+							</TableCell>
+							<TableCell align="center" sx={{ color: "white" }}>
+								Actions
+							</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{rooms.map((room) => (
-							<TableRow
-								key={room.idsoba}
-								sx={{
-									backgroundColor: room.unsaved_changes
-										? "rgba(255, 179, 71, 0.15)" // light orange
-										: "inherit",
-								}}
-							>
-								<TableCell padding="checkbox">
-									<Checkbox
-										checked={selected.includes(room.idsoba)}
-										onChange={() => toggleOne(room.idsoba)}
-									/>
-								</TableCell>
-								<TableCell>{room.naziv}</TableCell>
-								<TableCell>{room.lokacija}</TableCell>
-								<TableCell align="right">{room.st_naprav}</TableCell>
-								<TableCell align="center">
-									{room.unsaved_changes && (
-										<Button
-											variant="contained"
-											color="primary"
-											size="small"
-											onClick={() => handleCommit(room.idsoba)}
+						{paginatedRooms.map((room) => {
+							const devicesInRoom = allDevices.filter(
+								(dev) => dev.soba_idsoba === room.idsoba
+							);
+
+							return (
+								<React.Fragment key={room.idsoba}>
+									<TableRow
+										sx={{
+											backgroundColor: room.unsaved_changes
+												? "rgba(255, 179, 71, 0.15)"
+												: "inherit",
+										}}
+									>
+										<TableCell padding="checkbox">
+											<Checkbox
+												checked={selected.includes(room.idsoba)}
+												onChange={() => toggleOne(room.idsoba)}
+											/>
+										</TableCell>
+										<TableCell padding="none" sx={{ width: 40 }}>
+											{devicesInRoom.length > 0 ? (
+												<IconButton
+													aria-label="expand row"
+													size="small"
+													onClick={() => toggleRow(room.idsoba)}
+												>
+													{openRows[room.idsoba] ? (
+														<KeyboardArrowUpIcon />
+													) : (
+														<KeyboardArrowDownIcon />
+													)}
+												</IconButton>
+											) : null}
+										</TableCell>
+										<TableCell>{room.naziv}</TableCell>
+										<TableCell>{room.lokacija}</TableCell>
+										<TableCell align="right">{room.st_naprav}</TableCell>
+										<TableCell align="center">
+											{room.unsaved_changes && (
+												<Button
+													variant="contained"
+													color="warning"
+													size="small"
+													onClick={() => handleCommit(room.idsoba)}
+												>
+													Commit
+												</Button>
+											)}
+										</TableCell>
+									</TableRow>
+									<TableRow>
+										<TableCell
+											style={{ paddingBottom: 0, paddingTop: 0 }}
+											colSpan={6}
 										>
-											Commit
-										</Button>
-									)}
-								</TableCell>
-							</TableRow>
-						))}
+											<Collapse
+												in={!!openRows[room.idsoba] && devicesInRoom.length > 0}
+												timeout="auto"
+												unmountOnExit
+											>
+												<Box sx={{ margin: 1 }}>
+													<Table
+														size="small"
+														aria-label="devices-in-room"
+														stickyHeader
+													>
+														<TableHead>
+															<TableRow>
+																<TableCell>Device Name</TableCell>
+																<TableCell align="right">Actions</TableCell>
+															</TableRow>
+														</TableHead>
+														<TableBody>
+															{devicesInRoom.map((device) => (
+																<TableRow key={device.idnaprava}>
+																	<TableCell component="th" scope="row">
+																		{device.naprava}
+																	</TableCell>
+																	<TableCell align="right">
+																		<Button
+																			size="small"
+																			variant="outlined"
+																			color="error"
+																			onClick={() =>
+																				handleRemoveDevice(device.idnaprava)
+																			}
+																			disabled={
+																				!!loadingRemoving[device.idnaprava]
+																			}
+																		>
+																			{loadingRemoving[device.idnaprava]
+																				? "Removing..."
+																				: "Remove"}
+																		</Button>
+																	</TableCell>
+																</TableRow>
+															))}
+														</TableBody>
+													</Table>
+												</Box>
+											</Collapse>
+										</TableCell>
+									</TableRow>
+								</React.Fragment>
+							);
+						})}
 					</TableBody>
 				</Table>
+				<TablePagination
+					rowsPerPageOptions={[5, 10, 25]}
+					component="div"
+					count={rooms.length}
+					rowsPerPage={rowsPerPage}
+					page={page}
+					onPageChange={handleChangePage}
+					onRowsPerPageChange={handleChangeRowsPerPage}
+				/>
 			</TableContainer>
 
 			<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
@@ -198,7 +357,7 @@ const OperationRooms: React.FC = () => {
 				</Stack>
 			</Box>
 
-			{/* Modal */}
+			{/* Modal windows */}
 			<Dialog open={openAddRoom} onClose={closeAddRoom} fullWidth maxWidth="sm">
 				<DialogTitle sx={{ m: 0, p: 2 }}>
 					Create new room

@@ -72,10 +72,11 @@ exports.login = async (req, res, next) => {
 
 		const user = await userService.getUserByEmail(email);
 		if (!user)
-			return res.status(401).json({ message: "Napačn email ali geslo" });
+			return res.status(401).json({ message: "Napačen email ali geslo" });
 
 		const ok = await userService.checkGeslo(email, geslo);
-		if (!ok) return res.status(401).json({ message: "Napačn email ali geslo" });
+		if (!ok)
+			return res.status(401).json({ message: "Napačen email ali geslo" });
 
 		const payload = { email: user.email };
 		const token = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -100,10 +101,11 @@ exports.loginAdmin = async (req, res, next) => {
 
 		const user = await userService.getUserByEmailAndType(email);
 		if (!user)
-			return res.status(401).json({ message: "Napačni email ali geslo" });
+			return res.status(401).json({ message: "Napačen email ali geslo" });
 
 		const ok = await userService.checkGeslo(email, geslo);
-		if (!ok) return res.status(401).json({ message: "Napačn email ali geslo" });
+		if (!ok)
+			return res.status(401).json({ message: "Napačen email ali geslo" });
 
 		const payload = { email: user.email };
 		const token = jwt.sign(payload, process.env.JWT_SECRET, {

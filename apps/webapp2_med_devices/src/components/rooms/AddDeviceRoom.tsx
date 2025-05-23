@@ -24,8 +24,8 @@ interface Props {
 interface Device {
 	idnaprava: number;
 	naprava: string;
-	soba?: string; // display name of the room or undefined/null
-	soba_idsoba: number | null; // actual room ID or null if no room assigned
+	soba?: string;
+	soba_idsoba: number | null;
 }
 
 const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
@@ -70,88 +70,66 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 			onAdded();
 			onClose();
 		} catch (err) {
-			console.error("Napaka pri dodajanju naprav v sobo:", err);
-			alert("Napaka pri dodajanju naprav v sobo.");
+			console.error("Error adding devices to room:", err);
+			alert("Error adding devices to room.");
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100%",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "start",
-				pt: 2,
-			}}
-		>
-			<Box
-				sx={{
-					backgroundColor: "white",
-					padding: 3,
-					borderRadius: 2,
-					boxShadow: 3,
-					width: "100%",
-				}}
-			>
-				<Typography variant="h6" gutterBottom>
-					Dodaj naprave v sobo
-				</Typography>
-
-				<Stack spacing={2}>
-					<FormControl fullWidth>
-						<InputLabel id="devices-multi-select-label">
-							Izberi naprave
-						</InputLabel>
-						<Select
-							labelId="devices-multi-select-label"
-							multiple
-							value={selectedDevices}
-							onChange={handleSelectChange}
-							input={<OutlinedInput label="Izberi naprave" />}
-							renderValue={(selected) =>
-								devices
-									.filter((d) => selected.includes(d.idnaprava))
-									.map((d) => d.naprava)
-									.join(", ")
-							}
-						>
-							{devices.map((device) => {
-								const isAssignedToRoom = device.soba_idsoba === roomId;
-								return (
-									<MenuItem
-										key={device.idnaprava}
-										value={device.idnaprava}
+		<>
+			<Stack spacing={2}>
+				<FormControl fullWidth>
+					<InputLabel id="devices-multi-select-label">
+						Choose devices
+					</InputLabel>
+					<Select
+						labelId="devices-multi-select-label"
+						multiple
+						value={selectedDevices}
+						onChange={handleSelectChange}
+						input={<OutlinedInput label="Izberi naprave" />}
+						renderValue={(selected) =>
+							devices
+								.filter((d) => selected.includes(d.idnaprava))
+								.map((d) => d.naprava)
+								.join(", ")
+						}
+					>
+						{devices.map((device) => {
+							const isAssignedToRoom = device.soba_idsoba === roomId;
+							return (
+								<MenuItem
+									key={device.idnaprava}
+									value={device.idnaprava}
+									disabled={isAssignedToRoom}
+								>
+									<Checkbox
+										checked={selectedDevices.includes(device.idnaprava)}
 										disabled={isAssignedToRoom}
+									/>
+									<ListItemText primary={device.naprava} />
+									<Typography
+										variant="body2"
+										color="text.secondary"
+										sx={{ ml: 2, fontStyle: "italic" }}
 									>
-										<Checkbox
-											checked={selectedDevices.includes(device.idnaprava)}
-											disabled={isAssignedToRoom}
-										/>
-										<ListItemText primary={device.naprava} />
-										<Typography
-											variant="body2"
-											color="text.secondary"
-											sx={{ ml: 2, fontStyle: "italic" }}
-										>
-											{device.soba ?? "Brez sobe"}
-										</Typography>
-									</MenuItem>
-								);
-							})}
-						</Select>
-					</FormControl>
+										{device.soba ?? "NO ROOM"}
+									</Typography>
+								</MenuItem>
+							);
+						})}
+					</Select>
+				</FormControl>
 
-					<Stack direction="row" spacing={2} justifyContent="flex-end">
-						<Button variant="contained" onClick={handleAdd} disabled={loading}>
-							Dodaj
-						</Button>
-					</Stack>
+				<Stack direction="row" spacing={2} justifyContent="flex-end">
+					<Button variant="contained" onClick={handleAdd} disabled={loading}>
+						ADD TO ROOM
+					</Button>
 				</Stack>
-			</Box>
-		</Box>
+			</Stack>
+		</>
 	);
 };
 

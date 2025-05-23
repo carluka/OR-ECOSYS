@@ -8,6 +8,7 @@ import {
 	Select,
 	MenuItem,
 	SelectChangeEvent,
+	FormControl,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import api from "../../api";
@@ -70,43 +71,24 @@ function AddDevice({ onDeviceAdded }: Props) {
 	};
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "center",
-				backgroundColor: "#f5f5f5",
-			}}
-		>
-			<Box
-				sx={{
-					backgroundColor: "white",
-					padding: 4,
-					borderRadius: 2,
-					boxShadow: 3,
-					minWidth: 320,
-				}}
-			>
-				<Typography variant="h4" gutterBottom>
-					Dodaj Napravo
-				</Typography>
+		<>
+			<Stack spacing={2}>
+				<Stack spacing={1}>
+					<InputLabel htmlFor="ime">Device name</InputLabel>
+					<OutlinedInput
+						id="ime"
+						name="ime"
+						placeholder="Philips PageWriter TC70"
+						fullWidth
+						value={nazivNaprave}
+						onChange={(e) => setNazivNaprave(e.target.value)}
+					/>
+				</Stack>
 
-				<Stack spacing={2}>
-					<Stack spacing={1}>
-						<InputLabel htmlFor="ime">Naziv naprave</InputLabel>
-						<OutlinedInput
-							id="ime"
-							name="ime"
-							placeholder="Janez"
-							fullWidth
-							value={nazivNaprave}
-							onChange={(e) => setNazivNaprave(e.target.value)}
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="tip_naprave">Tip naprave</InputLabel>
+				<Stack spacing={1}>
+					<InputLabel htmlFor="tip_naprave">Device type</InputLabel>
+					<FormControl fullWidth>
+						<InputLabel htmlFor="tip_naprave">Device type</InputLabel>
 						<Select
 							id="tip_naprave"
 							name="tip_naprave"
@@ -114,6 +96,9 @@ function AddDevice({ onDeviceAdded }: Props) {
 							onChange={handleChange}
 							fullWidth
 						>
+							<MenuItem value="" disabled>
+								Select device type
+							</MenuItem>
 							{tipiNaprave.map((tip) => (
 								<MenuItem
 									key={tip.idtip_naprave}
@@ -123,9 +108,10 @@ function AddDevice({ onDeviceAdded }: Props) {
 								</MenuItem>
 							))}
 						</Select>
-					</Stack>
+					</FormControl>
+				</Stack>
 
-					{/* Stanje (privzeto Aktivno) */}
+				{/* Stanje (privzeto Aktivno) 
 					<Stack spacing={1}>
 						<InputLabel htmlFor="stanje">Stanje</InputLabel>
 						<OutlinedInput
@@ -136,8 +122,9 @@ function AddDevice({ onDeviceAdded }: Props) {
 							fullWidth
 						/>
 					</Stack>
+					*/}
 
-					{/* Lokacija (privzeto 1) 
+				{/* Lokacija (privzeto 1) 
 					<Stack spacing={1}>
 						<InputLabel htmlFor="lokacija">Lokacija</InputLabel>
 						<OutlinedInput
@@ -150,13 +137,12 @@ function AddDevice({ onDeviceAdded }: Props) {
 					</Stack>
 					*/}
 
-					{/* Gumb za dodajanje naprave */}
-					<Button variant="contained" color="primary" onClick={handleAddDevice}>
-						Dodaj
-					</Button>
-				</Stack>
-			</Box>
-		</Box>
+				{/* Gumb za dodajanje naprave */}
+				<Button variant="contained" color="primary" onClick={handleAddDevice}>
+					ADD DEVICE
+				</Button>
+			</Stack>
+		</>
 	);
 }
 

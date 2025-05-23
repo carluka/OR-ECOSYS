@@ -13,22 +13,22 @@ import api from "../api";
 export default function Login() {
 	const [email, setEmail] = useState("");
 	const [geslo, setGeslo] = useState("");
-	const [error, setError] = useState<string | null>(null); // <-- error state
+	const [error, setError] = useState<string | null>(null);
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setError(null); // clear previous error on new submit
+		setError(null);
 		try {
 			await api.post("/users/loginAdmin", { email, geslo });
 			navigate("/");
 		} catch (err: any) {
 			console.error(err);
-			// Check if error response has message
+
 			if (err.response && err.response.data && err.response.data.message) {
 				setError(err.response.data.message);
 			} else {
-				setError("Prišlo je do napake pri prijavi."); // generic error fallback
+				setError("Error trying to login.");
 			}
 		}
 	};
@@ -55,7 +55,7 @@ export default function Login() {
 				}}
 			>
 				<Typography variant="h4" gutterBottom>
-					Prijava
+					Sign In
 				</Typography>
 
 				<Stack spacing={2}>
@@ -65,7 +65,7 @@ export default function Login() {
 							id="email"
 							name="email"
 							type="email"
-							placeholder="janez.novak@gmail.com"
+							placeholder="joe.doe@gmail.com"
 							fullWidth
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
@@ -73,19 +73,18 @@ export default function Login() {
 					</Stack>
 
 					<Stack spacing={1}>
-						<InputLabel htmlFor="password">Geslo</InputLabel>
+						<InputLabel htmlFor="password">Password</InputLabel>
 						<OutlinedInput
 							id="password"
 							name="password"
 							type="password"
-							placeholder="Vnesite vaše geslo"
+							placeholder="Input your password"
 							fullWidth
 							value={geslo}
 							onChange={(e) => setGeslo(e.target.value)}
 						/>
 					</Stack>
 
-					{/* Display error message if exists */}
 					{error && (
 						<Typography color="error" variant="body2" sx={{ mt: 1 }}>
 							{error}
@@ -93,7 +92,7 @@ export default function Login() {
 					)}
 
 					<Button type="submit" variant="contained" color="primary">
-						Prijava
+						LOGIN
 					</Button>
 				</Stack>
 			</Box>

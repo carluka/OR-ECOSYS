@@ -47,7 +47,7 @@ function EditUser({ user, onUserUpdated }: Props) {
 				}
 			})
 			.catch((error) => {
-				console.error("Error fetching job types:", error);
+				console.error("Error fetching user types:", error);
 			});
 
 		// Napolni formo z izbranim uporabnikom
@@ -87,109 +87,83 @@ function EditUser({ user, onUserUpdated }: Props) {
 	};
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "center",
-				backgroundColor: "#f5f5f5",
-			}}
-		>
-			<Box
-				sx={{
-					backgroundColor: "white",
-					padding: 4,
-					borderRadius: 2,
-					boxShadow: 3,
-					minWidth: 320,
-				}}
-			>
-				<Typography variant="h4" gutterBottom>
-					Posodobi Uporabnika
-				</Typography>
-
-				<Stack spacing={2}>
-					<Stack spacing={1}>
-						<InputLabel htmlFor="ime">Ime</InputLabel>
-						<OutlinedInput
-							id="ime"
-							name="ime"
-							placeholder="Janez"
-							fullWidth
-							value={naziv}
-							onChange={(e) => setNaziv(e.target.value)}
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="priimek">Priimek</InputLabel>
-						<OutlinedInput
-							id="priimek"
-							name="priimek"
-							placeholder="Novak"
-							fullWidth
-							value={priimek}
-							onChange={(e) => setPriimek(e.target.value)}
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="email">Email</InputLabel>
-						<OutlinedInput
-							id="email"
-							name="email"
-							type="email"
-							placeholder="janez.novak@gmail.com"
-							fullWidth
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="tip_zaposlenega">Tip zaposlenega</InputLabel>
-						<Select
-							id="tip_zaposlenega"
-							name="tip_zaposlenega"
-							value={tipZaposlenega}
-							onChange={handleChange}
-							fullWidth
-						>
-							{tipiZaposlenih.map((tip) => (
-								<MenuItem
-									key={tip.idtip_uporabnika}
-									value={tip.idtip_uporabnika.toString()}
-								>
-									{tip.naziv}
-								</MenuItem>
-							))}
-						</Select>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="password">Geslo</InputLabel>
-						<OutlinedInput
-							id="password"
-							name="password"
-							type="password"
-							placeholder="Vnesite vaše geslo"
-							fullWidth
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-						/>
-					</Stack>
-
-					<Button
-						variant="contained"
-						color="primary"
-						onClick={handleUpdateUser}
-					>
-						Posodobi
-					</Button>
+		<>
+			<Stack spacing={2}>
+				<Stack spacing={1}>
+					<InputLabel htmlFor="ime">Name</InputLabel>
+					<OutlinedInput
+						id="ime"
+						name="ime"
+						placeholder="Joe"
+						fullWidth
+						value={naziv}
+						onChange={(e) => setNaziv(e.target.value)}
+					/>
 				</Stack>
-			</Box>
-		</Box>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="priimek">Surname</InputLabel>
+					<OutlinedInput
+						id="priimek"
+						name="priimek"
+						placeholder="Doe"
+						fullWidth
+						value={priimek}
+						onChange={(e) => setPriimek(e.target.value)}
+					/>
+				</Stack>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="email">Email</InputLabel>
+					<OutlinedInput
+						id="email"
+						name="email"
+						type="email"
+						placeholder="joe.doe@gmail.com"
+						fullWidth
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+					/>
+				</Stack>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="tip_zaposlenega">User type</InputLabel>
+					<Select
+						id="tip_zaposlenega"
+						name="tip_zaposlenega"
+						value={tipZaposlenega}
+						onChange={handleChange}
+						fullWidth
+					>
+						{tipiZaposlenih.map((tip) => (
+							<MenuItem
+								key={tip.idtip_uporabnika}
+								value={tip.idtip_uporabnika.toString()}
+							>
+								{tip.naziv}
+							</MenuItem>
+						))}
+					</Select>
+				</Stack>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="password">Password</InputLabel>
+					<OutlinedInput
+						id="password"
+						name="password"
+						type="password"
+						placeholder="Insert password"
+						fullWidth
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+					/>
+				</Stack>
+
+				<Button variant="contained" color="primary" onClick={handleUpdateUser}>
+					UPDATE USER
+				</Button>
+			</Stack>
+		</>
 	);
 }
 
