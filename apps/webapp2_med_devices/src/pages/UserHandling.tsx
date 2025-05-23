@@ -1,4 +1,3 @@
-// src/pages/UpravljanjeZOsebjem.tsx
 import React, { useState, useEffect } from "react";
 import MainLayout from "../layout/MainLayout";
 import {
@@ -18,6 +17,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	IconButton,
+	TablePagination,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddUser from "../components/users/AddUser";
@@ -50,6 +50,10 @@ const UserHandling: React.FC = () => {
 	const [formKey, setFormKey] = useState(0);
 	const [editingUser, setEditingUser] = useState<FullUser | null>(null);
 
+	// Pagination state
+	const [page, setPage] = useState(0);
+	const [rowsPerPage, setRowsPerPage] = useState(5);
+
 	const fetchUsers = () => {
 		api
 			.get("/users")
@@ -69,7 +73,7 @@ const UserHandling: React.FC = () => {
 		);
 
 	const handleDelete = () => {
-		if (!selected.length) return alert("Izberi vsaj enega uporabnika.");
+		if (!selected.length) return alert("Choose at least one user.");
 		api
 			.delete("/users/deleteMultiple", { data: { ids: selected } })
 			.then(() => {
@@ -87,7 +91,7 @@ const UserHandling: React.FC = () => {
 
 	const openEdit = () => {
 		if (selected.length !== 1) {
-			alert("Izberi natanko enega uporabnika za urejanje.");
+			alert("Choose exactly one user.");
 			return;
 		}
 		const id = selected[0];
@@ -98,7 +102,7 @@ const UserHandling: React.FC = () => {
 				setFormKey((k) => k + 1);
 				setOpenModal(true);
 			})
-			.catch(() => alert("Napaka pri nalaganju podatkov."));
+			.catch(() => alert("Error loading users."));
 	};
 
 	const closeModal = () => {
@@ -112,33 +116,52 @@ const UserHandling: React.FC = () => {
 		closeModal();
 	};
 
+	// Pagination handlers
+	const handleChangePage = (event: unknown, newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleChangeRowsPerPage = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		setRowsPerPage(parseInt(event.target.value, 10));
+		setPage(0);
+	};
+
+	// Paginate users for current page
+	const paginatedUsers = users.slice(
+		page * rowsPerPage,
+		page * rowsPerPage + rowsPerPage
+	);
+
 	return (
 		<MainLayout>
-			<Typography variant="h4" gutterBottom>
-				UPRAVLJANJE Z OSEBJEM
+			<Typography variant="h4" gutterBottom sx={{ fontWeight: "600" }}>
+				USERS
 			</Typography>
 
 			<TableContainer component={Paper}>
 				<Table>
-					<TableHead>
+					<TableHead sx={{ bgcolor: "#2C2D2D" }}>
 						<TableRow>
-							<TableCell padding="checkbox">
+							<TableCell padding="checkbox" sx={{ color: "white" }}>
 								<Checkbox
 									indeterminate={
 										selected.length > 0 && selected.length < users.length
 									}
 									checked={users.length > 0 && selected.length === users.length}
 									onChange={toggleAll}
+									sx={{ color: "white" }}
 								/>
 							</TableCell>
-							<TableCell>Ime</TableCell>
-							<TableCell>Priimek</TableCell>
-							<TableCell>Email</TableCell>
-							<TableCell>Tip zaposlenega</TableCell>
+							<TableCell sx={{ color: "white" }}>Name</TableCell>
+							<TableCell sx={{ color: "white" }}>Surname</TableCell>
+							<TableCell sx={{ color: "white" }}>Email</TableCell>
+							<TableCell sx={{ color: "white" }}>User Type</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{users.map((u) => (
+						{paginatedUsers.map((u) => (
 							<TableRow key={u.iduporabnik}>
 								<TableCell padding="checkbox">
 									<Checkbox
@@ -154,18 +177,36 @@ const UserHandling: React.FC = () => {
 						))}
 					</TableBody>
 				</Table>
+				<TablePagination
+					rowsPerPageOptions={[5, 10, 25]}
+					component="div"
+					count={users.length}
+					rowsPerPage={rowsPerPage}
+					page={page}
+					onPageChange={handleChangePage}
+					onRowsPerPageChange={handleChangeRowsPerPage}
+				/>
 			</TableContainer>
 
 			<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
 				<Stack direction="row" spacing={2}>
-					<Button variant="outlined" onClick={openEdit}>
-						Uredi uporabnika
-					</Button>
 					<Button variant="outlined" onClick={openAdd}>
-						Dodaj uporabnika
+						ADD USER
 					</Button>
-					<Button variant="outlined" color="error" onClick={handleDelete}>
-						Odstrani uporabnika
+					<Button
+						variant="outlined"
+						onClick={openEdit}
+						disabled={selected.length !== 1}
+					>
+						EDIT USER
+					</Button>
+					<Button
+						variant="outlined"
+						color="error"
+						onClick={handleDelete}
+						disabled={selected.length < 1}
+					>
+						REMOVE USER
 					</Button>
 				</Stack>
 			</Box>
@@ -173,8 +214,8 @@ const UserHandling: React.FC = () => {
 			<Dialog open={openModal} onClose={closeModal} fullWidth maxWidth="sm">
 				<DialogTitle sx={{ m: 0, p: 2 }}>
 					{editingUser
-						? `Uredi uporabnika: ${editingUser.ime} ${editingUser.priimek}`
-						: "Dodaj novega uporabnika"}
+						? `Edit user: ${editingUser.ime} ${editingUser.priimek}`
+						: "Add new user"}
 					<IconButton
 						aria-label="close"
 						onClick={closeModal}

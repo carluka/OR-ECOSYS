@@ -37,55 +37,35 @@ const AddRoom: React.FC<Props> = ({ onClose, onAdded }) => {
 	};
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100%",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "start",
-				pt: 2,
-			}}
-		>
-			<Box
-				sx={{
-					backgroundColor: "white",
-					padding: 3,
-					borderRadius: 2,
-					boxShadow: 3,
-					width: "100%",
-				}}
-			>
-				<Typography variant="h6" gutterBottom>
-					Dodaj sobo
-				</Typography>
-
-				<Stack spacing={2}>
-					<Stack spacing={1}>
-						<InputLabel htmlFor="naziv">Naziv</InputLabel>
-						<OutlinedInput
-							id="naziv"
-							value={naziv}
-							onChange={(e) => setNaziv(e.target.value)}
-							fullWidth
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="lokacija">Lokacija</InputLabel>
-						<OutlinedInput
-							id="lokacija"
-							value={lokacija}
-							onChange={(e) => setLokacija(e.target.value)}
-							fullWidth
-						/>
-					</Stack>
-
-					<Button variant="contained" color="primary" onClick={handleAdd}>
-						Shrani sobo
-					</Button>
+		<>
+			<Stack spacing={2}>
+				<Stack spacing={1}>
+					<InputLabel htmlFor="naziv">Room name</InputLabel>
+					<OutlinedInput
+						id="naziv"
+						value={naziv}
+						placeholder="Emergency Room"
+						onChange={(e) => setNaziv(e.target.value)}
+						fullWidth
+					/>
 				</Stack>
-			</Box>
-		</Box>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="lokacija">Location</InputLabel>
+					<OutlinedInput
+						id="lokacija"
+						value={lokacija}
+						placeholder="East wing"
+						onChange={(e) => setLokacija(e.target.value)}
+						fullWidth
+					/>
+				</Stack>
+
+				<Button variant="contained" color="primary" onClick={handleAdd}>
+					ADD ROOM
+				</Button>
+			</Stack>
+		</>
 	);
 };
 
