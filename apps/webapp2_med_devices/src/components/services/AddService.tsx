@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-	Box,
-	Button,
-	InputLabel,
-	OutlinedInput,
-	Stack,
-	Typography,
-} from "@mui/material";
+import { Button, InputLabel, OutlinedInput, Stack } from "@mui/material";
 import api from "../../api";
 
 interface Props {
