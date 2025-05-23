@@ -105,6 +105,20 @@ class RoomRepo {
       { where: { idsoba: roomId } }
     );
   }
+  async getDevicesInRoom(roomId) {
+    const sql = `
+      SELECT n.uuid,
+             t.naziv_k8s AS tipnaprave
+      FROM naprava n
+      JOIN tip_naprave t
+        ON n.tip_naprave_idtip_naprave = t.idtip_naprave
+      WHERE n.soba_idsoba = :roomId
+    `;
+    return sequelize.query(sql, {
+      replacements: { roomId },
+      type: QueryTypes.SELECT,
+    });
+  }
 }
 
 module.exports = new RoomRepo();

@@ -31,6 +31,14 @@ const router = createBrowserRouter([
               </DeviceProvider>
             ),
           },
+          {
+            path: "/operation/:roomId",
+            element: (
+              <DeviceProvider>
+                <OperationRoomPage />
+              </DeviceProvider>
+            ),
+          },
           { path: "/patients", element: <PatientsPage /> },
           { path: "/patients/:id", element: <PatientDetailsPage /> },
           { path: "*", element: <NotFoundPage /> },
