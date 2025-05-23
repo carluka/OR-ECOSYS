@@ -45,6 +45,7 @@ class K8sTemplateGenerator {
         room_uuid: roomUuid,
         provider_type: provider.type,
         provider_uuid: provider.uuid,
+        replicas: 0,
       });
 
       const providerOutputPath = path.join(

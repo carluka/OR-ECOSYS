@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState, useRef } from "react";
 import { useDeviceContext } from "../../context/DeviceContext";
+import { useParams, Navigate } from "react-router-dom";
 import NibpModule from "../../components/devices/NIBPModule";
 import EKGModule from "../../components/devices/EKGModule";
 import SPO2Sensor from "../../components/devices/SPO2Sensor";
@@ -9,6 +10,7 @@ import TemperatureGauge from "../../components/devices/TemperatureGauge";
 import InfusionPump from "../../components/devices/InfusionPump";
 import Ventilator from "../../components/devices/Ventilator";
 import "./OperationRoomPage.css";
+import api from "../../api";
 
 interface DataPoint {
   time: number;
@@ -21,9 +23,14 @@ interface MetricMessage {
   device_id: string;
 }
 
+interface MessageResponse {
+  message: string;
+}
+
 const MAX_POINTS = 60;
 
 const OperationRoomPage: React.FC = () => {
+  const { roomId } = useParams();
   const { deviceData, updateDeviceData } = useDeviceContext();
   const [connected, setConnected] = useState<boolean>(false);
   const [co2History, setCo2History] = useState<DataPoint[]>([]);
@@ -47,9 +54,13 @@ const OperationRoomPage: React.FC = () => {
     }
   };
 
-  const connect = () => {
+  const connect = async () => {
     wsRef.current?.close();
-    const ws = new WebSocket("ws://data.or-ecosystem.eu/ws/medical-device");
+    await api.post<MessageResponse>(`/rooms/${roomId}/deploy`);
+    await api.post<MessageResponse>(`/rooms/${roomId}/connect`);
+    const ws = new WebSocket(
+      "ws://data.or-ecosystem.eu:8000/ws/medical-device"
+    );
     wsRef.current = ws;
 
     ws.onopen = () => setConnected(true);
@@ -68,8 +79,11 @@ const OperationRoomPage: React.FC = () => {
     };
   };
 
-  const disconnect = () => {
-    wsRef.current?.close();
+  const disconnect = async () => {
+    try {
+      wsRef.current?.close();
+      await api.post<MessageResponse>(`/rooms/${roomId}/disconnect`);
+    } catch {}
   };
 
   const nibpData = {
@@ -160,6 +174,10 @@ const OperationRoomPage: React.FC = () => {
       ] ?? null,
   };
 
+  if (!roomId) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="operation-room-container">
       <div className="operation-room-content">
@@ -180,7 +198,7 @@ const OperationRoomPage: React.FC = () => {
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
               </svg>
             </div>
-            <h1>Operation Room - Dashboard</h1>
+            <h1>{decodeURIComponent(roomId)} - Dashboard</h1>
           </div>
 
           <div className="header-controls">
