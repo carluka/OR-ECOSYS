@@ -65,7 +65,7 @@ class SDCConsumerService:
         
         # Pošiljanje podatkov v Kafko
         self.kafka_send(data)
-        logger.info(f"Data sent to Kafka: {data}")
+        
 
         for callback in self._data_callbacks:
             try:
