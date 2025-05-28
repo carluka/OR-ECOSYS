@@ -1,34 +1,36 @@
-name: Auto Merge Development into Test
+name: Manual Merge development → test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - development
-
-permissions:
-  contents: write
-
 jobs:
-  merge-to-test:
+  merge-dev-to-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout all branches
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up Git
+
+      - name: Set up Git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-      - name: Fetch remote branches
+
+      - name: Fetch all branches
         run: git fetch origin
-      - name: Check out test branch
+
+      - name: Checkout test branch
         run: git checkout test
-      - name: Merge development into test
-        run: git merge origin/development --no-edit || echo "Nothing to merge"
-      - name: Show git log
-        run: git log --oneline --graph --decorate -20
-      - name: Git status
-        run: git status
-      - name: Push to test
+
+      - name: Merge development into test, preferring development (theirs)
+        run: |
+          git merge origin/development --strategy-option theirs --no-edit || echo "No changes to merge"
+
+      - name: Push changes to test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: git push origin test
