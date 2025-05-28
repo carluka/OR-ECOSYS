@@ -27,6 +27,7 @@ import api from "../api";
 import AddRoom from "../components/rooms/AddRoom";
 import AddDeviceRoom from "../components/rooms/AddDeviceRoom";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import DeviceReportModal from "../components/devices/DeviceReportModal";
 
 interface RoomWithDeviceCount {
 	idsoba: number;
@@ -54,6 +55,9 @@ const OperationRooms: React.FC = () => {
 	const [loadingRemoving, setLoadingRemoving] = useState<
 		Record<number, boolean>
 	>({});
+
+	const [openReportModal, setOpenReportModal] = useState(false);
+	const [reportDeviceId, setReportDeviceId] = useState<number | null>(null);
 
 	// Pagination state
 	const [page, setPage] = useState(0);
@@ -183,6 +187,11 @@ const OperationRooms: React.FC = () => {
 		page * rowsPerPage,
 		page * rowsPerPage + rowsPerPage
 	);
+
+	const handleShowReport = (deviceId: number) => {
+		setReportDeviceId(deviceId);
+		setOpenReportModal(true);
+	};
 
 	return (
 		<MainLayout>
@@ -335,12 +344,9 @@ const OperationRooms: React.FC = () => {
 																			variant="outlined"
 																			size="small"
 																			startIcon={<PictureAsPdfIcon />}
-																			onClick={() => {
-																				console.log(
-																					"DeviceID",
-																					device.idnaprava
-																				);
-																			}}
+																			onClick={() =>
+																				handleShowReport(device.idnaprava)
+																			}
 																		>
 																			PDF
 																		</Button>
@@ -433,6 +439,12 @@ const OperationRooms: React.FC = () => {
 					/>
 				</DialogContent>
 			</Dialog>
+
+			<DeviceReportModal
+				open={openReportModal}
+				onClose={() => setOpenReportModal(false)}
+				deviceId={reportDeviceId}
+			/>
 		</MainLayout>
 	);
 };
