@@ -1,10 +1,14 @@
-name: Manual Merge development → test
+name: Merge development into test
 
 on:
   workflow_dispatch:
   push:
     branches:
       - development
+
+permissions:
+  contents: write
+
 jobs:
   merge-dev-to-test:
     runs-on: ubuntu-latest
@@ -26,9 +30,9 @@ jobs:
       - name: Checkout test branch
         run: git checkout test
 
-      - name: Merge development into test, preferring development (theirs)
+      - name: Merge development into test, prefer incoming (theirs)
         run: |
-          git merge origin/development --strategy-option theirs --no-edit || echo "No changes to merge"
+          git merge -X theirs origin/development --no-edit || echo "Nothing to merge"
 
       - name: Push changes to test
         env:
