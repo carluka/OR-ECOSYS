@@ -65,7 +65,6 @@ exports.register = async (req, res, next) => {
 	}
 };
 
-// controllers/userCtrl.js
 exports.login = async (req, res, next) => {
 	try {
 		const { email, geslo } = req.body;
@@ -87,7 +86,6 @@ exports.login = async (req, res, next) => {
 			httpOnly: true,
 		});
 
-		// Pošlji odgovor
 		res.json({ message: "Prijava uspešna" });
 	} catch (err) {
 		console.error("Login error:", err);
@@ -116,7 +114,6 @@ exports.loginAdmin = async (req, res, next) => {
 			httpOnly: true,
 		});
 
-		// Pošlji odgovor
 		res.json({ message: "Prijava uspešna" });
 	} catch (err) {
 		console.error("Login error:", err);
@@ -124,7 +121,6 @@ exports.loginAdmin = async (req, res, next) => {
 	}
 };
 
-// controllers/userCtrl.js
 exports.logout = (req, res) => {
 	console.log("Logout request received");
 	console.log("Current cookies:", req.cookies);

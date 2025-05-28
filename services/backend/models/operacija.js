@@ -1,4 +1,3 @@
-// models/operacija.js
 const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
 	class Operacija extends Model {
