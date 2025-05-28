@@ -32,8 +32,10 @@ const MAX_POINTS = 60;
 const OperationRoomPage: React.FC = () => {
   const { roomId } = useParams();
   const { deviceData, updateDeviceData } = useDeviceContext();
-  const [connected, setConnected] = useState<boolean>(false);
+  const [connected, setConnected] = useState(false);
   const [co2History, setCo2History] = useState<DataPoint[]>([]);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [wsUuid, setWsUuid] = useState<string | null>(null);
 
   const allMetricsRef = useRef<MetricMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
@@ -53,15 +55,14 @@ const OperationRoomPage: React.FC = () => {
       });
     }
   };
-  const openSocket = () => {
+
+  const openSocket = (uuid: string) => {
     const ws = new WebSocket(
-      "ws://data.or-ecosystem.eu:8000/ws/medical-device"
+      `ws://data.or-ecosystem.eu:8000/ws/medical-device/${uuid}`
     );
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      setConnected(true);
-    };
+    ws.onopen = () => setConnected(true);
 
     ws.onmessage = (e: MessageEvent) => {
       try {
@@ -72,29 +73,35 @@ const OperationRoomPage: React.FC = () => {
         console.error("Failed to parse message", err);
       }
     };
+
+    ws.onerror = () => ws.close();
+
     ws.onclose = () => {
       setConnected(false);
       wsRef.current = null;
     };
-
-    ws.onerror = () => {
-      ws.close();
-    };
-
-    ws.onclose = () => {
-      if (!connected) {
-        setTimeout(openSocket, 1000);
-      }
-    };
   };
 
-  const connect = async () => {
-    if (connected) return;
+  const runMachines = async () => {
+    try {
+      const res = await api.post(`/rooms/${roomId}/startDevices`);
+      console.log(res);
+      if (res.data.status === "available" && res.data.wsUuid) {
+        setIsAvailable(true);
+        setWsUuid(res.data.wsUuid);
+      }
+    } catch (err) {
+      console.error("Failed to deploy devices", err);
+    }
+  };
 
-    await api.post(`/rooms/${roomId}/deploy`);
-    await api.post(`/rooms/${roomId}/connect`);
-
-    openSocket();
+  const connectToWebSocket = async () => {
+    if (connected || !wsUuid) return;
+    try {
+      openSocket(wsUuid);
+    } catch (err) {
+      console.error("Failed to connect", err);
+    }
   };
 
   const disconnect = async () => {
@@ -150,7 +157,7 @@ const OperationRoomPage: React.FC = () => {
     co2:
       deviceData["co2.ch0.capnograph"]?.metrics["co2.ch0.capnograph"] ?? null,
     rf: deviceData["rf.ch0.capnograph"]?.metrics["rf.ch0.capnograph"] ?? null,
-    co2History: co2History,
+    co2History,
   };
 
   const temperature =
@@ -191,6 +198,7 @@ const OperationRoomPage: React.FC = () => {
         "peep.ch0.mechanical_ventilator"
       ] ?? null,
   };
+
   if (!roomId) {
     return <Navigate to="/" replace />;
   }
@@ -230,9 +238,18 @@ const OperationRoomPage: React.FC = () => {
 
             <div className="action-buttons">
               <button
-                onClick={connect}
-                disabled={connected}
-                className={`connect-btn ${connected ? "disabled" : ""}`}
+                onClick={runMachines}
+                disabled={isAvailable}
+                className={`run-btn ${isAvailable ? "disabled" : ""}`}
+              >
+                Run Machines
+              </button>
+              <button
+                onClick={connectToWebSocket}
+                disabled={!isAvailable || connected}
+                className={`connect-btn ${
+                  !isAvailable || connected ? "disabled" : ""
+                }`}
               >
                 Connect
               </button>
