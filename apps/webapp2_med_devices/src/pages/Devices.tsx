@@ -23,12 +23,13 @@ import {
 	SelectChangeEvent,
 	TablePagination,
 } from "@mui/material";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect } from "react";
 import api from "../api";
 import AddDevice from "../components/devices/AddDevice";
 import EditDevice from "../components/devices/EditDevice";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import DeviceReportModal from "../components/devices/DeviceReportModal";
 
 interface DeviceOverview {
 	idnaprava: number;
@@ -60,11 +61,13 @@ const Devices: React.FC = () => {
 		{ idtip_naprave: number; naziv: string }[]
 	>([]);
 
+	const [openReportModal, setOpenReportModal] = useState(false);
+	const [reportDeviceId, setReportDeviceId] = useState<number | null>(null);
+
 	// Pagination state
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(5);
 
-	// Fetch devices with filters
 	const fetchDevices = () => {
 		const params: Record<string, any> = {};
 		if (filterType !== "all") params.tip_naprave = filterType;
@@ -147,6 +150,12 @@ const Devices: React.FC = () => {
 		fetchDevices();
 		setSelected([]);
 		closeModal();
+	};
+
+	// PDF MODAL
+	const handleShowReport = (deviceId: number) => {
+		setReportDeviceId(deviceId);
+		setOpenReportModal(true);
 	};
 
 	// Pagination handlers
@@ -275,9 +284,7 @@ const Devices: React.FC = () => {
 										variant="outlined"
 										size="small"
 										startIcon={<PictureAsPdfIcon />}
-										onClick={() => {
-											console.log("DeviceID", d.idnaprava);
-										}}
+										onClick={() => handleShowReport(d.idnaprava)}
 									>
 										PDF
 									</Button>
@@ -321,7 +328,6 @@ const Devices: React.FC = () => {
 				</Stack>
 			</Box>
 
-			{/* Modal */}
 			<Dialog open={openModal} onClose={closeModal} fullWidth maxWidth="sm">
 				<DialogTitle sx={{ m: 0, p: 2 }}>
 					{editingDevice
@@ -347,6 +353,12 @@ const Devices: React.FC = () => {
 					)}
 				</DialogContent>
 			</Dialog>
+
+			<DeviceReportModal
+				open={openReportModal}
+				onClose={() => setOpenReportModal(false)}
+				deviceId={reportDeviceId}
+			/>
 		</MainLayout>
 	);
 };
