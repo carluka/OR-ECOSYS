@@ -62,19 +62,6 @@ describe("DeviceService", () => {
 		});
 	});
 
-	describe("deleteDevice", () => {
-		test("should delete device", async () => {
-			const id = 1;
-			const mockDeleted = 1;
-			deviceRepo.delete.mockResolvedValue(mockDeleted);
-
-			const result = await deviceService.deleteDevice(id);
-
-			expect(deviceRepo.delete).toHaveBeenCalledWith(id);
-			expect(result).toEqual(mockDeleted);
-		});
-	});
-
 	describe("deleteDevices", () => {
 		test("should delete multiple devices", async () => {
 			const ids = [1, 2, 3];

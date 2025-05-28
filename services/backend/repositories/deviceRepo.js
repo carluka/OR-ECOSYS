@@ -30,7 +30,9 @@ class DeviceRepo {
 	async update(id, data) {
 		const device = await models.Naprava.findByPk(id);
 
-		await models.Naprava.update(data, { where: { idnaprava: id } });
+		const updateResult = await models.Naprava.update(data, {
+			where: { idnaprava: id },
+		});
 
 		const oldSobaId = device.soba_idsoba;
 		const newSobaId = data.hasOwnProperty("soba_idsoba")
@@ -61,7 +63,7 @@ class DeviceRepo {
 			}
 		}
 
-		return;
+		return updateResult;
 	}
 
 	async deleteMultiple(ids) {

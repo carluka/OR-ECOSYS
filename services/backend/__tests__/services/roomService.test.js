@@ -62,15 +62,15 @@ describe("RoomService", () => {
 		});
 	});
 
-	describe("deleteRoom", () => {
-		test("should delete room", async () => {
-			const id = 1;
-			const mockDeleted = 1;
-			roomRepo.delete.mockResolvedValue(mockDeleted);
+	describe("deleteRooms", () => {
+		test("should delete multiple rooms", async () => {
+			const ids = [1, 2, 3];
+			const mockDeleted = 3;
+			roomRepo.deleteMultiple.mockResolvedValue(mockDeleted);
 
-			const result = await roomService.deleteRoom(id);
+			const result = await roomService.deleteRooms(ids);
 
-			expect(roomRepo.delete).toHaveBeenCalledWith(id);
+			expect(roomRepo.deleteMultiple).toHaveBeenCalledWith(ids);
 			expect(result).toEqual(mockDeleted);
 		});
 	});
