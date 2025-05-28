@@ -12,29 +12,23 @@ jobs:
   merge-to-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout all branches
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Set up Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Set up authentication
-        run: |
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-
       - name: Fetch remote branches
         run: git fetch origin
-
       - name: Check out test branch
         run: git checkout test
-
       - name: Merge development into test
-        run: |
-          git merge origin/development --no-edit || echo "Nothing to merge"
-
+        run: git merge origin/development --no-edit || echo "Nothing to merge"
+      - name: Show git log
+        run: git log --oneline --graph --decorate -20
+      - name: Git status
+        run: git status
       - name: Push to test
         run: git push origin test
