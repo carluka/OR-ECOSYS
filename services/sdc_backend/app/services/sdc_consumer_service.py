@@ -1,5 +1,6 @@
 from typing import Callable, Dict, Any
 import asyncio
+import os
 import logging
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -100,9 +101,15 @@ class MinimalOptimizedSDCConsumerService:
             
             if 'timestamp' not in data:
                 data['timestamp'] = datetime.now(timezone.utc).isoformat()
-            
+
+            room_id = os.getenv('ROOM_UUID')
+            if room_id:
+                data['room_id'] = room_id
+            else:
+                logger.warning("⚠️ Okoljska spremenljivka ROOM_ID ni nastavljena")
+
             self.kafka_send(data)
-            
+
             for callback in self._data_callbacks:
                 try:
                     callback(data)
