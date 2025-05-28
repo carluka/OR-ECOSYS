@@ -21,12 +21,14 @@ import {
 	Select,
 	MenuItem,
 	SelectChangeEvent,
+	TablePagination,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect } from "react";
 import api from "../api";
 import AddDevice from "../components/devices/AddDevice";
 import EditDevice from "../components/devices/EditDevice";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 interface DeviceOverview {
 	idnaprava: number;
@@ -45,7 +47,7 @@ interface FullDevice {
 	servisiran: boolean;
 }
 
-const PregledVsehNaprav: React.FC = () => {
+const Devices: React.FC = () => {
 	const [devices, setDevices] = useState<DeviceOverview[]>([]);
 	const [selected, setSelected] = useState<number[]>([]);
 	const [openModal, setOpenModal] = useState(false);
@@ -58,7 +60,11 @@ const PregledVsehNaprav: React.FC = () => {
 		{ idtip_naprave: number; naziv: string }[]
 	>([]);
 
-	// Pridobi vse naprave za filtriranje
+	// Pagination state
+	const [page, setPage] = useState(0);
+	const [rowsPerPage, setRowsPerPage] = useState(5);
+
+	// Fetch devices with filters
 	const fetchDevices = () => {
 		const params: Record<string, any> = {};
 		if (filterType !== "all") params.tip_naprave = filterType;
@@ -83,13 +89,11 @@ const PregledVsehNaprav: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error(
-					"Napaka pri pridobivanju podatkov o tipih naprav:",
-					error
-				);
+				console.error("Error fetching device types:", error);
 			});
 	}, []);
 
+	// Selection handlers
 	const toggleAll = () =>
 		setSelected((sel) =>
 			sel.length === devices.length ? [] : devices.map((d) => d.idnaprava)
@@ -100,7 +104,7 @@ const PregledVsehNaprav: React.FC = () => {
 		);
 
 	const handleDelete = () => {
-		if (!selected.length) return alert("Izberi vsaj eno napravo.");
+		if (!selected.length) return alert("Choose at least one device.");
 		api
 			.delete("/devices/deleteMultiple", { data: { ids: selected } })
 			.then(() => {
@@ -118,7 +122,7 @@ const PregledVsehNaprav: React.FC = () => {
 
 	const openEdit = () => {
 		if (selected.length !== 1) {
-			return alert("Izberi natanko eno napravo za urejanje.");
+			return alert("Choose exactly one device.");
 		}
 		const id = selected[0];
 		api
@@ -129,8 +133,8 @@ const PregledVsehNaprav: React.FC = () => {
 				setOpenModal(true);
 			})
 			.catch((err) => {
-				console.error("Napaka pri pridobivanju naprave:", err);
-				alert("Napaka pri nalaganju podatkov za urejanje.");
+				console.error("Error fetching devices:", err);
+				alert("Error loading data for devices.");
 			});
 	};
 
@@ -145,22 +149,40 @@ const PregledVsehNaprav: React.FC = () => {
 		closeModal();
 	};
 
+	// Pagination handlers
+	const handleChangePage = (event: unknown, newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleChangeRowsPerPage = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		setRowsPerPage(parseInt(event.target.value, 10));
+		setPage(0);
+	};
+
+	// Slice devices for current page
+	const paginatedDevices = devices.slice(
+		page * rowsPerPage,
+		page * rowsPerPage + rowsPerPage
+	);
+
 	return (
 		<MainLayout>
-			<Typography variant="h4" gutterBottom>
-				Pregled vseh naprav
+			<Typography variant="h4" gutterBottom sx={{ fontWeight: "600" }}>
+				DEVICES
 			</Typography>
 
-			{/* Filtriranje */}
+			{/* Filters */}
 			<Box mb={2} display="flex" gap={2} alignItems="center">
 				<FormControl size="small">
-					<InputLabel>Tip naprave</InputLabel>
+					<InputLabel>Device type</InputLabel>
 					<Select
 						value={filterType}
 						label="Tip naprave"
 						onChange={(e: SelectChangeEvent) => setFilterType(e.target.value)}
 					>
-						<MenuItem value="all">Vsi tipi</MenuItem>
+						<MenuItem value="all">All devices</MenuItem>
 						{tipiNaprave.map((tip) => (
 							<MenuItem key={tip.idtip_naprave} value={tip.naziv}>
 								{tip.naziv}
@@ -170,7 +192,7 @@ const PregledVsehNaprav: React.FC = () => {
 				</FormControl>
 
 				<FormControl size="small">
-					<InputLabel>Servis</InputLabel>
+					<InputLabel>Service</InputLabel>
 					<Select
 						value={filterServis}
 						label="Servis"
@@ -190,7 +212,7 @@ const PregledVsehNaprav: React.FC = () => {
 							},
 						}}
 					>
-						<MenuItem value="all">Vsi</MenuItem>
+						<MenuItem value="all">All</MenuItem>
 						<MenuItem value="yes">✓</MenuItem>
 						<MenuItem value="no">X</MenuItem>
 					</Select>
@@ -199,9 +221,9 @@ const PregledVsehNaprav: React.FC = () => {
 
 			<TableContainer component={Paper}>
 				<Table>
-					<TableHead>
+					<TableHead sx={{ bgcolor: "#2C2D2D" }}>
 						<TableRow>
-							<TableCell padding="checkbox">
+							<TableCell padding="checkbox" sx={{ color: "white" }}>
 								<Checkbox
 									indeterminate={
 										selected.length > 0 && selected.length < devices.length
@@ -210,17 +232,23 @@ const PregledVsehNaprav: React.FC = () => {
 										devices.length > 0 && selected.length === devices.length
 									}
 									onChange={toggleAll}
+									sx={{ color: "white" }}
 								/>
 							</TableCell>
-							<TableCell>Ime naprave</TableCell>
-							<TableCell>Tip naprave</TableCell>
-							<TableCell>Stanje</TableCell>
-							<TableCell>Soba</TableCell>
-							<TableCell>Servis</TableCell>
+							<TableCell sx={{ color: "white" }}>Device Name</TableCell>
+							<TableCell sx={{ color: "white" }}>Device Type</TableCell>
+							<TableCell sx={{ color: "white" }}>State</TableCell>
+							<TableCell sx={{ color: "white" }}>Room</TableCell>
+							<TableCell align="center" sx={{ color: "white" }}>
+								Service
+							</TableCell>
+							<TableCell align="center" sx={{ color: "white" }}>
+								Actions
+							</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{devices.map((d) => (
+						{paginatedDevices.map((d) => (
 							<TableRow key={d.idnaprava}>
 								<TableCell padding="checkbox">
 									<Checkbox
@@ -230,25 +258,65 @@ const PregledVsehNaprav: React.FC = () => {
 								</TableCell>
 								<TableCell>{d.naprava}</TableCell>
 								<TableCell>{d.tip_naprave}</TableCell>
-								<TableCell>Aktivno</TableCell>
-								<TableCell>{d.soba}</TableCell>
-								<TableCell>{d.servis ? "✓" : "X"}</TableCell>
+								<TableCell>Active</TableCell>
+								<TableCell
+									align={d.soba === "NO ROOM" ? "center" : "inherit"}
+									sx={{
+										color: d.soba === "NO ROOM" ? "#E45F61" : "inherit",
+										fontWeight: d.soba === "NO ROOM" ? "bold" : "inherit",
+									}}
+								>
+									{d.soba === "NO ROOM" ? d.soba : d.soba}
+								</TableCell>
+
+								<TableCell align="center">{d.servis ? "✓" : "X"}</TableCell>
+								<TableCell align="center">
+									<Button
+										variant="outlined"
+										size="small"
+										startIcon={<PictureAsPdfIcon />}
+										onClick={() => {
+											console.log("DeviceID", d.idnaprava);
+										}}
+									>
+										PDF
+									</Button>
+								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 			</TableContainer>
 
+			<TablePagination
+				component="div"
+				count={devices.length}
+				page={page}
+				onPageChange={handleChangePage}
+				rowsPerPage={rowsPerPage}
+				onRowsPerPageChange={handleChangeRowsPerPage}
+				rowsPerPageOptions={[5, 10, 25]}
+			/>
+
 			<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
 				<Stack direction="row" spacing={2}>
-					<Button variant="outlined" onClick={openEdit}>
-						Uredi napravo
-					</Button>
 					<Button variant="outlined" onClick={openAdd}>
-						Dodaj napravo
+						ADD DEVICE
 					</Button>
-					<Button variant="outlined" color="error" onClick={handleDelete}>
-						Odstrani napravo
+					<Button
+						variant="outlined"
+						onClick={openEdit}
+						disabled={selected.length !== 1}
+					>
+						EDIT DEVICE
+					</Button>
+					<Button
+						variant="outlined"
+						color="error"
+						onClick={handleDelete}
+						disabled={selected.length < 1}
+					>
+						REMOVE DEVICE
 					</Button>
 				</Stack>
 			</Box>
@@ -257,8 +325,8 @@ const PregledVsehNaprav: React.FC = () => {
 			<Dialog open={openModal} onClose={closeModal} fullWidth maxWidth="sm">
 				<DialogTitle sx={{ m: 0, p: 2 }}>
 					{editingDevice
-						? `Uredi napravo: ${editingDevice.naziv}`
-						: "Dodaj novo napravo"}
+						? `Edit device: ${editingDevice.naziv}`
+						: "Add new device"}
 					<IconButton
 						aria-label="close"
 						onClick={closeModal}
@@ -283,4 +351,4 @@ const PregledVsehNaprav: React.FC = () => {
 	);
 };
 
-export default PregledVsehNaprav;
+export default Devices;

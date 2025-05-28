@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-	Box,
-	Button,
-	InputLabel,
-	OutlinedInput,
-	Stack,
-	Typography,
-} from "@mui/material";
+import { Button, InputLabel, OutlinedInput, Stack } from "@mui/material";
 import api from "../../api";
 
 interface Props {
@@ -38,70 +31,48 @@ const AddService: React.FC<Props> = ({ deviceId, onServiceAdded }) => {
 	};
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100%",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "start",
-				pt: 2,
-			}}
-		>
-			<Box
-				sx={{
-					backgroundColor: "white",
-					padding: 3,
-					borderRadius: 2,
-					boxShadow: 3,
-					width: "100%",
-				}}
-			>
-				<Typography variant="h6" gutterBottom>
-					Dodaj servis
-				</Typography>
-
-				<Stack spacing={2}>
-					<Stack spacing={1}>
-						<InputLabel htmlFor="datum">Datum</InputLabel>
-						<OutlinedInput
-							id="datum"
-							type="date"
-							value={datum}
-							onChange={(e) => setDatum(e.target.value)}
-							fullWidth
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="ura">Ura</InputLabel>
-						<OutlinedInput
-							id="ura"
-							type="time"
-							value={ura}
-							onChange={(e) => setUra(e.target.value)}
-							fullWidth
-						/>
-					</Stack>
-
-					<Stack spacing={1}>
-						<InputLabel htmlFor="komentar">Komentar</InputLabel>
-						<OutlinedInput
-							id="komentar"
-							value={komentar}
-							onChange={(e) => setKomentar(e.target.value)}
-							placeholder="Opis opravljenega servisa"
-							fullWidth
-							multiline
-							rows={3}
-						/>
-					</Stack>
-
-					<Button variant="outlined" color="primary" onClick={handleAdd}>
-						Shrani servis
-					</Button>
+		<>
+			<Stack spacing={2}>
+				<Stack spacing={1}>
+					<InputLabel htmlFor="datum">Date</InputLabel>
+					<OutlinedInput
+						id="datum"
+						type="date"
+						value={datum}
+						onChange={(e) => setDatum(e.target.value)}
+						fullWidth
+					/>
 				</Stack>
-			</Box>
-		</Box>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="ura">Time</InputLabel>
+					<OutlinedInput
+						id="ura"
+						type="time"
+						value={ura}
+						onChange={(e) => setUra(e.target.value)}
+						fullWidth
+					/>
+				</Stack>
+
+				<Stack spacing={1}>
+					<InputLabel htmlFor="komentar">Comment</InputLabel>
+					<OutlinedInput
+						id="komentar"
+						value={komentar}
+						onChange={(e) => setKomentar(e.target.value)}
+						placeholder="Description of service"
+						fullWidth
+						multiline
+						rows={3}
+					/>
+				</Stack>
+
+				<Button variant="contained" color="primary" onClick={handleAdd}>
+					ADD SERVICE
+				</Button>
+			</Stack>
+		</>
 	);
 };
 

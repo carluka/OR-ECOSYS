@@ -1,1 +1,55 @@
-# Docker compose za | Providers | | Consumer | | PostgreSQL | | InfluxDB | | Node.js | | Webapp1 | | Webapp2 |
+version: '3.8'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    network_mode: "host"
+    restart: always
+    environment:
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    network_mode: "host"
+    restart: always
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_ZOOKEEPER_CONNECT: 127.0.0.1:2181
+      KAFKA_OPTS: "-Djava.net.preferIPv4Stack=true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_MS: "21600000"
+      KAFKA_CREATE_TOPICS: "medical-device-data:1:1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+
+  influxdb:
+    image: influxdb:2.7
+    network_mode: "host"
+    restart: always
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+
+  telegraf:
+    image: telegraf:1.28
+    network_mode: "host"
+    restart: always
+    depends_on:
+      - kafka
+      - influxdb
+    volumes:
+      - /home/user/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
+
+volumes:
+  influxdb-data:
+  influxdb-config:

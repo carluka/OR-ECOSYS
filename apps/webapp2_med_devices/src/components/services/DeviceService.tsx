@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-	Typography,
 	TableContainer,
 	Table,
 	TableHead,
@@ -19,7 +18,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import api from "../../api";
-import AddService from "./addService";
+import AddService from "./AddService";
 
 interface Service {
 	idservis: number;
@@ -72,7 +71,7 @@ const DeviceService: React.FC<Props> = ({ device, onServiceAdded }) => {
 
 	const handleDelete = () => {
 		if (!selectedServices.length) {
-			alert("Prosim izberi vsaj en servis za brisanje.");
+			alert("Choose at least one service.");
 			return;
 		}
 		api
@@ -95,15 +94,11 @@ const DeviceService: React.FC<Props> = ({ device, onServiceAdded }) => {
 
 	return (
 		<Box>
-			<Typography variant="h6" gutterBottom>
-				Servisi za: <strong>{device.naziv}</strong>
-			</Typography>
-
 			<TableContainer component={Paper}>
 				<Table size="small">
-					<TableHead>
+					<TableHead sx={{ bgcolor: "#2C2D2D" }}>
 						<TableRow>
-							<TableCell padding="checkbox">
+							<TableCell padding="checkbox" sx={{ color: "white" }}>
 								<Checkbox
 									checked={
 										services.length > 0 &&
@@ -114,21 +109,22 @@ const DeviceService: React.FC<Props> = ({ device, onServiceAdded }) => {
 										selectedServices.length < services.length
 									}
 									onChange={handleToggleAll}
+									sx={{ color: "white" }}
 								/>
 							</TableCell>
-							<TableCell>Datum</TableCell>
-							<TableCell>Ura</TableCell>
-							<TableCell>Komentar</TableCell>
+							<TableCell sx={{ color: "white" }}>Date</TableCell>
+							<TableCell sx={{ color: "white" }}>Time</TableCell>
+							<TableCell sx={{ color: "white" }}>Comment</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
 						{loading ? (
 							<TableRow>
-								<TableCell colSpan={4}>Nalagam…</TableCell>
+								<TableCell colSpan={4}>Loading…</TableCell>
 							</TableRow>
 						) : services.length === 0 ? (
 							<TableRow>
-								<TableCell colSpan={4}>Ni servisnih vnosov.</TableCell>
+								<TableCell colSpan={4}>No services.</TableCell>
 							</TableRow>
 						) : (
 							services.map((svc) => (
@@ -152,10 +148,10 @@ const DeviceService: React.FC<Props> = ({ device, onServiceAdded }) => {
 			<Box sx={{ mt: 2, textAlign: "right" }}>
 				<Stack direction="row" spacing={2} justifyContent="flex-end">
 					<Button variant="outlined" onClick={handleDelete} color="error">
-						Odstrani servis
+						REMOVE SERVICE
 					</Button>
 					<Button variant="outlined" onClick={openAddModal}>
-						Dodaj servis
+						ADD SERVICE
 					</Button>
 				</Stack>
 			</Box>
@@ -163,7 +159,7 @@ const DeviceService: React.FC<Props> = ({ device, onServiceAdded }) => {
 			{/* AddService modal */}
 			<Dialog open={openAdd} onClose={closeAddModal} maxWidth="sm" fullWidth>
 				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Dodaj servis za: {device.naziv}
+					Add service: <strong>{device.naziv}</strong>
 					<IconButton
 						aria-label="close"
 						onClick={closeAddModal}

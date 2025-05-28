@@ -1,4 +1,3 @@
-// models/soba.js
 const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
 	class Soba extends Model {
@@ -16,6 +15,12 @@ module.exports = (sequelize) => {
 			},
 			naziv: { type: DataTypes.STRING(45), allowNull: false },
 			lokacija: { type: DataTypes.STRING(100), allowNull: true },
+			unsaved_changes: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: false,
+			},
+			uuid: { type: DataTypes.UUID, allowNull: false },
 		},
 		{
 			sequelize,

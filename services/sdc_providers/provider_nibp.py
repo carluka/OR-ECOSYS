@@ -19,19 +19,26 @@ def get_network_adapter() -> network.NetworkAdapter:
 
 
 def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvider:
+    raw_uuid = os.getenv('PROVIDER_UUID')
+    if not raw_uuid:
+        raise RuntimeError("Environment variable PROVIDER_UUID is not set")
+    try:
+        provider_uuid = uuid.UUID(raw_uuid)
+    except ValueError:
+        raise RuntimeError(f"Invalid PROVIDER_UUID: {raw_uuid!r} — must be a valid UUID string")
     ws_discovery = wsdiscovery.WSDiscovery(get_network_adapter().ip)
     ws_discovery.start()
 
     dpws_model = dpws_types.ThisModelType(
         manufacturer='sdc11073',
         manufacturer_url='www.sdc11073.com',
-        model_name='Capnograph',
+        model_name='NIBP Module',
         model_number='1.0',
         model_url='www.draeger.com/model',
         presentation_url='www.draeger.com/model/presentation'
     )
     dpws_device = dpws_types.ThisDeviceType(
-        friendly_name='Capnograph',
+        friendly_name='NIBP Module',
         firmware_version='Version1',
         serial_number='98765'
     )
@@ -43,7 +50,7 @@ def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvid
         this_model=dpws_model,
         this_device=dpws_device,
         device_mdib_container=mdib,
-        epr=uuid.UUID('adfadfcc-cdef-1234-5678-abcdefabcdef'),
+        epr=provider_uuid,
         ssl_context_container=None
     )
 
@@ -71,56 +78,61 @@ def run_provider():
         prov = create_provider()
         set_provider_data(prov)
 
-        desc_co2 = prov.mdib.descriptions.handle.get_one('co2.ch0.capnograph')
-        desc_rf = prov.mdib.descriptions.handle.get_one('rf.ch0.capnograph')
-
-        unit_co2 = (desc_co2.Unit.ConceptDescription[0].text
-                    if desc_co2.Unit and desc_co2.Unit.ConceptDescription else 'mmHg')
-        unit_rf = (desc_rf.Unit.ConceptDescription[0].text
-                   if desc_rf.Unit and desc_rf.Unit.ConceptDescription else 'breaths/min')
+        desc_sys = prov.mdib.descriptions.handle.get_one('bps.ch0.nibp_module')
+        desc_dia = prov.mdib.descriptions.handle.get_one('bpd.ch0.nibp_module')
+        desc_map = prov.mdib.descriptions.handle.get_one('bpa.ch0.nibp_module')
+        
+        unit = (desc_sys.Unit.ConceptDescription[0].text
+                if desc_sys.Unit and desc_sys.Unit.ConceptDescription else 'mmHg')
 
         with prov.mdib.metric_state_transaction() as mgr:
-            for desc in (desc_co2, desc_rf):
+            for desc in (desc_sys, desc_dia, desc_map):
                 state = mgr.get_state(desc.Handle)
                 if not state.MetricValue:
                     state.mk_metric_value()
 
-        base_co2 = 40.0      
-        base_rf = 16.0        
+
+        base_sys, base_dia = 120.0, 80.0
         t = 0
 
         while True:
             try:
-                co2_variation = math.sin(t / 10.0) * 5.0 + random.gauss(0, 1)
-                rf_variation = random.gauss(0, 0.5)
+                angle = t / 30.0
+                sys_variation = math.sin(angle) * 5.0 + random.gauss(0, 1)
+                dia_variation = math.sin(angle + math.pi/6) * 3.0 + random.gauss(0, 1)
 
-                etco2 = base_co2 + co2_variation
-                rr   = base_rf  + rf_variation
+                systolic = base_sys + sys_variation
+                diastolic = base_dia + dia_variation
 
-                etco2 = max(0.0, min(100.0, etco2))
-                rr    = max(5.0,  min(40.0, rr))
+                mean_art = (systolic + 2 * diastolic) / 3.0
 
-                co2_val = decimal.Decimal(etco2).quantize(decimal.Decimal('1.0'))
-                rf_val  = decimal.Decimal(rr).quantize(decimal.Decimal('1.0'))
+                systolic = max(30.0, min(200.0, systolic))
+                diastolic = max(30.0, min(200.0, diastolic))
+                mean_art = max(30.0, min(200.0, mean_art))
+
+                sys_val = decimal.Decimal(systolic).quantize(decimal.Decimal('1.0'))
+                dia_val = decimal.Decimal(diastolic).quantize(decimal.Decimal('1.0'))
+                map_val = decimal.Decimal(mean_art).quantize(decimal.Decimal('1.0'))
 
                 with prov.mdib.metric_state_transaction() as mgr:
-                    state_co2 = mgr.get_state(desc_co2.Handle)
-                    state_rf  = mgr.get_state(desc_rf.Handle)
-                    state_co2.MetricValue.Value = co2_val
-                    state_rf.MetricValue.Value  = rf_val
+                    st_sys = mgr.get_state(desc_sys.Handle)
+                    st_dia = mgr.get_state(desc_dia.Handle)
+                    st_map = mgr.get_state(desc_map.Handle)
+                    st_sys.MetricValue.Value = sys_val
+                    st_dia.MetricValue.Value = dia_val
+                    st_map.MetricValue.Value = map_val
 
-                logger.info(f'Set Capnograph: CO₂={co2_val}{unit_co2}, RR={rf_val}{unit_rf}')
+                logger.info(f'Set NIBP: sys={sys_val}{unit}, dia={dia_val}{unit}, map={map_val}{unit}')
 
                 t += 1
                 time.sleep(1)
 
             except Exception as loop_err:
-                logger.error(f'Error in capnograph loop: {loop_err}', exc_info=True)
+                logger.error(f'Error in NIBP loop: {loop_err}')
                 time.sleep(1)
 
-
     except KeyboardInterrupt:
-        print("\nStopping Capnograph provider...")
+        print("\nStopping NIBP provider...")
     except Exception as e:
         logger.error(f'Error: {e}')
     finally:

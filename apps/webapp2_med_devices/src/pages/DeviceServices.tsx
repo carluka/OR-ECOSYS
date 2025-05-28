@@ -17,15 +17,20 @@ import {
 	DialogContent,
 	IconButton,
 	Stack,
+	TablePagination,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import DeviceService from "../components/services/deviceService";
+import DeviceService from "../components/services/DeviceService";
 import api from "../api";
 
-const ServisiNaprav: React.FC = () => {
+const DeviceServices: React.FC = () => {
 	const [devices, setDevices] = useState<any[]>([]);
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [openService, setOpenService] = useState(false);
+
+	// Pagination state
+	const [page, setPage] = useState(0);
+	const [rowsPerPage, setRowsPerPage] = useState(5);
 
 	const fetchDevices = () => {
 		api
@@ -41,7 +46,7 @@ const ServisiNaprav: React.FC = () => {
 
 	const handleOpenService = () => {
 		if (selectedId == null) {
-			alert("Prosim izberi eno napravo za servis.");
+			alert("Please choose one device.");
 			return;
 		}
 		setOpenService(true);
@@ -50,25 +55,43 @@ const ServisiNaprav: React.FC = () => {
 		setOpenService(false);
 	};
 
+	// Pagination handlers
+	const handleChangePage = (event: unknown, newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleChangeRowsPerPage = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		setRowsPerPage(parseInt(event.target.value, 10));
+		setPage(0);
+	};
+
+	// Slice devices for current page
+	const paginatedDevices = devices.slice(
+		page * rowsPerPage,
+		page * rowsPerPage + rowsPerPage
+	);
+
 	const device = devices.find((d) => d.idnaprava === selectedId)!;
 
 	return (
 		<MainLayout>
-			<Typography variant="h4" gutterBottom>
-				Servisi naprav
+			<Typography variant="h4" gutterBottom sx={{ fontWeight: "600" }}>
+				DEVICE SERVICES
 			</Typography>
 
 			<TableContainer component={Paper}>
 				<Table>
-					<TableHead>
+					<TableHead sx={{ bgcolor: "#2C2D2D" }}>
 						<TableRow>
-							<TableCell padding="checkbox" />
-							<TableCell>Ime naprave</TableCell>
-							<TableCell>Tip naprave</TableCell>
+							<TableCell padding="checkbox" sx={{ color: "white" }} />
+							<TableCell sx={{ color: "white" }}>Device Name</TableCell>
+							<TableCell sx={{ color: "white" }}>Device Type</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{devices.map((d) => (
+						{paginatedDevices.map((d) => (
 							<TableRow key={d.idnaprava}>
 								<TableCell padding="checkbox">
 									<Checkbox
@@ -82,17 +105,30 @@ const ServisiNaprav: React.FC = () => {
 						))}
 					</TableBody>
 				</Table>
+				<TablePagination
+					rowsPerPageOptions={[5, 10, 25]}
+					component="div"
+					count={devices.length}
+					rowsPerPage={rowsPerPage}
+					page={page}
+					onPageChange={handleChangePage}
+					onRowsPerPageChange={handleChangeRowsPerPage}
+				/>
 			</TableContainer>
 
 			<Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
 				<Stack direction="row" spacing={2}>
-					<Button variant="outlined" onClick={handleOpenService}>
-						Pregled servisov
+					<Button
+						variant="outlined"
+						onClick={handleOpenService}
+						disabled={selectedId === null}
+					>
+						SERVICE OVERVIEW
 					</Button>
 				</Stack>
 			</Box>
 
-			{/* Modal za pregled servisov */}
+			{/* Modal for service overview */}
 			<Dialog
 				open={openService}
 				onClose={handleCloseService}
@@ -100,7 +136,7 @@ const ServisiNaprav: React.FC = () => {
 				fullWidth
 			>
 				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Pregled servisov naprave: {device?.naziv}
+					Services overview: <strong>{device?.naziv}</strong>
 					<IconButton
 						aria-label="close"
 						onClick={handleCloseService}
@@ -125,4 +161,4 @@ const ServisiNaprav: React.FC = () => {
 	);
 };
 
-export default ServisiNaprav;
+export default DeviceServices;

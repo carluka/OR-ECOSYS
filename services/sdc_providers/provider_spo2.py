@@ -18,6 +18,13 @@ def get_network_adapter() -> network.NetworkAdapter:
     return next(adapter for adapter in network.get_adapters() if adapter.is_loopback)
 
 def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvider:
+    raw_uuid = os.getenv('PROVIDER_UUID')
+    if not raw_uuid:
+        raise RuntimeError("Environment variable PROVIDER_UUID is not set")
+    try:
+        provider_uuid = uuid.UUID(raw_uuid)
+    except ValueError:
+        raise RuntimeError(f"Invalid PROVIDER_UUID: {raw_uuid!r} — must be a valid UUID string")
     ws_discovery = wsdiscovery.WSDiscovery(get_network_adapter().ip)
     ws_discovery.start()
 
@@ -43,7 +50,7 @@ def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvid
         this_model=dpws_model,
         this_device=dpws_device,
         device_mdib_container=mdib,
-        epr=uuid.UUID('abcdefab-cdef-1234-5678-abcdefabcdef'),
+        epr=provider_uuid,
         ssl_context_container=None
     )
 

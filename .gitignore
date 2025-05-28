@@ -3,7 +3,10 @@
 
 #Config
 *.env
+.env.*
 
 
 #PyCache
 __pycache__/
+
+infra/k8s/

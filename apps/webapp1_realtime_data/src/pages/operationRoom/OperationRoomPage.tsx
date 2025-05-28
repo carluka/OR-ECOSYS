@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState, useRef } from "react";
 import { useDeviceContext } from "../../context/DeviceContext";
+import { useParams, Navigate } from "react-router-dom";
 import NibpModule from "../../components/devices/NIBPModule";
 import EKGModule from "../../components/devices/EKGModule";
 import SPO2Sensor from "../../components/devices/SPO2Sensor";
@@ -9,6 +10,7 @@ import TemperatureGauge from "../../components/devices/TemperatureGauge";
 import InfusionPump from "../../components/devices/InfusionPump";
 import Ventilator from "../../components/devices/Ventilator";
 import "./OperationRoomPage.css";
+import api from "../../api";
 
 interface DataPoint {
   time: number;
@@ -21,9 +23,14 @@ interface MetricMessage {
   device_id: string;
 }
 
+interface MessageResponse {
+  message: string;
+}
+
 const MAX_POINTS = 60;
 
 const OperationRoomPage: React.FC = () => {
+  const { roomId } = useParams();
   const { deviceData, updateDeviceData } = useDeviceContext();
   const [connected, setConnected] = useState<boolean>(false);
   const [co2History, setCo2History] = useState<DataPoint[]>([]);
@@ -46,13 +53,16 @@ const OperationRoomPage: React.FC = () => {
       });
     }
   };
-
-  const connect = () => {
-    wsRef.current?.close();
-    const ws = new WebSocket("ws://localhost:8000/ws/medical-device");
+  const openSocket = () => {
+    const ws = new WebSocket(
+      "ws://data.or-ecosystem.eu:8000/ws/medical-device"
+    );
     wsRef.current = ws;
 
-    ws.onopen = () => setConnected(true);
+    ws.onopen = () => {
+      setConnected(true);
+    };
+
     ws.onmessage = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data);
@@ -66,10 +76,32 @@ const OperationRoomPage: React.FC = () => {
       setConnected(false);
       wsRef.current = null;
     };
+
+    ws.onerror = () => {
+      ws.close();
+    };
+
+    ws.onclose = () => {
+      if (!connected) {
+        setTimeout(openSocket, 1000);
+      }
+    };
   };
 
-  const disconnect = () => {
-    wsRef.current?.close();
+  const connect = async () => {
+    if (connected) return;
+
+    await api.post(`/rooms/${roomId}/deploy`);
+    await api.post(`/rooms/${roomId}/connect`);
+
+    openSocket();
+  };
+
+  const disconnect = async () => {
+    try {
+      wsRef.current?.close();
+      await api.post<MessageResponse>(`/rooms/${roomId}/disconnect`);
+    } catch {}
   };
 
   const nibpData = {
@@ -159,6 +191,9 @@ const OperationRoomPage: React.FC = () => {
         "peep.ch0.mechanical_ventilator"
       ] ?? null,
   };
+  if (!roomId) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="operation-room-container">
@@ -180,7 +215,7 @@ const OperationRoomPage: React.FC = () => {
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
               </svg>
             </div>
-            <h1>Operation Room - Dashboard</h1>
+            <h1>{decodeURIComponent(roomId)} - Dashboard</h1>
           </div>
 
           <div className="header-controls">

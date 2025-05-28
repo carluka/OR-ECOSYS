@@ -10,7 +10,9 @@ import {
   Paper,
   Typography,
   Box,
+  Button,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 
 interface Room {
@@ -25,6 +27,7 @@ interface ApiResponse {
 
 const HomePage = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -39,18 +42,23 @@ const HomePage = () => {
     fetchRooms();
   }, []);
 
+  const handleRoomSelect = (roomName: number) => {
+    navigate(`/operation/${encodeURIComponent(roomName)}`);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Operation Rooms
+        Operacijske sobe
       </Typography>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Room Name</TableCell>
-              <TableCell>Location</TableCell>
+              <TableCell>Ime sobe</TableCell>
+              <TableCell>Lokacija</TableCell>
+              <TableCell>Akcije</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -59,6 +67,15 @@ const HomePage = () => {
                 <TableCell>{room.idsoba}</TableCell>
                 <TableCell>{room.naziv}</TableCell>
                 <TableCell>{room.lokacija}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleRoomSelect(room.idsoba)}
+                  >
+                    Odpri sobo
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

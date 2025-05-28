@@ -1,21 +1,33 @@
 from typing import Callable, Dict, Any
 import asyncio
+import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 import json
 from confluent_kafka import Producer
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 from app.services import consumers
 
 logger = logging.getLogger(__name__)
-producer = Producer({'bootstrap.servers': 'kafka:9092'})
 
-class SDCConsumerService:
+class MinimalOptimizedSDCConsumerService:
     def __init__(self):
         self._consumer_task: asyncio.Task | None = None
         self._is_running = False
         self._data_callbacks: list[Callable[[Dict[str, Any]], None]] = []
+        
+        self._thread_pool = ThreadPoolExecutor(max_workers=3, thread_name_prefix="SDC-Async")
+        
+        self.producer = Producer({
+            'bootstrap.servers': '127.0.0.1:9092',
+            'batch.size': 8192,
+            'linger.ms': 5,  
+            'acks': 1,       
+            'retries': 2,
+        })
 
     def add_data_callback(self, callback: Callable[[Dict[str, Any]], None]):
         self._data_callbacks.append(callback)
@@ -40,41 +52,77 @@ class SDCConsumerService:
                 await self._consumer_task
             except asyncio.CancelledError:
                 pass
+        
+        self._thread_pool.shutdown(wait=True)
+        
+        self.producer.flush(timeout=5.0)
 
     async def _run(self):
-        def metric_callback(metrics_by_handle: dict):
-            for handle, metric in metrics_by_handle.items():
-                value = metric.MetricValue.Value if metric.MetricValue else None
-                if isinstance(value, Decimal):
-                    value = float(value)
-                data = {
-                    "device_id": handle,
-                    "timestamp": datetime.now().isoformat(),
-                    "metrics": {handle: value}
-                }
-                self._handle_device_data(data)
+        def fast_metric_callback(metrics_by_handle: dict):
+            try:
+                for handle, metric in metrics_by_handle.items():
+                    try:
+                        value = metric.MetricValue.Value if metric.MetricValue else None
+                        if isinstance(value, Decimal):
+                            value = float(value)
+                        
+                        logger.info(f"📊 Processing metric - Handle: {handle}, Value: {value}")
+                        
+                        data = {
+                            "device_id": handle,
+                            "timestamp": datetime.now().isoformat(),
+                            "metrics": {handle: value}
+                        }
+                        
+                        self._thread_pool.submit(self._handle_device_data_async, data)
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Error processing metric {handle}: {e}")
+                        
+            except Exception as e:
+                logger.error(f"❌ Error in fast metric callback: {e}")
 
-        consumers.on_metric_update = metric_callback
+        consumers.on_metric_update = fast_metric_callback
+        await asyncio.sleep(0.1)
+        
+        if hasattr(consumers, 'rebind_callbacks'):
+            consumers.rebind_callbacks()
+        else:
+            logger.warning("⚠️ rebind_callbacks function not available in consumers module")
 
+        await asyncio.sleep(0.1)
+        
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, consumers.run_multi_provider_consumer)
 
-    def _handle_device_data(self, data: Dict[str, Any]):
-        if 'timestamp' not in data:
-            data['timestamp'] = datetime.now().isoformat()
-        
-        # Pošiljanje podatkov v Kafko
-        self.kafka_send(data)
-        logger.info(f"Data sent to Kafka: {data}")
+    def _handle_device_data_async(self, data: Dict[str, Any]):
+        try:
+            start_time = time.time()
+            
+            if 'timestamp' not in data:
+                data['timestamp'] = datetime.now(timezone.utc).isoformat()
 
-        for callback in self._data_callbacks:
-            try:
-                callback(data)
-            except Exception as e:
-                logger.error(f"Error in data callback: {e}")
+            room_id = os.getenv('ROOM_UUID')
+            if room_id:
+                data['room_id'] = room_id
+            else:
+                logger.warning("⚠️ Okoljska spremenljivka ROOM_ID ni nastavljena")
+
+            self.kafka_send(data)
+
+            for callback in self._data_callbacks:
+                try:
+                    callback(data)
+                except Exception as e:
+                    logger.error(f"❌ Error in data callback: {e}")
+            
+            processing_time = time.time() - start_time
+            logger.debug(f"📤 Data processed in {processing_time:.3f}s: {data}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error in async data handling: {e}")
     
     def _json_serializer(self, obj):
-        """Pomožna funkcija za serializacijo posebnih tipov v JSON."""
         if isinstance(obj, Decimal):
             return float(obj)
         if isinstance(obj, datetime):
@@ -82,18 +130,16 @@ class SDCConsumerService:
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
     
     def kafka_send(self, data: Dict[str, Any]):
-        """Pošlje podatke v Kafka temo."""
         try:
-            #TOPIC V KAFKI
             topic = "medical-device-data"
-    
             json_data = json.dumps(data, default=self._json_serializer)
-        
-            producer.produce(topic, json_data.encode('utf-8'))
-            producer.flush(timeout=1.0)
             
-            logger.debug(f"Successfully sent data to Kafka topic {topic}")
+            self.producer.produce(topic, json_data.encode('utf-8'))
+            
+            self.producer.poll(0)
+            
+            logger.debug(f"✅ Successfully sent data to Kafka topic {topic}")
         except Exception as e:
-            logger.error(f"Error sending data to Kafka: {e}")
+            logger.error(f"❌ Error sending data to Kafka: {e}")
 
-sdc_consumer_service = SDCConsumerService()
+sdc_consumer_service = MinimalOptimizedSDCConsumerService()

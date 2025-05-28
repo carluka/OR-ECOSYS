@@ -1,5 +1,6 @@
 const { models, sequelize } = require("../db/database");
 const { QueryTypes } = require("sequelize");
+const { v4: uuidv4 } = require("uuid");
 
 class DeviceRepo {
 	async findAll() {
@@ -22,20 +23,70 @@ class DeviceRepo {
 	}
 
 	async create(data) {
+		data.uuid = uuidv4();
 		return models.Naprava.create(data);
 	}
 
 	async update(id, data) {
-		return models.Naprava.update(data, { where: { idnaprava: id } });
-	}
+		const device = await models.Naprava.findByPk(id);
 
-	async delete(id) {
-		// TODO: implement delete or soft-delete
-		return models.Naprava.destroy({ where: { idnaprava: id } });
+		await models.Naprava.update(data, { where: { idnaprava: id } });
+
+		const oldSobaId = device.soba_idsoba;
+		const newSobaId = data.hasOwnProperty("soba_idsoba")
+			? data.soba_idsoba
+			: oldSobaId;
+
+		// If room assignment changed, update both old and new rooms
+		if (oldSobaId !== newSobaId) {
+			if (oldSobaId !== null && oldSobaId !== undefined) {
+				await models.Soba.update(
+					{ unsaved_changes: true },
+					{ where: { idsoba: oldSobaId } }
+				);
+			}
+			if (newSobaId !== null && newSobaId !== undefined) {
+				await models.Soba.update(
+					{ unsaved_changes: true },
+					{ where: { idsoba: newSobaId } }
+				);
+			}
+		} else {
+			// If room didn't change but device is assigned to a room, mark that room unsaved_changes
+			if (oldSobaId !== null && oldSobaId !== undefined) {
+				await models.Soba.update(
+					{ unsaved_changes: true },
+					{ where: { idsoba: oldSobaId } }
+				);
+			}
+		}
+
+		return;
 	}
 
 	async deleteMultiple(ids) {
-		// TODO: implement delete or soft-delete
+		const devices = await models.Naprava.findAll({
+			where: {
+				idnaprava: ids,
+			},
+			attributes: ["soba_idsoba"],
+		});
+
+		const sobaIds = [
+			...new Set(
+				devices
+					.map((d) => d.soba_idsoba)
+					.filter((id) => id !== null && id !== undefined)
+			),
+		];
+
+		if (sobaIds.length > 0) {
+			await models.Soba.update(
+				{ unsaved_changes: true },
+				{ where: { idsoba: sobaIds } }
+			);
+		}
+
 		return models.Naprava.destroy({
 			where: {
 				idnaprava: ids,
@@ -49,12 +100,10 @@ class DeviceRepo {
 			const whereConditions = [];
 			const havingConditions = [];
 
-			// simple WHERE on device type
 			if (tip_naprave) {
 				whereConditions.push(`tn.naziv = :tip_naprave`);
 			}
 
-			// filter on the aggregated "servis" flag
 			if (servis !== undefined) {
 				havingConditions.push(
 					`COALESCE(bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'), FALSE) = :servis`
@@ -74,7 +123,9 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv              AS naprava,
 			  tn.naziv             AS tip_naprave,
-			  (sb.naziv || ' ' || sb.lokacija) AS soba,
+			  n.soba_idsoba,
+			  -- Use COALESCE to show empty string if no room assigned
+			  COALESCE(sb.naziv || ' ' || sb.lokacija, 'NO ROOM') AS soba,
 			  -- default to false if no servis rows at all
 			  COALESCE(
 				bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'),
@@ -83,7 +134,7 @@ class DeviceRepo {
 			FROM naprava n
 			JOIN tip_naprave tn
 			  ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
-			JOIN soba sb
+			LEFT JOIN soba sb
 			  ON n.soba_idsoba = sb.idsoba
 			LEFT JOIN servis sv
 			  ON sv.naprava_idnaprava = n.idnaprava
@@ -92,16 +143,16 @@ class DeviceRepo {
 			  n.idnaprava,
 			  n.naziv,
 			  tn.naziv,
+			  n.soba_idsoba,
 			  sb.naziv,
 			  sb.lokacija
 			${havingSQL}
-			ORDER BY n.naziv;
+			ORDER BY n.idnaprava DESC;
 		  `;
 
 			const results = await sequelize.query(sql, {
 				replacements: {
 					tip_naprave,
-					// ensure boolean
 					servis: servis === "true",
 				},
 				type: QueryTypes.SELECT,

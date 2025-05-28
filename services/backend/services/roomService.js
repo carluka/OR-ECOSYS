@@ -1,28 +1,45 @@
-const roomRepo = require('../repositories/roomRepo');
+const roomRepo = require("../repositories/roomRepo");
 
 class RoomService {
-  async listRooms() {
-    return roomRepo.findAll();
-  }
+	async listRooms() {
+		return roomRepo.findAll();
+	}
 
-  async getRoom(id) {
-    return roomRepo.findById(id);
-  }
+	async getRoom(id) {
+		return roomRepo.findById(id);
+	}
 
-  async createRoom(payload) {
-    // TODO: add validation
-    return roomRepo.create(payload);
-  }
+	async getById(id) {
+		return this.getRoom(id);
+	}
 
-  async updateRoom(id, payload) {
-    // TODO: business rules
-    return roomRepo.update(id, payload);
-  }
+	async createRoom(payload) {
+		return roomRepo.create(payload);
+	}
 
-  async deleteRoom(id) {
-    // TODO: check constraints before delete
-    return roomRepo.delete(id);
-  }
+	async updateRoom(id, payload) {
+		return roomRepo.update(id, payload);
+	}
+
+	async getDevices(id) {
+		return roomRepo.getDevicesInRoom(id);
+	}
+
+	async deleteRoom(id) {
+		return roomRepo.delete(id);
+	}
+
+	async roomDeviceCount() {
+		return roomRepo.getRoomsWithDevicesCount();
+	}
+
+	async deleteRooms(ids) {
+		return roomRepo.deleteMultiple(ids);
+	}
+
+	async commitChanges(id) {
+		return roomRepo.commitChanges(id);
+	}
 }
 
 module.exports = new RoomService();

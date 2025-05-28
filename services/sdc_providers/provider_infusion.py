@@ -18,20 +18,27 @@ def get_network_adapter() -> network.NetworkAdapter:
     return next(adapter for adapter in network.get_adapters() if adapter.is_loopback)
 
 def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvider:
+    raw_uuid = os.getenv('PROVIDER_UUID')
+    if not raw_uuid:
+        raise RuntimeError("Environment variable PROVIDER_UUID is not set")
+    try:
+        provider_uuid = uuid.UUID(raw_uuid)
+    except ValueError:
+        raise RuntimeError(f"Invalid PROVIDER_UUID: {raw_uuid!r} — must be a valid UUID string")
     ws_discovery = wsdiscovery.WSDiscovery(get_network_adapter().ip)
     ws_discovery.start()
 
     dpws_model = dpws_types.ThisModelType(
         manufacturer='sdc11073',
         manufacturer_url='www.sdc11073.com',
-        model_name='Temperature gauge',
+        model_name='Infusion pump',
         model_number='1.0',
         model_url='www.draeger.com/model',
         presentation_url='www.draeger.com/model/presentation'
     )
     
     dpws_device = dpws_types.ThisDeviceType(
-        friendly_name='Temperature gauge',
+        friendly_name='Infusion pump',
         firmware_version='Version1',
         serial_number='54321'
     )
@@ -43,7 +50,7 @@ def create_provider(mdib_path: pathlib.Path | None = None) -> provider.SdcProvid
         this_model=dpws_model,
         this_device=dpws_device,
         device_mdib_container=mdib,
-        epr=uuid.UUID('abcdefff-cdef-1234-5678-abcdefabcdef'),
+        epr=provider_uuid,
         ssl_context_container=None
     )
 
@@ -69,45 +76,51 @@ def run_provider():
         prov = create_provider()
         set_provider_data(prov)
 
-        metric = prov.mdib.descriptions.handle.get_one('temperature.ch0.temperature_gauge')
+        metric_name = prov.mdib.descriptions.handle.get_one('drugName.ch0.infusion_pump')
+        metric_speed = prov.mdib.descriptions.handle.get_one('flowRate.ch0.infusion_pump')
+        metric_total = prov.mdib.descriptions.handle.get_one('volumeTotal.ch0.infusion_pump')
+        drug_names = ["Propofol", "Saline", "Dopamine", "Fentanyl", "Midazolam"]
+        current_drug = random.choice(drug_names)
 
-        unit = metric.Unit.ConceptDescription[0].text if metric.Unit and metric.Unit.ConceptDescription else "°C"
+        infusion_rate = 25.0  
+        total_volume = 0.0  
+        t = 0
 
         with prov.mdib.metric_state_transaction() as mgr:
-            state = mgr.get_state(metric.Handle)
+            state = mgr.get_state(metric_name.Handle)
             if not state.MetricValue:
                 state.mk_metric_value()
-
-        current_temp = 36.8  
-        min_temp, max_temp = 35.5, 38.0  
-        t = 0
+            state.MetricValue.Value = current_drug
 
         while True:
             try:
-                sine_variation = math.sin(t / 100.0) * 0.2  
-                drift = random.gauss(0, 0.02)  
+                variation = math.sin(t / 20.0) * 0.5 + random.gauss(0, 0.2)
+                infusion_rate_dynamic = max(0.0, infusion_rate + variation)
 
-                target_temp = 36.5
+                total_volume += infusion_rate_dynamic / 3600.0  
 
-                current_temp += (target_temp - current_temp) * 0.01 + sine_variation + drift
-
-                current_temp = max(min_temp, min(max_temp, current_temp))
-
-                temp_decimal = decimal.Decimal(current_temp).quantize(decimal.Decimal('1.0'))
+                rate_decimal = decimal.Decimal(infusion_rate_dynamic).quantize(decimal.Decimal('0.1'))
+                total_decimal = decimal.Decimal(total_volume).quantize(decimal.Decimal('1'))
 
                 with prov.mdib.metric_state_transaction() as mgr:
-                    state = mgr.get_state(metric.Handle)
+                    state = mgr.get_state(metric_speed.Handle)
                     if not state.MetricValue:
                         state.mk_metric_value()
-                    state.MetricValue.Value = temp_decimal
+                    state.MetricValue.Value = rate_decimal
 
-                logger.info(f'Set Body Temperature to {temp_decimal}{unit}')
+                with prov.mdib.metric_state_transaction() as mgr:
+                    state = mgr.get_state(metric_total.Handle)
+                    if not state.MetricValue:
+                        state.mk_metric_value()
+                    state.MetricValue.Value = total_decimal
+
+                logger.info(f"Infusing {current_drug}: {rate_decimal} ml/h, total {total_decimal} ml")
 
                 time.sleep(1)
                 t += 1
 
             except Exception as e:
-                logger.error(f'Error in main loop: {e}')
+                logger.error(f'Error in infusion simulation: {e}')
                 time.sleep(1)
 
     except KeyboardInterrupt:
