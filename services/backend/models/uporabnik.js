@@ -1,4 +1,3 @@
-// models/uporabnik.js
 const { Model, DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {

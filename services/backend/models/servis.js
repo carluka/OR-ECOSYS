@@ -1,4 +1,3 @@
-// models/servis.js
 const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
 	class Servis extends Model {

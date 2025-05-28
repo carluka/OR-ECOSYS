@@ -44,11 +44,10 @@ class UserRepo {
 	}
 
 	async delete(id) {
-		// TODO: implement delete logic
+		// TODO
 	}
 
 	async deleteMultiple(ids) {
-		// TODO: implement delete or soft-delete
 		return models.Uporabnik.destroy({
 			where: {
 				iduporabnik: ids,

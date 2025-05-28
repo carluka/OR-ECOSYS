@@ -25,7 +25,6 @@ class UserService {
 	}
 
 	async createUser(payload) {
-		// TODO: hash password
 		if (payload.geslo) {
 			payload.geslo = await bcryptjs.hash(payload.geslo, 12);
 		}
@@ -33,7 +32,6 @@ class UserService {
 	}
 
 	async updateUser(id, payload) {
-		// TODO: if changing password, hash again
 		if (payload.geslo) {
 			payload.geslo = await bcryptjs.hash(payload.geslo, 10);
 		}
@@ -44,12 +42,10 @@ class UserService {
 	}
 
 	async deleteUser(id) {
-		// TODO: check if user has pending operations
 		return userRepo.delete(id);
 	}
 
 	async deleteUsers(ids) {
-		// TODO: check if users have pending operations
 		return userRepo.deleteMultiple(ids);
 	}
 }

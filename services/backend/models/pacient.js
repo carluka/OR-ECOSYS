@@ -1,4 +1,3 @@
-// models/pacient.js
 const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
 	class Pacient extends Model {

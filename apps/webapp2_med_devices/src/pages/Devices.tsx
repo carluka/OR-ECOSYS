@@ -28,6 +28,7 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import AddDevice from "../components/devices/AddDevice";
 import EditDevice from "../components/devices/EditDevice";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 interface DeviceOverview {
 	idnaprava: number;
@@ -241,6 +242,9 @@ const Devices: React.FC = () => {
 							<TableCell align="center" sx={{ color: "white" }}>
 								Service
 							</TableCell>
+							<TableCell align="center" sx={{ color: "white" }}>
+								Actions
+							</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
@@ -266,6 +270,18 @@ const Devices: React.FC = () => {
 								</TableCell>
 
 								<TableCell align="center">{d.servis ? "✓" : "X"}</TableCell>
+								<TableCell align="center">
+									<Button
+										variant="outlined"
+										size="small"
+										startIcon={<PictureAsPdfIcon />}
+										onClick={() => {
+											console.log("DeviceID", d.idnaprava);
+										}}
+									>
+										PDF
+									</Button>
+								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>

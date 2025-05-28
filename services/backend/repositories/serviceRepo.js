@@ -15,11 +15,11 @@ class ServiceRepo {
 	}
 
 	async update(id, data) {
-		// TODO: implement update logic
+		// TODO
 	}
 
 	async delete(id) {
-		// TODO: implement delete logic
+		// TODO
 	}
 
 	async findByDeviceId(id) {
