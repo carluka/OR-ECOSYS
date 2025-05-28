@@ -8,7 +8,7 @@ const {
   removeMultiple,
   commitChanges,
   deploy,
-  connectRoom,
+  startDevices,
   disconnectRoom,
 } = require("../controllers/roomCtrl");
 const router = require("express").Router();
@@ -17,7 +17,7 @@ router.get("/roomsDeviceCount", getRoomsDeviceCount);
 router.delete("/deleteMultiple", removeMultiple);
 router.post("/commitChanges", commitChanges);
 router.post("/:id/deploy", deploy);
-router.post("/:id/connect", connectRoom);
+router.post("/:id/startDevices", startDevices);
 router.post("/:id/disconnect", disconnectRoom);
 router.get("/", getAll);
 router.get("/:id", getById);
