@@ -100,12 +100,10 @@ class DeviceRepo {
 			const whereConditions = [];
 			const havingConditions = [];
 
-			// simple WHERE on device type
 			if (tip_naprave) {
 				whereConditions.push(`tn.naziv = :tip_naprave`);
 			}
 
-			// filter on the aggregated "servis" flag
 			if (servis !== undefined) {
 				havingConditions.push(
 					`COALESCE(bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'), FALSE) = :servis`
@@ -149,7 +147,7 @@ class DeviceRepo {
 			  sb.naziv,
 			  sb.lokacija
 			${havingSQL}
-			ORDER BY n.naziv;
+			ORDER BY n.idnaprava DESC;
 		  `;
 
 			const results = await sequelize.query(sql, {

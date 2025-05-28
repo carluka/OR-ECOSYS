@@ -1,4 +1,3 @@
-// services/backend/models/tipNaprave.js
 const { Model, DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
@@ -21,7 +20,7 @@ module.exports = (sequelize) => {
 			},
 		},
 		{
-			sequelize, // ← tukaj je ključno!
+			sequelize,
 			modelName: "TipNaprave",
 			tableName: "tip_naprave",
 			timestamps: false,

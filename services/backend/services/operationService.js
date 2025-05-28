@@ -1,28 +1,25 @@
-const operationRepo = require('../repositories/operationRepo');
+const operationRepo = require("../repositories/operationRepo");
 
 class OperationService {
-  async listOperations() {
-    return operationRepo.findAll();
-  }
+	async listOperations() {
+		return operationRepo.findAll();
+	}
 
-  async getOperation(id) {
-    return operationRepo.findById(id);
-  }
+	async getOperation(id) {
+		return operationRepo.findById(id);
+	}
 
-  async createOperation(payload) {
-    // TODO: check patient and room availability
-    return operationRepo.create(payload);
-  }
+	async createOperation(payload) {
+		return operationRepo.create(payload);
+	}
 
-  async updateOperation(id, payload) {
-    // TODO: enforce business rules (e.g. no overlapping times)
-    return operationRepo.update(id, payload);
-  }
+	async updateOperation(id, payload) {
+		return operationRepo.update(id, payload);
+	}
 
-  async deleteOperation(id) {
-    // TODO: clean up related operation_staff entries
-    return operationRepo.delete(id);
-  }
+	async deleteOperation(id) {
+		return operationRepo.delete(id);
+	}
 }
 
 module.exports = new OperationService();

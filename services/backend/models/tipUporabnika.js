@@ -1,4 +1,3 @@
-// models/tipUporabnika.js
 const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
 	class TipUporabnika extends Model {

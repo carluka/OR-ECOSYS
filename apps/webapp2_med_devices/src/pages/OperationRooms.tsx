@@ -26,6 +26,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import api from "../api";
 import AddRoom from "../components/rooms/AddRoom";
 import AddDeviceRoom from "../components/rooms/AddDeviceRoom";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 interface RoomWithDeviceCount {
 	idsoba: number;
@@ -38,6 +39,7 @@ interface RoomWithDeviceCount {
 interface Device {
 	idnaprava: number;
 	naprava: string;
+	tip_naprave: string;
 	soba_idsoba: number | null;
 }
 
@@ -283,17 +285,37 @@ const OperationRooms: React.FC = () => {
 													>
 														<TableHead>
 															<TableRow>
-																<TableCell>Device Name</TableCell>
-																<TableCell align="right">Actions</TableCell>
+																<TableCell>
+																	<strong>Device Name</strong>
+																</TableCell>
+																<TableCell>
+																	<strong>Device Type</strong>
+																</TableCell>
+																<TableCell align="right">
+																	<strong>Actions</strong>
+																</TableCell>
 															</TableRow>
 														</TableHead>
 														<TableBody>
-															{devicesInRoom.map((device) => (
-																<TableRow key={device.idnaprava}>
+															{devicesInRoom.map((device, index) => (
+																<TableRow
+																	key={device.idnaprava}
+																	sx={{
+																		backgroundColor:
+																			index % 2 === 0 ? "white" : "#f5f5f5",
+																	}}
+																>
 																	<TableCell component="th" scope="row">
 																		{device.naprava}
 																	</TableCell>
-																	<TableCell align="right">
+																	<TableCell>{device.tip_naprave}</TableCell>
+																	<TableCell
+																		align="right"
+																		sx={{
+																			display: "flex",
+																			gap: 2,
+																		}}
+																	>
 																		<Button
 																			size="small"
 																			variant="outlined"
@@ -308,6 +330,19 @@ const OperationRooms: React.FC = () => {
 																			{loadingRemoving[device.idnaprava]
 																				? "Removing..."
 																				: "Remove"}
+																		</Button>
+																		<Button
+																			variant="outlined"
+																			size="small"
+																			startIcon={<PictureAsPdfIcon />}
+																			onClick={() => {
+																				console.log(
+																					"DeviceID",
+																					device.idnaprava
+																				);
+																			}}
+																		>
+																			PDF
 																		</Button>
 																	</TableCell>
 																</TableRow>
