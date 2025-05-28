@@ -1,6 +1,7 @@
 const { exec } = require("child_process");
 
 function kubectlApply(filePath, namespace = "or-ecosys") {
+  console.log(filePath);
   return new Promise((resolve, reject) => {
     exec(
       `kubectl apply -f ${filePath} -n ${namespace}`,

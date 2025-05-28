@@ -33,6 +33,10 @@ class DeviceService {
 	async getDevices(filters = {}) {
 		return deviceRepo.getDevices(filters);
 	}
+
+	async getDeviceReportData(id) {
+		return deviceRepo.getReportData(id);
+	}
 }
 
 module.exports = new DeviceService();

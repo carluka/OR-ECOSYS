@@ -6,9 +6,13 @@ class K8sTemplateGenerator {
   constructor(templateDir, outputDir) {
     this.templateDir = templateDir;
     this.outputDir = outputDir;
+
+    if (!fs.existsSync(this.outputDir)) {
+      fs.mkdirSync(this.outputDir, { recursive: true });
+    }
   }
 
-  async generateDeployment(roomUuid, consumerDeviceUuids, providers) {
+  async generateDeployment(roomUuid, consumerDeviceUuids, providers, roomID) {
     const consumerTemplatePath = path.join(
       this.templateDir,
       "consumer-deployment.yaml"
@@ -21,7 +25,9 @@ class K8sTemplateGenerator {
 
     const consumerYaml = consumerTemplate({
       room_uuid: roomUuid,
+      PORT: 8000 + Number(roomID),
       device_uuids: JSON.stringify(consumerDeviceUuids),
+      websocket_add: `/ws/medical-device/${roomUuid}`,
     });
 
     const consumerOutputPath = path.join(
@@ -29,7 +35,7 @@ class K8sTemplateGenerator {
       `${roomUuid}-consumer-deployment.yaml`
     );
     fs.writeFileSync(consumerOutputPath, consumerYaml, "utf8");
-
+    console.log(providers);
     for (const provider of providers) {
       const providerTemplatePath = path.join(
         this.templateDir,
@@ -63,6 +69,32 @@ class K8sTemplateGenerator {
           `${roomUuid}-provider-${p.type}-deployment.yaml`
         )
       ),
+    };
+  }
+
+  async generateService(roomUuid, roomID) {
+    const consumerTemplatePath = path.join(
+      this.templateDir,
+      "consumer-service.yaml"
+    );
+    const consumerTemplateContent = fs.readFileSync(
+      consumerTemplatePath,
+      "utf8"
+    );
+    const consumerTemplate = Handlebars.compile(consumerTemplateContent);
+
+    const consumerYaml = consumerTemplate({
+      room_uuid: roomUuid,
+      PORT: 8000 + Number(roomID),
+    });
+
+    const consumerOutputPath = path.join(
+      this.outputDir,
+      `${roomUuid}-consumer-service.yaml`
+    );
+    fs.writeFileSync(consumerOutputPath, consumerYaml, "utf8");
+    return {
+      consumerYamlPathService: consumerOutputPath,
     };
   }
 }

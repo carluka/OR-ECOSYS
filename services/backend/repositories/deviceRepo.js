@@ -164,6 +164,70 @@ class DeviceRepo {
 			throw err;
 		}
 	}
+
+	async getReportData(idnaprava) {
+		let replacements = { idnaprava };
+
+		const sql = `
+			SELECT
+				n.idnaprava,
+				n.naziv,
+				tn.naziv AS tip_naprave,
+				sb.naziv AS soba_naziv,
+				sb.lokacija AS soba_lokacija,
+				COALESCE(bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'), FALSE) AS servis,
+
+				COALESCE(
+					json_agg(
+						json_build_object(
+							'idservis', sv.idservis,
+							'datum', sv.datum,
+							'ura', sv.ura,
+							'komentar', sv.komentar
+						)
+						ORDER BY sv.datum DESC, sv.ura DESC
+					) FILTER (WHERE sv.idservis IS NOT NULL), '[]'
+				) AS servisi,
+
+				(
+					SELECT json_agg(ops ORDER BY (ops->>'datum')::date DESC, (ops->>'cas_zacetka') DESC)
+					FROM (
+						SELECT
+							jsonb_build_object(
+								'idoperacija', op2.idoperacija,
+								'datum', op2.datum,
+								'cas_zacetka', op2.cas_zacetka,
+								'cas_konca', op2.cas_konca,
+								'pacient_idpacient', op2.pacient_idpacient
+							) AS ops
+						FROM operacija op2
+						WHERE op2.soba_idsoba = n.soba_idsoba
+						GROUP BY op2.idoperacija, op2.datum, op2.cas_zacetka, op2.cas_konca, op2.pacient_idpacient
+					) sub
+				) AS operacije
+
+			FROM naprava n
+			JOIN tip_naprave tn ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
+			LEFT JOIN soba sb ON n.soba_idsoba = sb.idsoba
+			LEFT JOIN servis sv ON sv.naprava_idnaprava = n.idnaprava
+			LEFT JOIN operacija op ON op.soba_idsoba = n.soba_idsoba
+			WHERE n.idnaprava = :idnaprava
+			GROUP BY
+				n.idnaprava,
+				n.naziv,
+				tn.naziv,
+				sb.naziv,
+				sb.lokacija
+			ORDER BY n.idnaprava DESC;
+    	`;
+
+		const [results] = await sequelize.query(sql, {
+			replacements,
+			type: QueryTypes.SELECT,
+		});
+
+		return results || null;
+	}
 }
 
 module.exports = new DeviceRepo();
