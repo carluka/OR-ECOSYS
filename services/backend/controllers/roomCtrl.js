@@ -1,5 +1,6 @@
 const roomService = require("../services/roomService");
-const { kubectlScale } = require("../repositories/kubectl");
+const { generateIngress } = require("../utils/generateIngress");
+const { kubectlApply, kubectlScale } = require("../utils/kubectl");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -22,6 +23,11 @@ exports.getById = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const newRoom = await roomService.createRoom(req.body);
+    const path = await generateIngress(
+      newRoom.dataValues.uuid,
+      8000 + Number(newRoom.dataValues.idsoba)
+    );
+    await kubectlApply(path, "or-ecosys");
     res.status(201).json({ data: newRoom });
   } catch (err) {
     next(err);
@@ -84,12 +90,12 @@ exports.deploy = async (req, res, next) => {
   }
 };
 
-exports.connectRoom = async (req, res, next) => {
+exports.startDevices = async (req, res, next) => {
   try {
     const { id } = req.params;
+    await roomService.commitChanges(id);
     const room = await roomService.getById(id);
     const devices = await roomService.getDevices(id);
-
     await kubectlScale(`${room.uuid}-consumer`, 1);
 
     for (const d of devices) {
@@ -99,7 +105,7 @@ exports.connectRoom = async (req, res, next) => {
       );
     }
 
-    res.status(200).json({ message: "Connected (pods up)" });
+    res.status(200).json({ status: "available", wsUuid: room.uuid });
   } catch (err) {
     next(err);
   }

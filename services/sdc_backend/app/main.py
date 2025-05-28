@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 import logging
+import os
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
@@ -57,7 +58,9 @@ app.mount("/static", StaticFiles(directory=pathlib.Path(__file__).parent.parent 
 async def root():
     return RedirectResponse(url="/static/prikaz.html")
 
-@app.websocket("/ws/medical-device")
+ROOM_UUID = os.getenv("ROOM_UUID")
+
+@app.websocket("/ws/medical-device/{ROOM_UUID}")
 async def websocket_endpoint(websocket: WebSocket):
     await medical_device_ws.connect(websocket)
     try:
