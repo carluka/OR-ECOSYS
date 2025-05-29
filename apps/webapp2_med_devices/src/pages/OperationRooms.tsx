@@ -63,6 +63,8 @@ const OperationRooms: React.FC = () => {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(5);
 
+	const [loadingCommitIds, setLoadingCommitIds] = useState<number[]>([]);
+
 	const fetchRooms = () => {
 		api
 			.get("/rooms/roomsDeviceCount")
@@ -158,16 +160,17 @@ const OperationRooms: React.FC = () => {
 		closeAddDeviceRoom();
 	};
 
-	const handleCommit = (roomId: number) => {
-		api
-			.post("/rooms/commitChanges", { id: roomId })
-			.then(() => {
-				fetchRooms();
-			})
-			.catch((err) => {
-				console.error("Error committing changes for room:", err);
-				alert("Failed to commit changes.");
-			});
+	const handleCommit = async (roomId: number) => {
+		setLoadingCommitIds((prev) => [...prev, roomId]);
+		try {
+			await api.post("/rooms/commitChanges", { id: roomId });
+			await fetchRooms();
+		} catch (err) {
+			console.error("Error committing changes for room:", err);
+			alert("Failed to commit changes.");
+		} finally {
+			setLoadingCommitIds((prev) => prev.filter((id) => id !== roomId));
+		}
 	};
 
 	// Pagination handlers
@@ -264,16 +267,27 @@ const OperationRooms: React.FC = () => {
 										<TableCell>{room.lokacija}</TableCell>
 										<TableCell align="right">{room.st_naprav}</TableCell>
 										<TableCell align="center">
-											{room.unsaved_changes && (
-												<Button
-													variant="contained"
-													color="warning"
-													size="small"
-													onClick={() => handleCommit(room.idsoba)}
-												>
-													Commit
-												</Button>
-											)}
+											{room.unsaved_changes &&
+												(loadingCommitIds.includes(room.idsoba) ? (
+													<Button
+														variant="contained"
+														color="warning"
+														size="small"
+														disabled
+														loading
+													>
+														Commit
+													</Button>
+												) : (
+													<Button
+														variant="contained"
+														color="warning"
+														size="small"
+														onClick={() => handleCommit(room.idsoba)}
+													>
+														Commit
+													</Button>
+												))}
 										</TableCell>
 									</TableRow>
 									<TableRow>
