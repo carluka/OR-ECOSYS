@@ -57,8 +57,9 @@ const OperationRoomPage: React.FC = () => {
   };
 
   const openSocket = (uuid: string) => {
+    const port = 8000 + Number(roomId);
     const ws = new WebSocket(
-      `ws://data.or-ecosystem.eu:8000/ws/medical-device/${uuid}`
+      `ws://data.or-ecosystem.eu:${port}/ws/medical-device/${uuid}`
     );
     wsRef.current = ws;
 
@@ -85,7 +86,6 @@ const OperationRoomPage: React.FC = () => {
   const runMachines = async () => {
     try {
       const res = await api.post(`/rooms/${roomId}/startDevices`);
-      console.log(res);
       if (res.data.status === "available" && res.data.wsUuid) {
         setIsAvailable(true);
         setWsUuid(res.data.wsUuid);
