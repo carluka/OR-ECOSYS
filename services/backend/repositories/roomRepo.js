@@ -15,8 +15,10 @@ class RoomRepo {
   }
 
   async create(data) {
-    data.uuid = uuidv4();
+    let uuid = uuidv4();
+    uuid = "a" + uuid.slice(1);
 
+    data.uuid = uuid;
     return models.Soba.create(data);
   }
 

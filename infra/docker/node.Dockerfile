@@ -7,6 +7,12 @@ RUN curl -LO https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubect
 WORKDIR /app
 ARG JWT_SECRET
 ENV JWT_SECRET=${JWT_SECRET}
+ARG INFLUX_URL
+ENV INFLUX_URL=${INFLUX_URL}
+ARG INFLUX_TOKEN
+ENV INFLUX_TOKEN=${INFLUX_TOKEN}
+ARG INFLUX_ORG
+ENV INFLUX_ORG=${INFLUX_ORG}
 COPY services/backend/package*.json ./
 RUN npm install
 COPY services/backend/ ./
