@@ -17,23 +17,25 @@ interface Props {
 const AddRoom: React.FC<Props> = ({ onClose, onAdded }) => {
 	const [naziv, setNaziv] = useState<string>("");
 	const [lokacija, setLokacija] = useState<string>("");
+	const [loading, setLoading] = useState(false);
 
-	const handleAdd = () => {
+	const handleAdd = async () => {
+		setLoading(true);
 		const payload = {
 			naziv,
 			lokacija,
 		};
 
-		api
-			.post("/rooms", payload)
-			.then(() => {
-				onAdded();
-				onClose();
-			})
-			.catch((err) => {
-				console.error("Error adding room:", err);
-				alert("Napaka pri dodajanju sobe.");
-			});
+		try {
+			await api.post("/rooms", payload);
+			onAdded();
+			onClose();
+		} catch (err) {
+			console.error("Error adding room:", err);
+			alert("Napaka pri dodajanju sobe.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -61,9 +63,15 @@ const AddRoom: React.FC<Props> = ({ onClose, onAdded }) => {
 					/>
 				</Stack>
 
-				<Button variant="contained" color="primary" onClick={handleAdd}>
-					ADD ROOM
-				</Button>
+				{loading ? (
+					<Button variant="contained" color="primary" disabled loading>
+						ADD ROOM
+					</Button>
+				) : (
+					<Button variant="contained" color="primary" onClick={handleAdd}>
+						ADD ROOM
+					</Button>
+				)}
 			</Stack>
 		</>
 	);

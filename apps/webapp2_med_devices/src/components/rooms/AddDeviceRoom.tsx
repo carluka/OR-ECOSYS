@@ -49,9 +49,21 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 
 	const handleSelectChange = (event: SelectChangeEvent<number[]>) => {
 		const value = event.target.value;
-		setSelectedDevices(
-			typeof value === "string" ? value.split(",").map(Number) : value
-		);
+
+		let newSelection: number[] =
+			typeof value === "string" ? value.split(",").map(Number) : value;
+
+		const uniqueByType: Record<string, number> = {};
+		const filteredSelection = [];
+		for (const deviceId of newSelection) {
+			const device = devices.find((d) => d.idnaprava === deviceId);
+			if (!device) continue;
+			if (!uniqueByType[device.tip_naprave]) {
+				uniqueByType[device.tip_naprave] = deviceId;
+				filteredSelection.push(deviceId);
+			}
+		}
+		setSelectedDevices(filteredSelection);
 	};
 
 	const handleAdd = async () => {
@@ -78,13 +90,21 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 		}
 	};
 
-	// Main filter:
 	const deviceTypesInRoom = new Set(
 		devices.filter((d) => d.soba_idsoba === roomId).map((d) => d.tip_naprave)
 	);
-	const filteredDevices = devices
-		.filter((d) => d.soba_idsoba !== roomId)
-		.filter((d) => !deviceTypesInRoom.has(d.tip_naprave));
+
+	const filteredDevices = devices.filter(
+		(d) => d.soba_idsoba === null && !deviceTypesInRoom.has(d.tip_naprave)
+	);
+
+	const isDeviceDisabled = (device: Device) => {
+		return selectedDevices.some((selectedId) => {
+			if (selectedId === device.idnaprava) return false;
+			const selectedDevice = devices.find((d) => d.idnaprava === selectedId);
+			return selectedDevice?.tip_naprave === device.tip_naprave;
+		});
+	};
 
 	return (
 		<>
@@ -109,8 +129,7 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 						<MenuItem disabled sx={{ opacity: 1, fontWeight: 600 }}>
 							<Box sx={{ width: 58 }} />
 							<Box sx={{ flex: 2, minWidth: 120, mr: 2 }}>Device Name</Box>
-							<Box sx={{ flex: 2, minWidth: 160, mr: 2 }}>Device Type</Box>
-							<Box sx={{ flex: 2, minWidth: 100 }}>Room Name</Box>
+							<Box sx={{ flex: 2, minWidth: 100 }}>Device Type</Box>
 						</MenuItem>
 						{filteredDevices.length === 0 ? (
 							<MenuItem disabled>
@@ -121,6 +140,7 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 								<MenuItem
 									key={device.idnaprava}
 									value={device.idnaprava}
+									disabled={isDeviceDisabled(device)}
 									sx={{
 										display: "flex",
 										alignItems: "center",
@@ -135,18 +155,6 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 										<ListItemText primary={device.naprava} />
 									</Box>
 									<Typography
-										sx={{
-											flex: 2,
-											minWidth: 160,
-											mr: 2,
-											wordBreak: "break-word",
-											whiteSpace: "normal",
-											fontWeight: 500,
-										}}
-									>
-										{device.tip_naprave}
-									</Typography>
-									<Typography
 										variant="body2"
 										color="text.secondary"
 										sx={{
@@ -157,7 +165,7 @@ const AddDeviceRoom: React.FC<Props> = ({ roomId, onClose, onAdded }) => {
 											whiteSpace: "normal",
 										}}
 									>
-										{device.soba ?? "NO ROOM"}
+										{device.tip_naprave}
 									</Typography>
 								</MenuItem>
 							))
