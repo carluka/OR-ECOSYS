@@ -54,6 +54,9 @@ jobs:
         run: |
           docker build \
             --build-arg JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            --build-arg INFLUX_URL=${{ secrets.INFLUX_URL }} \
+            --build-arg INFLUX_TOKEN=${{ secrets.INFLUX_TOKEN }} \
+            --build-arg INFLUX_ORG=${{ secrets.INFLUX_ORG }} \
             -t $REGISTRY/$DOCKERHUB_REPO/node-backend:latest \
             -f infra/docker/node.Dockerfile \
             .
