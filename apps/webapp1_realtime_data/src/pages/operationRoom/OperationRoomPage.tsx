@@ -105,10 +105,10 @@ const OperationRoomPage: React.FC = () => {
     };
   };
 
-  const runMachines = async () => {
+  const handleMachines = async () => {
     if (isActive) {
       try {
-        await api.post(`/rooms/${roomId}/disconnect`);
+        await api.post(`/rooms/${roomId}/stopDevices`);
       } catch (err) {
         console.error("Failed to stop devices", err);
       }
@@ -273,7 +273,7 @@ const OperationRoomPage: React.FC = () => {
 
             <div className="action-buttons">
               <button
-                onClick={runMachines}
+                onClick={handleMachines}
                 className={`run-btn ${isActive ? "" : ""}`}
               >
                 {isActive ? "Stop Machines" : "Run Machines"}

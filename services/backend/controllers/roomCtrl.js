@@ -1,6 +1,6 @@
 const roomService = require("../services/roomService");
 const operationService = require("../services/operationService");
-const { Operacija } = require("../models");
+const { Operacija, Soba } = require("../models");
 const { generateIngress } = require("../utils/generateIngress");
 const { kubectlApply, kubectlScale } = require("../utils/kubectl");
 
@@ -125,7 +125,12 @@ exports.startDevices = async (req, res, next) => {
   }
 };
 
-exports.disconnectRoom = async (req, res, next) => {
+const getCurrentTimePlus2 = () => {
+  const now = new Date();
+  return new Date(now.getTime() + 2 * 60 * 60 * 1000);
+};
+
+exports.stopDevices = async (req, res, next) => {
   try {
     const { id } = req.params;
     const room = await roomService.getById(id);
@@ -137,6 +142,21 @@ exports.disconnectRoom = async (req, res, next) => {
         `${room.uuid}-provider-${d.tipnaprave.toLowerCase()}`,
         0
       );
+    }
+    const latestOperation = await Operacija.findOne({
+      where: {
+        soba_idsoba: id,
+        cas_konca: null,
+      },
+      order: [
+        ["datum", "DESC"],
+        ["cas_zacetka", "DESC"],
+      ],
+    });
+
+    if (latestOperation) {
+      latestOperation.cas_konca = getCurrentTimePlus2();
+      await latestOperation.save();
     }
 
     res.status(200).json({ message: "Disconnected (pods down)" });
@@ -159,8 +179,11 @@ exports.checkStatus = async (req, res, next) => {
       return res.status(200).json({ active: false });
     }
     const active = latestOperation.cas_konca === null;
+    const soba = await Soba.findOne({ where: { idsoba: id } });
 
-    res.status(200).json({ active });
+    const wsUuid = soba ? soba.uuid : null;
+
+    res.status(200).json({ active, wsUuid });
   } catch (err) {
     next(err);
   }
