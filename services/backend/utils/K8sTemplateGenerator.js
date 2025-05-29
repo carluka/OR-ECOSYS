@@ -35,7 +35,7 @@ class K8sTemplateGenerator {
       `${roomUuid}-consumer-deployment.yaml`
     );
     fs.writeFileSync(consumerOutputPath, consumerYaml, "utf8");
-    console.log(providers);
+
     for (const provider of providers) {
       const providerTemplatePath = path.join(
         this.templateDir,
