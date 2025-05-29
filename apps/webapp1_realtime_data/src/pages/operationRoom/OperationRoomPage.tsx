@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDeviceContext } from "../../context/DeviceContext";
 import { useParams, Navigate } from "react-router-dom";
 import NibpModule from "../../components/devices/NIBPModule";
@@ -36,6 +36,7 @@ const OperationRoomPage: React.FC = () => {
   const [co2History, setCo2History] = useState<DataPoint[]>([]);
   const [isAvailable, setIsAvailable] = useState(false);
   const [wsUuid, setWsUuid] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(false);
 
   const allMetricsRef = useRef<MetricMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
@@ -55,6 +56,27 @@ const OperationRoomPage: React.FC = () => {
       });
     }
   };
+
+  useEffect(() => {
+    const fetchActiveStatus = async () => {
+      try {
+        const res = await api.get(`/rooms/${roomId}/status`);
+        if (res.data && typeof res.data.active === "boolean") {
+          setIsActive(res.data.active);
+          if (res.data.active && res.data.wsUuid) {
+            setIsAvailable(true);
+            setWsUuid(res.data.wsUuid);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch active status", err);
+      }
+    };
+
+    if (roomId) {
+      fetchActiveStatus();
+    }
+  }, [roomId]);
 
   const openSocket = (uuid: string) => {
     const port = 8000 + Number(roomId);
@@ -84,14 +106,29 @@ const OperationRoomPage: React.FC = () => {
   };
 
   const runMachines = async () => {
-    try {
-      const res = await api.post(`/rooms/${roomId}/startDevices`);
-      if (res.data.status === "available" && res.data.wsUuid) {
-        setIsAvailable(true);
-        setWsUuid(res.data.wsUuid);
+    if (isActive) {
+      try {
+        await api.post(`/rooms/${roomId}/disconnect`);
+      } catch (err) {
+        console.error("Failed to stop devices", err);
       }
-    } catch (err) {
-      console.error("Failed to deploy devices", err);
+
+      wsRef.current?.close();
+      setConnected(false);
+      setIsActive(false);
+      setIsAvailable(false);
+      setWsUuid(null);
+    } else {
+      try {
+        const res = await api.post(`/rooms/${roomId}/startDevices`);
+        if (res.data.status === "available" && res.data.wsUuid) {
+          setIsAvailable(true);
+          setWsUuid(res.data.wsUuid);
+          setIsActive(true);
+        }
+      } catch (err) {
+        console.error("Failed to deploy devices", err);
+      }
     }
   };
 
@@ -104,11 +141,9 @@ const OperationRoomPage: React.FC = () => {
     }
   };
 
-  const disconnect = async () => {
-    try {
-      wsRef.current?.close();
-      await api.post<MessageResponse>(`/rooms/${roomId}/disconnect`);
-    } catch {}
+  const disconnect = () => {
+    wsRef.current?.close();
+    setConnected(false);
   };
 
   const nibpData = {
@@ -239,10 +274,9 @@ const OperationRoomPage: React.FC = () => {
             <div className="action-buttons">
               <button
                 onClick={runMachines}
-                disabled={isAvailable}
-                className={`run-btn ${isAvailable ? "disabled" : ""}`}
+                className={`run-btn ${isActive ? "" : ""}`}
               >
-                Run Machines
+                {isActive ? "Stop Machines" : "Run Machines"}
               </button>
               <button
                 onClick={connectToWebSocket}
