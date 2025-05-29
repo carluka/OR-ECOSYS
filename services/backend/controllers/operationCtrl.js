@@ -44,3 +44,12 @@ exports.remove = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getWithMeasurements = async (req, res, next) => {
+  try {
+    const data = await operationService.getOperationWithMeasurements(req.params.id);
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+};

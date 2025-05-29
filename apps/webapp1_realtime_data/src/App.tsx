@@ -9,6 +9,8 @@ import "./App.css";
 import PatientsPage from "./pages/patients/PatientsPage";
 import PatientDetailsPage from "./pages/patientDetail/PatientDetailsPage";
 import { DeviceProvider } from "./context/DeviceContext";
+import OperationsPage from "./pages/operations/Operations";
+import OperationDetailsPage from "./pages/operationDetails/OperationDetails";
 
 const router = createBrowserRouter([
   {
@@ -41,6 +43,8 @@ const router = createBrowserRouter([
           },
           { path: "/patients", element: <PatientsPage /> },
           { path: "/patients/:id", element: <PatientDetailsPage /> },
+          { path: "/operations", element: <OperationsPage /> },
+          { path: "/operations/:id", element: <OperationDetailsPage /> },
           { path: "*", element: <NotFoundPage /> },
         ],
       },

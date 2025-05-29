@@ -23,6 +23,9 @@ const Layout = () => {
           <Link to="/patients" className="nav-link">
             Patients
           </Link>
+          <Link to="/operations" className="nav-link">
+            Operations
+          </Link>
         </nav>
         <Button onClick={handleLogout}>Sign out</Button>
       </header>
