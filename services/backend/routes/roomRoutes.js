@@ -10,6 +10,7 @@ const {
   deploy,
   startDevices,
   disconnectRoom,
+  checkStatus,
 } = require("../controllers/roomCtrl");
 const router = require("express").Router();
 
@@ -19,6 +20,7 @@ router.post("/commitChanges", commitChanges);
 router.post("/:id/deploy", deploy);
 router.post("/:id/startDevices", startDevices);
 router.post("/:id/disconnect", disconnectRoom);
+router.post("/:id/status", checkStatus);
 router.get("/", getAll);
 router.get("/:id", getById);
 router.post("/", create);
