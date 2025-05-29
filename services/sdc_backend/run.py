@@ -3,7 +3,6 @@ import uvicorn
 import os
 
 PORT = os.getenv("PORT")
-print(PORT)
 
 if __name__ == "__main__":
     time.sleep(15)
