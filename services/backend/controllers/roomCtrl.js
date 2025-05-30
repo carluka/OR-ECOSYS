@@ -127,7 +127,8 @@ exports.startDevices = async (req, res, next) => {
 
 const getCurrentTimePlus2 = () => {
   const now = new Date();
-  return new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  return nowPlus2.toTimeString().split(" ")[0];
 };
 
 exports.stopDevices = async (req, res, next) => {
