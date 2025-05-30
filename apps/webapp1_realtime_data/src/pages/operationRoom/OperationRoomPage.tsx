@@ -9,6 +9,8 @@ import Capnograph from "../../components/devices/Capnograph";
 import TemperatureGauge from "../../components/devices/TemperatureGauge";
 import InfusionPump from "../../components/devices/InfusionPump";
 import Ventilator from "../../components/devices/Ventilator";
+import DraggablePanel from "../../components/DraggablePanel/DraggablePanel";
+import DashboardControls from "../../components/DashboardControls/DashboardControls";
 import "./OperationRoomPage.css";
 import api from "../../api";
 
@@ -23,13 +25,45 @@ interface MetricMessage {
   device_id: string;
 }
 
-interface MessageResponse {
-  message: string;
+interface GridPosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface ModuleLayout {
+  [key: string]: GridPosition;
+}
+
+interface ModuleVisibility {
+  [key: string]: boolean;
 }
 
 const MAX_POINTS = 60;
+const GRID_SIZE = { cols: 12, rows: 16 };
 
-const OperationRoomPage: React.FC = () => {
+const DEFAULT_LAYOUT: ModuleLayout = {
+  temperature: { x: 6, y: 8, width: 3, height: 4 },
+  ekg: { x: 0, y: 0, width: 6, height: 6 },
+  spo2: { x: 6, y: 3, width: 3, height: 5 },
+  capnograph: { x: 0, y: 6, width: 6, height: 6 },
+  nibp: { x: 6, y: 0, width: 3, height: 3 },
+  infusion: { x: 9, y: 0, width: 3, height: 3 },
+  ventilator: { x: 9, y: 3, width: 3, height: 6 },
+};
+
+const DEFAULT_VISIBILITY: ModuleVisibility = {
+  temperature: true,
+  ekg: true,
+  spo2: true,
+  capnograph: true,
+  nibp: true,
+  infusion: true,
+  ventilator: true,
+};
+
+const OperationRoomPageNew: React.FC = () => {
   const { roomId } = useParams();
   const { deviceData, updateDeviceData } = useDeviceContext();
   const [connected, setConnected] = useState(false);
@@ -37,6 +71,14 @@ const OperationRoomPage: React.FC = () => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [wsUuid, setWsUuid] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(false);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [moduleLayout, setModuleLayout] =
+    useState<ModuleLayout>(DEFAULT_LAYOUT);
+  const [moduleVisibility, setModuleVisibility] =
+    useState<ModuleVisibility>(DEFAULT_VISIBILITY);
 
   const allMetricsRef = useRef<MetricMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
@@ -54,6 +96,55 @@ const OperationRoomPage: React.FC = () => {
           ? next.slice(next.length - MAX_POINTS)
           : next;
       });
+    }
+  };
+
+  const handlePositionChange = (moduleId: string, position: GridPosition) => {
+    setModuleLayout((prev) => ({
+      ...prev,
+      [moduleId]: position,
+    }));
+  };
+
+  const handleVisibilityChange = (moduleId: string, visible: boolean) => {
+    setModuleVisibility((prev) => ({
+      ...prev,
+      [moduleId]: visible,
+    }));
+  };
+
+  const handleResetLayout = () => {
+    setModuleLayout(DEFAULT_LAYOUT);
+    setModuleVisibility(DEFAULT_VISIBILITY);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current
+          .requestFullscreen()
+          .then(() => {
+            setIsFullscreen(true);
+          })
+          .catch((err) => {
+            console.error(
+              `Error attempting to enable fullscreen: ${err.message}`
+            );
+          });
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document
+          .exitFullscreen()
+          .then(() => {
+            setIsFullscreen(false);
+          })
+          .catch((err) => {
+            console.error(
+              `Error attempting to exit fullscreen: ${err.message}`
+            );
+          });
+      }
     }
   };
 
@@ -77,6 +168,33 @@ const OperationRoomPage: React.FC = () => {
       fetchActiveStatus();
     }
   }, [roomId]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "F11") {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const openSocket = (uuid: string) => {
     const port = 8000 + Number(roomId);
@@ -239,102 +357,199 @@ const OperationRoomPage: React.FC = () => {
   }
 
   return (
-    <div className="operation-room-container">
+    <div
+      ref={containerRef}
+      className={`operation-room-container ${isFullscreen ? "fullscreen" : ""}`}
+    >
       <div className="operation-room-content">
-        <div className="header-container">
-          <div className="header-title">
-            <div className="header-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </div>
-            <h1>{decodeURIComponent(roomId)} - Dashboard</h1>
+        {isFullscreen && (
+          <div className="fullscreen-indicator">
+            Press F11 to exit fullscreen | Press ESC to exit
           </div>
+        )}
 
-          <div className="header-controls">
-            <div className="connection-status">
-              <div
-                className={`status-indicator ${
-                  connected ? "connected" : "disconnected"
-                }`}
-              ></div>
-              <span>Status: {connected ? "Connected" : "Disconnected"}</span>
-            </div>
-
-            <div className="action-buttons">
-              <button
-                onClick={handleMachines}
-                className={`run-btn ${isActive ? "" : ""}`}
-              >
-                {isActive ? "Stop Machines" : "Run Machines"}
-              </button>
-              <button
-                onClick={connectToWebSocket}
-                disabled={!isAvailable || connected}
-                className={`connect-btn ${
-                  !isAvailable || connected ? "disabled" : ""
-                }`}
-              >
-                Connect
-              </button>
-              <button
-                onClick={disconnect}
-                disabled={!connected}
-                className={`disconnect-btn ${!connected ? "disabled" : ""}`}
-              >
-                Disconnect
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="dashboard-grid">
-          <div className="vital-signs-column">
-            <div className="module-row">
-              <div className="module-card temperature-card">
-                <TemperatureGauge temperature={temperature} />
+        {!isFullscreen && (
+          <>
+            <div className="header-container">
+              <div className="header-title">
+                <div className="header-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                  </svg>
+                </div>
+                <h1>{decodeURIComponent(roomId)} - Dashboard</h1>
               </div>
-              <div className="module-card ekg-card">
-                <EKGModule {...ekgData} />
+
+              <div className="header-controls">
+                <div className="connection-status">
+                  <div
+                    className={`status-indicator ${
+                      connected ? "connected" : "disconnected"
+                    }`}
+                  ></div>
+                  <span>
+                    Status: {connected ? "Connected" : "Disconnected"}
+                  </span>
+                </div>
+
+                <div className="action-buttons">
+                  <button
+                    onClick={toggleFullscreen}
+                    className="fullscreen-btn"
+                    title="Toggle Fullscreen (F11)"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      {isFullscreen ? (
+                        <>
+                          <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                          <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                          <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                          <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                        </>
+                      ) : (
+                        <>
+                          <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                          <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                          <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                          <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                        </>
+                      )}
+                    </svg>
+                    {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                  </button>
+                  <button
+                    onClick={handleMachines}
+                    className={`run-btn ${isActive ? "" : ""}`}
+                  >
+                    {isActive ? "Stop Machines" : "Run Machines"}
+                  </button>
+                  <button
+                    onClick={connectToWebSocket}
+                    disabled={!isAvailable || connected}
+                    className={`connect-btn ${
+                      !isAvailable || connected ? "disabled" : ""
+                    }`}
+                  >
+                    Connect
+                  </button>
+                  <button
+                    onClick={disconnect}
+                    disabled={!connected}
+                    className={`disconnect-btn ${!connected ? "disabled" : ""}`}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="module-row">
-              <div className="module-card spo2-card">
-                <SPO2Sensor {...spo2SensorData} />
-              </div>
-              <div className="module-card capnograph-card">
-                <Capnograph {...capnographData} />
-              </div>
-            </div>
-          </div>
+            <DashboardControls
+              moduleVisibility={moduleVisibility}
+              onVisibilityChange={handleVisibilityChange}
+              onResetLayout={handleResetLayout}
+            />
+          </>
+        )}
 
-          <div className="other-devices-column">
-            <div className="module-card nibp-card">
-              <NibpModule {...nibpData} />
-            </div>
+        <div
+          className="dashboard-grid-container"
+          style={{
+            gridTemplateColumns: `repeat(${GRID_SIZE.cols}, 1fr)`,
+            gridTemplateRows: `repeat(${GRID_SIZE.rows}, ${
+              isFullscreen ? "80px" : "60px"
+            })`,
+          }}
+        >
+          <DraggablePanel
+            id="temperature"
+            gridPosition={moduleLayout.temperature}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.temperature}
+          >
+            <TemperatureGauge temperature={temperature} />
+          </DraggablePanel>
 
-            <div className="module-card infusion-card">
-              <InfusionPump {...infusionPumpData} />
-            </div>
-            <div className="module-card ventilator-card">
-              <Ventilator {...ventilatorData} />
-            </div>
-          </div>
+          <DraggablePanel
+            id="ekg"
+            gridPosition={moduleLayout.ekg}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.ekg}
+          >
+            <EKGModule {...ekgData} />
+          </DraggablePanel>
+
+          <DraggablePanel
+            id="spo2"
+            gridPosition={moduleLayout.spo2}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.spo2}
+          >
+            <SPO2Sensor {...spo2SensorData} />
+          </DraggablePanel>
+
+          <DraggablePanel
+            id="capnograph"
+            gridPosition={moduleLayout.capnograph}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.capnograph}
+          >
+            <Capnograph {...capnographData} />
+          </DraggablePanel>
+
+          <DraggablePanel
+            id="nibp"
+            gridPosition={moduleLayout.nibp}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.nibp}
+          >
+            <NibpModule {...nibpData} />
+          </DraggablePanel>
+
+          <DraggablePanel
+            id="infusion"
+            gridPosition={moduleLayout.infusion}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.infusion}
+          >
+            <InfusionPump {...infusionPumpData} />
+          </DraggablePanel>
+
+          <DraggablePanel
+            id="ventilator"
+            gridPosition={moduleLayout.ventilator}
+            onPositionChange={handlePositionChange}
+            gridSize={GRID_SIZE}
+            isVisible={moduleVisibility.ventilator}
+          >
+            <Ventilator {...ventilatorData} />
+          </DraggablePanel>
         </div>
       </div>
     </div>
   );
 };
 
-export default OperationRoomPage;
+export default OperationRoomPageNew;
