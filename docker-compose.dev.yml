@@ -7,7 +7,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: infra/docker/node.Dockerfile
+      dockerfile: infra/docker/node-dev.Dockerfile
     command: npm run dev
     restart: always
     volumes:

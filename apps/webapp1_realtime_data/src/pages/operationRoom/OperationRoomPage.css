@@ -2,10 +2,11 @@
   background-color: #f8f9fa;
   min-height: 100vh;
   padding: 1.5rem;
+  user-select: none;
 }
 
 .operation-room-content {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -105,13 +106,13 @@
   background-color: #dc2626;
 }
 
-.download-btn {
-  background-color: #e2e8f0;
-  color: #475569;
+.run-btn {
+  background-color: #10b981;
+  color: white;
 }
 
-.download-btn:hover {
-  background-color: #cbd5e1;
+.run-btn:hover {
+  background-color: #059669;
 }
 
 .action-buttons button.disabled {
@@ -120,140 +121,70 @@
   cursor: not-allowed;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
+.fullscreen-btn {
+  background-color: #6366f1;
+  color: white;
 }
 
-.vital-signs-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.fullscreen-btn:hover {
+  background-color: #4f46e5;
 }
 
-.module-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.other-devices-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.module-card {
-  background-color: white;
+.dashboard-grid-container {
+  background-color: #f8f9fa;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1.25rem;
+  padding: 1rem;
+  min-height: 600px;
   position: relative;
-  overflow: hidden;
 }
 
-.module-card::before {
-  content: "";
-  position: absolute;
+/* Fullscreen styles - brez temne teme */
+.operation-room-container.fullscreen {
+  position: fixed;
   top: 0;
   left: 0;
-  width: 4px;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: #f8f9fa;
+  padding: 0;
+}
+
+.operation-room-container.fullscreen .operation-room-content {
+  max-width: none;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.operation-room-container.fullscreen .header-container,
+.operation-room-container.fullscreen .dashboard-controls {
+  display: none;
+}
+
+.operation-room-container.fullscreen .dashboard-grid-container {
+  flex: 1;
+  margin: 0;
+  border-radius: 0;
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  min-height: auto;
   height: 100%;
 }
 
-.nibp-card::before {
-  background-color: #0ea5e9;
-}
-
-.ekg-card::before {
-  background-color: #3b82f6;
-}
-
-.spo2-card::before {
-  background-color: #ef4444;
-}
-
-.capnograph-card::before {
-  background-color: #10b981;
-}
-
-.temperature-card::before {
-  background-color: #f97316;
-}
-
-.infusion-card::before {
-  background-color: #8b5cf6;
-}
-
-.ventilator-card::before {
-  background-color: #6366f1;
-}
-
-/* Alert */
-.alert-container {
-  margin-top: 1.5rem;
-  background-color: #fef9c3;
-  border-left: 4px solid #eab308;
-  padding: 1rem;
-  border-radius: 0.375rem;
-  display: flex;
-  align-items: flex-start;
-}
-
-.alert-icon {
-  color: #ca8a04;
-  margin-right: 0.75rem;
-  margin-top: 0.125rem;
-}
-
-.alert-content h3 {
+.fullscreen-indicator {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #854d0e;
-  margin: 0 0 0.25rem 0;
+  z-index: 10000;
+  display: none;
 }
 
-.alert-content p {
-  font-size: 0.875rem;
-  color: #854d0e;
-  margin: 0;
-}
-
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .other-devices-column {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-controls {
-    width: 100%;
-    margin-top: 1rem;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .action-buttons {
-    width: 100%;
-    margin-top: 0.5rem;
-  }
-
-  .module-row {
-    grid-template-columns: 1fr;
-  }
-
-  .other-devices-column {
-    grid-template-columns: 1fr;
-  }
+.operation-room-container.fullscreen .fullscreen-indicator {
+  display: block;
 }
