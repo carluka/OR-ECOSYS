@@ -28,6 +28,7 @@ class K8sTemplateGenerator {
       PORT: 8000 + Number(roomID),
       device_uuids: JSON.stringify(consumerDeviceUuids),
       websocket_add: `/ws/medical-device/${roomUuid}`,
+      replicas: 0,
     });
 
     const consumerOutputPath = path.join(

@@ -1,4 +1,6 @@
 const roomService = require("../services/roomService");
+const operationService = require("../services/operationService");
+const { Operacija, Soba } = require("../models");
 const { generateIngress } = require("../utils/generateIngress");
 const { kubectlApply, kubectlScale } = require("../utils/kubectl");
 
@@ -93,9 +95,21 @@ exports.deploy = async (req, res, next) => {
 exports.startDevices = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await roomService.commitChanges(id);
     const room = await roomService.getById(id);
     const devices = await roomService.getDevices(id);
+
+    const now = new Date();
+    const date = now.toISOString().split("T")[0];
+    const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const startTime = nowPlus2.toTimeString().split(" ")[0];
+
+    operationService.createOperation({
+      pacient_idpacient: 1,
+      soba_idsoba: id,
+      datum: date,
+      cas_zacetka: startTime,
+      cas_konca: null,
+    });
     await kubectlScale(`${room.uuid}-consumer`, 1);
 
     for (const d of devices) {
@@ -111,7 +125,13 @@ exports.startDevices = async (req, res, next) => {
   }
 };
 
-exports.disconnectRoom = async (req, res, next) => {
+const getCurrentTimePlus2 = () => {
+  const now = new Date();
+  const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  return nowPlus2.toTimeString().split(" ")[0];
+};
+
+exports.stopDevices = async (req, res, next) => {
   try {
     const { id } = req.params;
     const room = await roomService.getById(id);
@@ -124,8 +144,47 @@ exports.disconnectRoom = async (req, res, next) => {
         0
       );
     }
+    const latestOperation = await Operacija.findOne({
+      where: {
+        soba_idsoba: id,
+        cas_konca: null,
+      },
+      order: [
+        ["datum", "DESC"],
+        ["cas_zacetka", "DESC"],
+      ],
+    });
+
+    if (latestOperation) {
+      latestOperation.cas_konca = getCurrentTimePlus2();
+      await latestOperation.save();
+    }
 
     res.status(200).json({ message: "Disconnected (pods down)" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.checkStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const latestOperation = await Operacija.findOne({
+      where: { soba_idsoba: id },
+      order: [
+        ["datum", "DESC"],
+        ["cas_zacetka", "DESC"],
+      ],
+    });
+    if (!latestOperation) {
+      return res.status(200).json({ active: false });
+    }
+    const active = latestOperation.cas_konca === null;
+    const soba = await Soba.findOne({ where: { idsoba: id } });
+
+    const wsUuid = soba ? soba.uuid : null;
+
+    res.status(200).json({ active, wsUuid });
   } catch (err) {
     next(err);
   }
