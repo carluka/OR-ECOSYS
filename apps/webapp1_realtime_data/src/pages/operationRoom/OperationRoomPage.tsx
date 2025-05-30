@@ -199,7 +199,7 @@ const OperationRoomPageNew: React.FC = () => {
   const openSocket = (uuid: string) => {
     const port = 8000 + Number(roomId);
     const ws = new WebSocket(
-      `ws://data.or-ecosystem.eu:${port}/ws/medical-device/${uuid}`
+      `ws://data.or-ecosystem.eu/ws/medical-device/${uuid}`
     );
     wsRef.current = ws;
 
