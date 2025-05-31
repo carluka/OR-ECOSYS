@@ -1,7 +1,10 @@
 const roomService = require("../services/roomService");
 const operationService = require("../services/operationService");
 const { Operacija, Soba } = require("../models");
-const { generateIngress } = require("../utils/generateIngress");
+const {
+  generateIngress,
+  deleteIngressRule,
+} = require("../utils/generateIngress");
 const { kubectlApply, kubectlScale } = require("../utils/kubectl");
 
 exports.getAll = async (req, res, next) => {
@@ -25,10 +28,7 @@ exports.getById = async (req, res, next) => {
 exports.create = async (req, res, next) => {
   try {
     const newRoom = await roomService.createRoom(req.body);
-    const path = await generateIngress(
-      newRoom.dataValues.uuid,
-      8000 + Number(newRoom.dataValues.idsoba)
-    );
+    const path = await generateIngress(newRoom.dataValues.uuid);
     await kubectlApply(path, "or-ecosys");
     res.status(201).json({ data: newRoom });
   } catch (err) {
@@ -57,7 +57,24 @@ exports.remove = async (req, res, next) => {
 exports.removeMultiple = async (req, res, next) => {
   try {
     const { ids } = req.body;
+
+    const rooms = await Promise.all(
+      ids.map(async (id) => {
+        const room = await roomService.getById(id);
+        return room ? room.dataValues.uuid : null;
+      })
+    );
+
     await roomService.deleteRooms(ids);
+
+    for (const uuid of rooms) {
+      if (!uuid) {
+        continue;
+      }
+      const pathToYaml = await deleteIngressRule(uuid);
+      await kubectlApply(pathToYaml, "or-ecosys");
+      console.log(`✅ Uspešno odstranjen ingress rule za room ${uuid}`);
+    }
     res.status(204).end();
   } catch (err) {
     next(err);

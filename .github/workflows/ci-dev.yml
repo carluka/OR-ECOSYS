@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - development
-      - optimizacija_k8s
+      - secure_websocket
 
 env:
   REGISTRY: docker.io
