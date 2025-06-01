@@ -16,7 +16,6 @@ const fluxQuery = `
     |> range(start: time(v: "${start}"), stop: time(v: "${stop}"))
     |> filter(fn: (r) => r["_measurement"] == "kafka_consumer")
     |> filter(fn: (r) => r["room_id"] == "${roomId}")
-    |> limit(n: 1000)
 `;
 
   console.log("Flux query:", fluxQuery);

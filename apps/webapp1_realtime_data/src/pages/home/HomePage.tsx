@@ -1,5 +1,9 @@
-import "./HomePage.css";
-import { useEffect, useState } from "react";
+"use client"
+
+import type React from "react"
+
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Table,
   TableBody,
@@ -10,79 +14,315 @@ import {
   Paper,
   Typography,
   Box,
-  Button,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import api from "../../api";
+  Chip,
+  Card,
+  CardContent,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Tooltip,
+  Alert,
+  CircularProgress,
+  Badge,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+} from "@mui/material"
+import {
+  LocalHospital,
+  Search,
+  FilterList,
+  Visibility,
+  MoreVert,
+  MeetingRoom,
+  LocationOn,
+  CheckCircle,
+  AccessTime,
+} from "@mui/icons-material"
+import api from "../../api"
 
 interface Room {
-  idsoba: number;
-  naziv: string;
-  lokacija: string;
+  idsoba: number
+  naziv: string
+  lokacija: string
+  status?: "active" | "not-active" 
+  equipment?: string[] 
+  capacity?: number
 }
 
 interface ApiResponse {
-  data: Room[];
+  data: Room[]
 }
 
-const HomePage = () => {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const navigate = useNavigate();
+const OperationRoomsPage = () => {
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await api.get<ApiResponse>("/rooms");
-        setRooms(response.data.data);
+        setLoading(true)
+        setError(null)
+        const response = await api.get<ApiResponse>("/rooms")
+        setRooms(response.data.data)
+        setFilteredRooms(response.data.data)
       } catch (error) {
-        console.error("Error fetching rooms:", error);
+        console.error("Error fetching rooms:", error)
+        setError("Error loading operation rooms data")
+      } finally {
+        setLoading(false)
       }
-    };
+    }
 
-    fetchRooms();
-  }, []);
+    fetchRooms()
+  }, [])
 
-  const handleRoomSelect = (roomName: number) => {
-    navigate(`/operation/${encodeURIComponent(roomName)}`);
-  };
+  useEffect(() => {
+    const filtered = rooms.filter(
+      (room) =>
+        room.naziv.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        room.lokacija.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        room.idsoba.toString().includes(searchTerm),
+    )
+    setFilteredRooms(filtered)
+  }, [searchTerm, rooms])
+
+  const handleRoomSelect = (roomId: number) => {
+    navigate(`/operation/${roomId}`)
+  }
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, roomId: number) => {
+    event.stopPropagation()
+    setMenuAnchorEl(event.currentTarget)
+    setSelectedRoomId(roomId)
+  }
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null)
+    setSelectedRoomId(null)
+  }
+
+  const handleViewRoom = () => {
+    if (selectedRoomId) {
+      navigate(`/operation/${selectedRoomId}`)
+    }
+    handleMenuClose()
+  }
+
+  const getRoomStatusChip = (status?: string) => {
+    switch (status) {
+      case "active":
+        return <Chip icon={<CheckCircle />} label="Active" color="success" size="small" variant="outlined" />
+      case "not-active":
+        return <Chip icon={<AccessTime />} label="Not Active" color="warning" size="small" variant="outlined" />
+      default:
+        return <Chip label="Unknown" size="small" variant="outlined" />
+    }
+  }
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading operation rooms...</Typography>
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    )
+  }
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Operacijske sobe
-      </Typography>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Ime sobe</TableCell>
-              <TableCell>Lokacija</TableCell>
-              <TableCell>Akcije</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rooms.map((room) => (
-              <TableRow key={room.idsoba}>
-                <TableCell>{room.idsoba}</TableCell>
-                <TableCell>{room.naziv}</TableCell>
-                <TableCell>{room.lokacija}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleRoomSelect(room.idsoba)}
-                  >
-                    Odpri sobo
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
-  );
-};
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
+          <LocalHospital sx={{ mr: 1 }} color="primary" />
+          Operation Rooms
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          View and manage all operation rooms and their status
+        </Typography>
+      </Box>
 
-export default HomePage;
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 2, mb: 3 }}>
+        <Card variant="outlined">
+          <CardContent sx={{ textAlign: "center", py: 2 }}>
+            <Typography variant="h4" color="primary.main" fontWeight="bold">
+              {rooms.length}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Total Rooms
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card variant="outlined">
+          <CardContent sx={{ textAlign: "center", py: 2 }}>
+            <Typography variant="h4" color="success.main" fontWeight="bold">
+              {rooms.filter((room) => room.status === "active").length}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Active
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card variant="outlined">
+          <CardContent sx={{ textAlign: "center", py: 2 }}>
+            <Typography variant="h4" color="warning.main" fontWeight="bold">
+              {rooms.filter((room) => room.status === "not-active").length}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Not Active
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
+        <Paper sx={{ p: 1, display: "flex", alignItems: "center", flexGrow: 1, maxWidth: "500px" }}>
+          <TextField
+            placeholder="Search rooms..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ flexGrow: 1 }}
+            size="small"
+            variant="standard"
+          />
+          <Tooltip title="Advanced Filters">
+            <IconButton>
+              <FilterList />
+            </IconButton>
+          </Tooltip>
+        </Paper>
+      </Box>
+
+      <Paper sx={{ overflow: "hidden" }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "grey.50" }}>
+                <TableCell sx={{ fontWeight: 600 }}>Room ID</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Room Name</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredRooms.length > 0 ? (
+                filteredRooms.map((room) => (
+                  <TableRow
+                    key={room.idsoba}
+                    onClick={() => handleRoomSelect(room.idsoba)}
+                    sx={{
+                      cursor: "pointer",
+                      "&:hover": {
+                        backgroundColor: "action.hover",
+                      },
+                      transition: "background-color 0.2s",
+                    }}
+                  >
+                    <TableCell>
+                      <Chip label={`#${room.idsoba}`} size="small" variant="outlined" color="primary" />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Badge
+                          color={room.status === "active" ? "success" : "warning"}
+                          variant="dot"
+                          anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                          sx={{ "& .MuiBadge-badge": { top: 13, left: 13 } }}
+                        >
+                          <MeetingRoom color="action" />
+                        </Badge>
+                        <Typography variant="body2" fontWeight="medium">
+                          {room.naziv}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <LocationOn fontSize="small" color="action" />
+                        <Typography variant="body2">{room.lokacija}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>{getRoomStatusChip(room.status)}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Tooltip title="View Room">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRoomSelect(room.idsoba)
+                            }}
+                          >
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="More Options">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, room.idsoba)}
+                            aria-label="more options"
+                          >
+                            <MoreVert fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      {searchTerm ? "No rooms found matching your search." : "No operation rooms available."}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {filteredRooms.length > 0 && (
+        <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="body2" color="text.secondary">
+            Showing {filteredRooms.length} of {rooms.length} operation rooms
+          </Typography>
+        </Box>
+      )}
+
+      <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
+        <MenuItem onClick={handleViewRoom}>
+          <ListItemIcon>
+            <Visibility fontSize="small" />
+          </ListItemIcon>
+          View Room
+        </MenuItem>
+      </Menu>
+    </Box>
+  )
+}
+
+export default OperationRoomsPage

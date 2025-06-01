@@ -1,7 +1,10 @@
+"use client";
+
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useDeviceContext } from "../../context/DeviceContext";
 import { useParams, Navigate } from "react-router-dom";
+
 import NibpModule from "../../components/devices/NIBPModule";
 import EKGModule from "../../components/devices/EKGModule";
 import SPO2Sensor from "../../components/devices/SPO2Sensor";
@@ -9,11 +12,37 @@ import Capnograph from "../../components/devices/Capnograph";
 import TemperatureGauge from "../../components/devices/TemperatureGauge";
 import InfusionPump from "../../components/devices/InfusionPump";
 import Ventilator from "../../components/devices/Ventilator";
+
 import DraggablePanel from "../../components/DraggablePanel/DraggablePanel";
-import DashboardControls from "../../components/DashboardControls/DashboardControls";
-import "./OperationRoomPage.css";
+
 import api from "../../api";
 
+import {
+  Box,
+  Button,
+  Chip,
+  Divider,
+  Typography,
+  IconButton,
+  Tooltip,
+  useTheme,
+  Checkbox,
+  FormControlLabel,
+} from "@mui/material";
+import {
+  Fullscreen as FullscreenIcon,
+  FullscreenExit as FullscreenExitIcon,
+  PowerSettingsNew as PowerIcon,
+  PowerOff as PowerOffIcon,
+  Link as LinkIcon,
+  LinkOff as LinkOffIcon,
+  Circle as CircleIcon,
+  RestartAlt as RestartAltIcon,
+} from "@mui/icons-material";
+
+import "./OperationRoomPage.css"; // ohrani, če imate še kakšne specifične CSS razrede
+
+// Tipizacije
 interface DataPoint {
   time: number;
   value: number;
@@ -40,6 +69,18 @@ interface ModuleVisibility {
   [key: string]: boolean;
 }
 
+// Seznam modulov in njihove oznake
+const MODULES = [
+  { id: "temperature", label: "Temperature Gauge" },
+  { id: "ekg", label: "EKG Module" },
+  { id: "spo2", label: "SPO2 Sensor" },
+  { id: "capnograph", label: "Capnograph" },
+  { id: "nibp", label: "NIBP Module" },
+  { id: "infusion", label: "Infusion Pump" },
+  { id: "ventilator", label: "Ventilator" },
+];
+
+// Konstantne
 const MAX_POINTS = 60;
 const GRID_SIZE = { cols: 12, rows: 16 };
 
@@ -66,6 +107,7 @@ const DEFAULT_VISIBILITY: ModuleVisibility = {
 const OperationRoomPageNew: React.FC = () => {
   const { roomId } = useParams();
   const { deviceData, updateDeviceData } = useDeviceContext();
+
   const [connected, setConnected] = useState(false);
   const [co2History, setCo2History] = useState<DataPoint[]>([]);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -83,6 +125,9 @@ const OperationRoomPageNew: React.FC = () => {
   const allMetricsRef = useRef<MetricMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
 
+  const theme = useTheme();
+
+  // Obdelava prejema metrike iz WebSocketa
   const handleMetric = (msg: MetricMessage) => {
     allMetricsRef.current.push(msg);
     updateDeviceData(msg);
@@ -99,6 +144,7 @@ const OperationRoomPageNew: React.FC = () => {
     }
   };
 
+  // Sprememba položaja draggable panela
   const handlePositionChange = (moduleId: string, position: GridPosition) => {
     setModuleLayout((prev) => ({
       ...prev,
@@ -106,6 +152,7 @@ const OperationRoomPageNew: React.FC = () => {
     }));
   };
 
+  // Sprememba vidljivosti posameznih modulov
   const handleVisibilityChange = (moduleId: string, visible: boolean) => {
     setModuleVisibility((prev) => ({
       ...prev,
@@ -113,41 +160,13 @@ const OperationRoomPageNew: React.FC = () => {
     }));
   };
 
+  // Ponastavitev na privzeti layout / vidljivosti
   const handleResetLayout = () => {
     setModuleLayout(DEFAULT_LAYOUT);
     setModuleVisibility(DEFAULT_VISIBILITY);
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      if (containerRef.current?.requestFullscreen) {
-        containerRef.current
-          .requestFullscreen()
-          .then(() => {
-            setIsFullscreen(true);
-          })
-          .catch((err) => {
-            console.error(
-              `Error attempting to enable fullscreen: ${err.message}`
-            );
-          });
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document
-          .exitFullscreen()
-          .then(() => {
-            setIsFullscreen(false);
-          })
-          .catch((err) => {
-            console.error(
-              `Error attempting to exit fullscreen: ${err.message}`
-            );
-          });
-      }
-    }
-  };
-
+  // Preverjanje, ali je OR “aktiven” in pridobitev wsUuid
   useEffect(() => {
     const fetchActiveStatus = async () => {
       try {
@@ -169,18 +188,19 @@ const OperationRoomPageNew: React.FC = () => {
     }
   }, [roomId]);
 
+  // Ob spremembi fullscreen načina (npr. pritisk F11 ali exit)
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
+  // Tipka F11 za preklop fullscreen
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "F11") {
@@ -188,23 +208,20 @@ const OperationRoomPageNew: React.FC = () => {
         toggleFullscreen();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [isFullscreen]);
 
+  // Odpri WebSocket povezavo
   const openSocket = (uuid: string) => {
-    const port = 8000 + Number(roomId);
     const ws = new WebSocket(
       `wss://data.or-ecosystem.eu/ws/medical-device/${uuid}`
     );
     wsRef.current = ws;
 
     ws.onopen = () => setConnected(true);
-
     ws.onmessage = (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data);
@@ -214,15 +231,14 @@ const OperationRoomPageNew: React.FC = () => {
         console.error("Failed to parse message", err);
       }
     };
-
     ws.onerror = () => ws.close();
-
     ws.onclose = () => {
       setConnected(false);
       wsRef.current = null;
     };
   };
 
+  // Funkcija za run/stop machines
   const handleMachines = async () => {
     if (isActive) {
       try {
@@ -230,7 +246,6 @@ const OperationRoomPageNew: React.FC = () => {
       } catch (err) {
         console.error("Failed to stop devices", err);
       }
-
       wsRef.current?.close();
       setConnected(false);
       setIsActive(false);
@@ -250,6 +265,7 @@ const OperationRoomPageNew: React.FC = () => {
     }
   };
 
+  // Poveži se na WebSocket
   const connectToWebSocket = async () => {
     if (connected || !wsUuid) return;
     try {
@@ -259,10 +275,16 @@ const OperationRoomPageNew: React.FC = () => {
     }
   };
 
+  // Prekini WebSocket
   const disconnect = () => {
     wsRef.current?.close();
     setConnected(false);
   };
+
+  // Če ni roomId, preusmeri
+  if (!roomId) {
+    return <Navigate to="/" replace />;
+  }
 
   const nibpData = {
     systolic:
@@ -278,19 +300,15 @@ const OperationRoomPageNew: React.FC = () => {
       "ecgWaveform.ch0.ecg_module"
     ];
   const ecgWaveform =
-    typeof waveformRaw === "string"
-      ? JSON.parse(waveformRaw)
-      : waveformRaw ?? [];
+    typeof waveformRaw === "string" ? JSON.parse(waveformRaw) : waveformRaw ?? [];
 
   const ekgData = {
     heartRate:
-      deviceData["heartRate.ch0.ecg_module"]?.metrics[
-        "heartRate.ch0.ecg_module"
-      ] ?? null,
+      deviceData["heartRate.ch0.ecg_module"]?.metrics["heartRate.ch0.ecg_module"] ??
+      null,
     rrInterval:
-      deviceData["rrInterval.ch0.ecg_module"]?.metrics[
-        "rrInterval.ch0.ecg_module"
-      ] ?? null,
+      deviceData["rrInterval.ch0.ecg_module"]?.metrics["rrInterval.ch0.ecg_module"] ??
+      null,
     qrsDuration:
       deviceData["qrsDuration.ch0.ecg_module"]?.metrics[
         "qrsDuration.ch0.ecg_module"
@@ -320,13 +338,10 @@ const OperationRoomPageNew: React.FC = () => {
 
   const infusionPumpData = {
     flowRate:
-      deviceData["flowRate.ch0.infusion_pump"]?.metrics[
-        "flowRate.ch0.infusion_pump"
-      ] ?? null,
+      deviceData["flowRate.ch0.infusion_pump"]?.metrics["flowRate.ch0.infusion_pump"] ?? null,
     volumeTotal:
-      deviceData["volumeTotal.ch0.infusion_pump"]?.metrics[
-        "volumeTotal.ch0.infusion_pump"
-      ] ?? null,
+      deviceData["volumeTotal.ch0.infusion_pump"]?.metrics["volumeTotal.ch0.infusion_pump"] ??
+      null,
   };
 
   const ventilatorData = {
@@ -352,203 +367,441 @@ const OperationRoomPageNew: React.FC = () => {
       ] ?? null,
   };
 
-  if (!roomId) {
-    return <Navigate to="/" replace />;
-  }
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current
+          .requestFullscreen()
+          .then(() => setIsFullscreen(true))
+          .catch((err) =>
+            console.error(`Error enabling fullscreen: ${err.message}`)
+          );
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document
+          .exitFullscreen()
+          .then(() => setIsFullscreen(false))
+          .catch((err) =>
+            console.error(`Error exiting fullscreen: ${err.message}`)
+          );
+      }
+    }
+  };
+
+  const selectedModules = MODULES.filter((m) => moduleVisibility[m.id]);
 
   return (
-    <div
+    <Box
       ref={containerRef}
-      className={`operation-room-container ${isFullscreen ? "fullscreen" : ""}`}
+      sx={{
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        backgroundColor: theme.palette.grey[50],
+        overflow: "hidden",
+      }}
     >
-      <div className="operation-room-content">
-        {isFullscreen && (
-          <div className="fullscreen-indicator">
-            Press F11 to exit fullscreen | Press ESC to exit
-          </div>
+      {isFullscreen && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            left: "50%",
+            transform: "translateX(-50%)",
+            bgcolor: "rgba(0,0,0,0.6)",
+            borderRadius: 1,
+            px: 2,
+            py: 1,
+            zIndex: 1300,
+          }}
+        >
+          <Typography variant="body2" color="common.white">
+            Press F11 or click Exit Fullscreen to return
+          </Typography>
+        </Box>
+      )}
+
+      <Box
+        className={`operation-room-content${isFullscreen ? " fullscreen" : ""}`}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
+
+        {!isFullscreen && (
+          <Box
+            className="header-container"
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              bgcolor: "background.paper",
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              px: 3,
+              py: 2,
+            }}
+          >
+
+            <Box className="header-title" sx={{ display: "flex", alignItems: "center" }}>
+              <Box
+                className="header-icon"
+                sx={{
+                  mr: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 46,
+                  height: 46,
+                  bgcolor: "primary.main",
+                  borderRadius: "50%",
+                  color: "common.white",
+                }}
+              >
+                <Typography variant="h6" component="span">
+                  OR
+                </Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {decodeURIComponent(roomId)} – Dashboard
+              </Typography>
+            </Box>
+
+            <Box className="header-controls" sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
+                className="connection-status"
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
+                <CircleIcon
+                  fontSize="small"
+                  sx={{
+                    color: connected ? "success.main" : "error.main",
+                  }}
+                />
+                <Typography variant="body2">
+                  Status:{" "}
+                  <Box component="span" sx={{ fontWeight: 500 }}>
+                    {connected ? "Connected" : "Disconnected"}
+                  </Box>
+                </Typography>
+              </Box>
+
+              <Box className="action-buttons" sx={{ display: "flex", gap: 1 }}>
+                <Tooltip title="Toggle Fullscreen (F11)">
+                  <IconButton
+                    onClick={toggleFullscreen}
+                    size="small"
+                    sx={{
+                      bgcolor: "background.paper",
+                      "&:hover": { bgcolor: "action.hover" },
+                    }}
+                  >
+                    {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title={isActive ? "Stop Machines" : "Run Machines"}>
+                  <Button
+                    onClick={handleMachines}
+                    variant={isActive ? "outlined" : "contained"}
+                    color={isActive ? "warning" : "primary"}
+                    startIcon={isActive ? <PowerOffIcon /> : <PowerIcon />}
+                    size="small"
+                    sx={{ textTransform: "none" }}
+                  >
+                    {isActive ? "Stop" : "Run"}
+                  </Button>
+                </Tooltip>
+
+                <Tooltip title="Connect WebSocket">
+                  <Button
+                    onClick={connectToWebSocket}
+                    disabled={!isAvailable || connected}
+                    variant="outlined"
+                    color="success"
+                    startIcon={<LinkIcon />}
+                    size="small"
+                    sx={{
+                      textTransform: "none",
+                      ...(!isAvailable || connected
+                        ? {
+                            color: theme.palette.action.disabled,
+                            borderColor: theme.palette.action.disabledBackground,
+                          }
+                        : {}),
+                    }}
+                  >
+                    Connect
+                  </Button>
+                </Tooltip>
+
+                <Tooltip title="Disconnect WebSocket">
+                  <Button
+                    onClick={disconnect}
+                    disabled={!connected}
+                    variant="outlined"
+                    color="error"
+                    startIcon={<LinkOffIcon />}
+                    size="small"
+                    sx={{
+                      textTransform: "none",
+                      ...(!connected
+                        ? {
+                            color: theme.palette.action.disabled,
+                            borderColor: theme.palette.action.disabledBackground,
+                          }
+                        : {}),
+                    }}
+                  >
+                    Disconnect
+                  </Button>
+                </Tooltip>
+              </Box>
+            </Box>
+          </Box>
         )}
 
         {!isFullscreen && (
-          <>
-            <div className="header-container">
-              <div className="header-title">
-                <div className="header-icon">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                </div>
-                <h1>{decodeURIComponent(roomId)} - Dashboard</h1>
-              </div>
+          <Box
+            sx={{
+              mb: 2,
+              p: 2,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 1,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Module Visibility
+              </Typography>
 
-              <div className="header-controls">
-                <div className="connection-status">
-                  <div
-                    className={`status-indicator ${
-                      connected ? "connected" : "disconnected"
-                    }`}
-                  ></div>
-                  <span>
-                    Status: {connected ? "Connected" : "Disconnected"}
-                  </span>
-                </div>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    MODULES.forEach((m) => {
+                      if (!moduleVisibility[m.id]) {
+                        handleVisibilityChange(m.id, true);
+                      }
+                    });
+                  }}
+                  sx={{
+                    textTransform: "none",
+                    bgcolor: theme.palette.primary.main,
+                    "&:hover": { bgcolor: theme.palette.primary.dark },
+                  }}
+                >
+                  SELECT ALL
+                </Button>
 
-                <div className="action-buttons">
-                  <button
-                    onClick={toggleFullscreen}
-                    className="fullscreen-btn"
-                    title="Toggle Fullscreen (F11)"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      {isFullscreen ? (
-                        <>
-                          <path d="M8 3v3a2 2 0 0 1-2 2H3" />
-                          <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
-                          <path d="M3 16h3a2 2 0 0 1 2 2v3" />
-                          <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
-                        </>
-                      ) : (
-                        <>
-                          <path d="M8 3H5a2 2 0 0 0-2 2v3" />
-                          <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-                          <path d="M3 16v3a2 2 0 0 0 2 2h3" />
-                          <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-                        </>
-                      )}
-                    </svg>
-                    {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                  </button>
-                  <button
-                    onClick={handleMachines}
-                    className={`run-btn ${isActive ? "" : ""}`}
-                  >
-                    {isActive ? "Stop Machines" : "Run Machines"}
-                  </button>
-                  <button
-                    onClick={connectToWebSocket}
-                    disabled={!isAvailable || connected}
-                    className={`connect-btn ${
-                      !isAvailable || connected ? "disabled" : ""
-                    }`}
-                  >
-                    Connect
-                  </button>
-                  <button
-                    onClick={disconnect}
-                    disabled={!connected}
-                    className={`disconnect-btn ${!connected ? "disabled" : ""}`}
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              </div>
-            </div>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="secondary"
+                  onClick={() => {
+                    MODULES.forEach((m) => {
+                      if (moduleVisibility[m.id]) {
+                        handleVisibilityChange(m.id, false);
+                      }
+                    });
+                  }}
+                  sx={{
+                    textTransform: "none",
+                    borderColor: theme.palette.secondary.main,
+                    color: theme.palette.secondary.main,
+                    "&:hover": {
+                      borderColor: theme.palette.secondary.dark,
+                      bgcolor: theme.palette.secondary.light,
+                    },
+                  }}
+                >
+                  CLEAR ALL
+                </Button>
 
-            <DashboardControls
-              moduleVisibility={moduleVisibility}
-              onVisibilityChange={handleVisibilityChange}
-              onResetLayout={handleResetLayout}
-            />
-          </>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<RestartAltIcon />}
+                  onClick={handleResetLayout}
+                  sx={{
+                    textTransform: "none",
+                    ml: { xs: 0, sm: 2 },
+                  }}
+                >
+                  Reset Layout
+                </Button>
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Selected modules ({selectedModules.length}/{MODULES.length}):
+            </Typography>
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+              {selectedModules.length > 0 ? (
+                selectedModules.map((m) => (
+                  <Chip
+                    key={m.id}
+                    label={m.label}
+                    size="small"
+                    onDelete={() => handleVisibilityChange(m.id, false)}
+                    sx={{
+                      bgcolor: theme.palette.primary.dark,
+                      color: theme.palette.primary.contrastText,
+                      "& .MuiChip-deleteIcon": {
+                        color: theme.palette.primary.contrastText,
+                      },
+                    }}
+                  />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  None
+                </Typography>
+              )}
+            </Box>
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              {MODULES.map((m) => (
+                <FormControlLabel
+                  key={m.id}
+                  control={
+                    <Checkbox
+                      checked={moduleVisibility[m.id]}
+                      onChange={() =>
+                        handleVisibilityChange(m.id, !moduleVisibility[m.id])
+                      }
+                    />
+                  }
+                  label={m.label}
+                  sx={{ userSelect: "none" }}
+                />
+              ))}
+            </Box>
+          </Box>
         )}
 
-        <div
+        <Box
           className="dashboard-grid-container"
-          style={{
+          sx={{
+            flexGrow: 1,
+            display: "grid",
             gridTemplateColumns: `repeat(${GRID_SIZE.cols}, 1fr)`,
             gridTemplateRows: `repeat(${GRID_SIZE.rows}, ${
               isFullscreen ? "80px" : "60px"
             })`,
+            gap: 1,
+            p: 1,
+            position: "relative",
           }}
         >
-          <DraggablePanel
-            id="temperature"
-            gridPosition={moduleLayout.temperature}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.temperature}
-          >
-            <TemperatureGauge temperature={temperature} />
-          </DraggablePanel>
+          {moduleVisibility.temperature && (
+            <DraggablePanel
+              id="temperature"
+              gridPosition={moduleLayout.temperature}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <TemperatureGauge temperature={temperature} />
+            </DraggablePanel>
+          )}
 
-          <DraggablePanel
-            id="ekg"
-            gridPosition={moduleLayout.ekg}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.ekg}
-          >
-            <EKGModule {...ekgData} />
-          </DraggablePanel>
+          {moduleVisibility.ekg && (
+            <DraggablePanel
+              id="ekg"
+              gridPosition={moduleLayout.ekg}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <EKGModule {...ekgData} />
+            </DraggablePanel>
+          )}
 
-          <DraggablePanel
-            id="spo2"
-            gridPosition={moduleLayout.spo2}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.spo2}
-          >
-            <SPO2Sensor {...spo2SensorData} />
-          </DraggablePanel>
+          {moduleVisibility.spo2 && (
+            <DraggablePanel
+              id="spo2"
+              gridPosition={moduleLayout.spo2}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <SPO2Sensor {...spo2SensorData} />
+            </DraggablePanel>
+          )}
 
-          <DraggablePanel
-            id="capnograph"
-            gridPosition={moduleLayout.capnograph}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.capnograph}
-          >
-            <Capnograph {...capnographData} />
-          </DraggablePanel>
+          {moduleVisibility.capnograph && (
+            <DraggablePanel
+              id="capnograph"
+              gridPosition={moduleLayout.capnograph}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <Capnograph {...capnographData} />
+            </DraggablePanel>
+          )}
 
-          <DraggablePanel
-            id="nibp"
-            gridPosition={moduleLayout.nibp}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.nibp}
-          >
-            <NibpModule {...nibpData} />
-          </DraggablePanel>
+          {moduleVisibility.nibp && (
+            <DraggablePanel
+              id="nibp"
+              gridPosition={moduleLayout.nibp}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <NibpModule {...nibpData} />
+            </DraggablePanel>
+          )}
 
-          <DraggablePanel
-            id="infusion"
-            gridPosition={moduleLayout.infusion}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.infusion}
-          >
-            <InfusionPump {...infusionPumpData} />
-          </DraggablePanel>
+          {moduleVisibility.infusion && (
+            <DraggablePanel
+              id="infusion"
+              gridPosition={moduleLayout.infusion}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <InfusionPump {...infusionPumpData} />
+            </DraggablePanel>
+          )}
 
-          <DraggablePanel
-            id="ventilator"
-            gridPosition={moduleLayout.ventilator}
-            onPositionChange={handlePositionChange}
-            gridSize={GRID_SIZE}
-            isVisible={moduleVisibility.ventilator}
-          >
-            <Ventilator {...ventilatorData} />
-          </DraggablePanel>
-        </div>
-      </div>
-    </div>
+          {moduleVisibility.ventilator && (
+            <DraggablePanel
+              id="ventilator"
+              gridPosition={moduleLayout.ventilator}
+              onPositionChange={handlePositionChange}
+              gridSize={GRID_SIZE}
+              isVisible
+            >
+              <Ventilator {...ventilatorData} />
+            </DraggablePanel>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

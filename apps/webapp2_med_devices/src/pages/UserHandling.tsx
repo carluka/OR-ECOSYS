@@ -52,7 +52,7 @@ const UserHandling: React.FC = () => {
 
 	// Pagination state
 	const [page, setPage] = useState(0);
-	const [rowsPerPage, setRowsPerPage] = useState(5);
+	const [rowsPerPage, setRowsPerPage] = useState(15);
 
 	const fetchUsers = () => {
 		api
