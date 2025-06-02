@@ -122,32 +122,33 @@ class DeviceRepo {
 
 			const sql = `
 			SELECT
-			  n.idnaprava,
-			  n.naziv              AS naprava,
-			  tn.naziv             AS tip_naprave,
-			  n.soba_idsoba,
-			  -- Use COALESCE to show empty string if no room assigned
-			  COALESCE(sb.naziv || ' ' || sb.lokacija, 'NO ROOM') AS soba,
-			  -- default to false if no servis rows at all
-			  COALESCE(
+			n.idnaprava,
+			n.naziv              AS naprava,
+			tn.naziv             AS tip_naprave,
+			n.soba_idsoba,
+			COALESCE(sb.naziv || ' ' || sb.lokacija, 'NO ROOM') AS soba,
+			COALESCE(sb.naziv, '') AS soba_naziv,
+			COALESCE(sb.lokacija, '') AS soba_lokacija,
+			-- default to false if no servis rows at all
+			COALESCE(
 				bool_or(sv.datum >= CURRENT_DATE - INTERVAL '2 months'),
 				FALSE
-			  ) AS servis
+			) AS servis
 			FROM naprava n
 			JOIN tip_naprave tn
-			  ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
+			ON n.tip_naprave_idtip_naprave = tn.idtip_naprave
 			LEFT JOIN soba sb
-			  ON n.soba_idsoba = sb.idsoba
+			ON n.soba_idsoba = sb.idsoba
 			LEFT JOIN servis sv
-			  ON sv.naprava_idnaprava = n.idnaprava
+			ON sv.naprava_idnaprava = n.idnaprava
 			${whereSQL}
 			GROUP BY
-			  n.idnaprava,
-			  n.naziv,
-			  tn.naziv,
-			  n.soba_idsoba,
-			  sb.naziv,
-			  sb.lokacija
+			n.idnaprava,
+			n.naziv,
+			tn.naziv,
+			n.soba_idsoba,
+			sb.naziv,
+			sb.lokacija
 			${havingSQL}
 			ORDER BY n.idnaprava DESC;
 		  `;
