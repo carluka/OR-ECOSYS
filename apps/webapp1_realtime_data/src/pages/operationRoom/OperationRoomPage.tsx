@@ -164,10 +164,6 @@ const OperationRoomPageNew: React.FC = () => {
     setShowPatientModal(false);
   };
 
-  const handlePatientSelected = (patient: any) => {
-    console.log("Patient selected:", patient);
-  };
-
   useEffect(() => {
     const fetchActiveStatus = async () => {
       try {
@@ -524,7 +520,6 @@ const OperationRoomPageNew: React.FC = () => {
                 <PatientSelectionModal
                   open={showPatientModal}
                   onClose={handlePatientModalClose}
-                  onPatientSelected={handlePatientSelected}
                   operationID={operationID}
                 />
 

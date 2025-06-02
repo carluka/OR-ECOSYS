@@ -1,9 +1,6 @@
-"use client"
-
-import type React from "react"
-
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -27,7 +24,7 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-} from "@mui/material"
+} from "@mui/material";
 import {
   LocalHospital,
   Search,
@@ -38,101 +35,159 @@ import {
   LocationOn,
   CheckCircle,
   AccessTime,
-} from "@mui/icons-material"
-import api from "../../api"
+} from "@mui/icons-material";
+import api from "../../api";
 
 interface Room {
-  idsoba: number
-  naziv: string
-  lokacija: string
-  status?: "active" | "not-active" 
-  equipment?: string[] 
-  capacity?: number
+  idsoba: number;
+  naziv: string;
+  lokacija: string;
+  active?: boolean; // sad koristimo boolean
+  equipment?: string[];
+  capacity?: number;
 }
 
 interface ApiResponse {
-  data: Room[]
+  data: Room[];
 }
 
 const OperationRoomsPage = () => {
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
-  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null)
-  const navigate = useNavigate()
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        const response = await api.get<ApiResponse>("/rooms")
-        setRooms(response.data.data)
-        setFilteredRooms(response.data.data)
+        setLoading(true);
+        setError(null);
+
+        // 1) Prvo dohvatimo sve sobe
+        const response = await api.get<ApiResponse>("/rooms");
+        const baseRooms: Room[] = response.data.data;
+
+        // 2) Za svaku sobu dohvatimo status (active: boolean)
+        const roomsWithStatus: Room[] = await Promise.all(
+          baseRooms.map(async (room) => {
+            try {
+              // Očekujemo da backend vrati { active: boolean }
+              const statusRes = await api.get<{ active: boolean }>(
+                `/rooms/${room.idsoba}/status`
+              );
+
+              return {
+                ...room,
+                active: statusRes.data.active, // spremamo boolean
+              };
+            } catch (statusError) {
+              console.error(
+                `Error fetching status for room ${room.idsoba}:`,
+                statusError
+              );
+              return {
+                ...room,
+                active: undefined, // ili false, ovisno o tome želite li "unknown" tretirati kao neaktivno
+              };
+            }
+          })
+        );
+
+        setRooms(roomsWithStatus);
+        setFilteredRooms(roomsWithStatus);
       } catch (error) {
-        console.error("Error fetching rooms:", error)
-        setError("Error loading operation rooms data")
+        console.error("Error fetching rooms:", error);
+        setError("Napaka pri nalaganju podatkov o operacijskih sobah");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchRooms()
-  }, [])
+    fetchRooms();
+  }, []);
 
+  // Filtriranje prema pojmu za pretraživanje
   useEffect(() => {
     const filtered = rooms.filter(
       (room) =>
         room.naziv.toLowerCase().includes(searchTerm.toLowerCase()) ||
         room.lokacija.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        room.idsoba.toString().includes(searchTerm),
-    )
-    setFilteredRooms(filtered)
-  }, [searchTerm, rooms])
+        room.idsoba.toString().includes(searchTerm)
+    );
+    setFilteredRooms(filtered);
+  }, [searchTerm, rooms]);
 
   const handleRoomSelect = (roomId: number) => {
-    navigate(`/operation/${roomId}`)
-  }
+    navigate(`/operation/${roomId}`);
+  };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, roomId: number) => {
-    event.stopPropagation()
-    setMenuAnchorEl(event.currentTarget)
-    setSelectedRoomId(roomId)
-  }
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    roomId: number
+  ) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedRoomId(roomId);
+  };
 
   const handleMenuClose = () => {
-    setMenuAnchorEl(null)
-    setSelectedRoomId(null)
-  }
+    setMenuAnchorEl(null);
+    setSelectedRoomId(null);
+  };
 
   const handleViewRoom = () => {
     if (selectedRoomId) {
-      navigate(`/operation/${selectedRoomId}`)
+      navigate(`/operation/${selectedRoomId}`);
     }
-    handleMenuClose()
-  }
+    handleMenuClose();
+  };
 
-  const getRoomStatusChip = (status?: string) => {
-    switch (status) {
-      case "active":
-        return <Chip icon={<CheckCircle />} label="Active" color="success" size="small" variant="outlined" />
-      case "not-active":
-        return <Chip icon={<AccessTime />} label="Not Active" color="warning" size="small" variant="outlined" />
-      default:
-        return <Chip label="Unknown" size="small" variant="outlined" />
+  // 3) Funkcija za prikaz statusa kao Chip, sad radi s boolean vrijednošću
+  const getRoomStatusChip = (isActive?: boolean) => {
+    if (isActive === true) {
+      return (
+        <Chip
+          icon={<CheckCircle />}
+          label="Active"
+          color="success"
+          size="small"
+          variant="outlined"
+        />
+      );
+    } else if (isActive === false) {
+      return (
+        <Chip
+          icon={<AccessTime />}
+          label="Not Active"
+          color="warning"
+          size="small"
+          variant="outlined"
+        />
+      );
+    } else {
+      return <Chip label="Unknown" size="small" variant="outlined" />;
     }
-  }
+  };
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+      <Box
+        sx={{
+          p: 3,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
         <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading operation rooms...</Typography>
+        <Typography sx={{ ml: 2 }}>Downloading operation rooms...</Typography>
       </Box>
-    )
+    );
   }
 
   if (error) {
@@ -140,13 +195,17 @@ const OperationRoomsPage = () => {
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
       </Box>
-    )
+    );
   }
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ display: "flex", alignItems: "center" }}
+        >
           <LocalHospital sx={{ mr: 1 }} color="primary" />
           Operation Rooms
         </Typography>
@@ -155,7 +214,15 @@ const OperationRoomsPage = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 2, mb: 3 }}>
+      {/* 4) KARTICE S BROJEVIMA */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Card variant="outlined">
           <CardContent sx={{ textAlign: "center", py: 2 }}>
             <Typography variant="h4" color="primary.main" fontWeight="bold">
@@ -169,7 +236,7 @@ const OperationRoomsPage = () => {
         <Card variant="outlined">
           <CardContent sx={{ textAlign: "center", py: 2 }}>
             <Typography variant="h4" color="success.main" fontWeight="bold">
-              {rooms.filter((room) => room.status === "active").length}
+              {rooms.filter((room) => room.active === true).length}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Active
@@ -179,7 +246,7 @@ const OperationRoomsPage = () => {
         <Card variant="outlined">
           <CardContent sx={{ textAlign: "center", py: 2 }}>
             <Typography variant="h4" color="warning.main" fontWeight="bold">
-              {rooms.filter((room) => room.status === "not-active").length}
+              {rooms.filter((room) => room.active === false).length}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Not Active
@@ -188,8 +255,25 @@ const OperationRoomsPage = () => {
         </Card>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Paper sx={{ p: 1, display: "flex", alignItems: "center", flexGrow: 1, maxWidth: "500px" }}>
+      {/* SEARCH BAR */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Paper
+          sx={{
+            p: 1,
+            display: "flex",
+            alignItems: "center",
+            flexGrow: 1,
+            maxWidth: "500px",
+          }}
+        >
           <TextField
             placeholder="Search rooms..."
             value={searchTerm}
@@ -213,6 +297,7 @@ const OperationRoomsPage = () => {
         </Paper>
       </Box>
 
+      {/* TABLICA S PODACIMA */}
       <Paper sx={{ overflow: "hidden" }}>
         <TableContainer>
           <Table>
@@ -240,12 +325,19 @@ const OperationRoomsPage = () => {
                     }}
                   >
                     <TableCell>
-                      <Chip label={`#${room.idsoba}`} size="small" variant="outlined" color="primary" />
+                      <Chip
+                        label={`#${room.idsoba}`}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Badge
-                          color={room.status === "active" ? "success" : "warning"}
+                          color={room.active ? "success" : "warning"}
                           variant="dot"
                           anchorOrigin={{ vertical: "top", horizontal: "left" }}
                           sx={{ "& .MuiBadge-badge": { top: 13, left: 13 } }}
@@ -258,12 +350,14 @@ const OperationRoomsPage = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <LocationOn fontSize="small" color="action" />
                         <Typography variant="body2">{room.lokacija}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>{getRoomStatusChip(room.status)}</TableCell>
+                    <TableCell>{getRoomStatusChip(room.active)}</TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", gap: 1 }}>
                         <Tooltip title="View Room">
@@ -271,8 +365,8 @@ const OperationRoomsPage = () => {
                             size="small"
                             color="primary"
                             onClick={(e) => {
-                              e.stopPropagation()
-                              handleRoomSelect(room.idsoba)
+                              e.stopPropagation();
+                              handleRoomSelect(room.idsoba);
                             }}
                           >
                             <Visibility fontSize="small" />
@@ -293,9 +387,11 @@ const OperationRoomsPage = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                  <TableCell colSpan={5} sx={{ textAlign: "center", py: 4 }}>
                     <Typography variant="body1" color="text.secondary">
-                      {searchTerm ? "No rooms found matching your search." : "No operation rooms available."}
+                      {searchTerm
+                        ? "No rooms found matching your search."
+                        : "No operation rooms available."}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -306,14 +402,25 @@ const OperationRoomsPage = () => {
       </Paper>
 
       {filteredRooms.length > 0 && (
-        <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box
+          sx={{
+            mt: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
             Showing {filteredRooms.length} of {rooms.length} operation rooms
           </Typography>
         </Box>
       )}
 
-      <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={handleMenuClose}>
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+      >
         <MenuItem onClick={handleViewRoom}>
           <ListItemIcon>
             <Visibility fontSize="small" />
@@ -322,7 +429,7 @@ const OperationRoomsPage = () => {
         </MenuItem>
       </Menu>
     </Box>
-  )
-}
+  );
+};
 
-export default OperationRoomsPage
+export default OperationRoomsPage;
