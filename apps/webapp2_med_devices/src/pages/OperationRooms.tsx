@@ -1,123 +1,96 @@
-import React, { useState, useEffect } from "react";
-import MainLayout from "../layout/MainLayout";
+import type React from "react";
+import { useState } from "react";
 import {
-	Typography,
-	TableContainer,
-	Table,
-	TableHead,
-	TableRow,
-	TableCell,
-	TableBody,
-	Paper,
-	Checkbox,
 	Box,
-	Button,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	IconButton,
-	Stack,
-	Collapse,
+	Typography,
 	TablePagination,
+	Alert,
+	CircularProgress,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import api from "../api";
-import AddRoom from "../components/rooms/AddRoom";
-import AddDeviceRoom from "../components/rooms/AddDeviceRoom";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import DeviceReportModal from "../components/devices/DeviceReportModal";
-
-interface RoomWithDeviceCount {
-	idsoba: number;
-	naziv: string;
-	lokacija: string;
-	st_naprav: string;
-	unsaved_changes: boolean;
-}
-
-interface Device {
-	idnaprava: number;
-	naprava: string;
-	tip_naprave: string;
-	soba_idsoba: number | null;
-}
+import MainLayout from "../layout/MainLayout";
+import { useRooms } from "../hooks/useRooms";
+import { useRoomFilters } from "../hooks/useRoomFilters";
+import { useRoomSelection } from "../hooks/useRoomSelection";
+import { RoomHeader } from "../components/rooms/RoomHeader";
+import { RoomSummaryCards } from "../components/rooms/RoomSummaryCards";
+import { RoomSearchAndActions } from "../components/rooms/RoomSearchAndActions";
+import { RoomActionButtons } from "../components/rooms/RoomActionButtons";
+import { RoomTable } from "../components/rooms/RoomTable";
+import { RoomModals } from "../components/rooms/RoomModals";
+import { RoomContextMenu } from "../components/rooms/RoomContextMenu";
+import type { RoomStats } from "../types/room.types";
 
 const OperationRooms: React.FC = () => {
-	const [rooms, setRooms] = useState<RoomWithDeviceCount[]>([]);
-	const [selected, setSelected] = useState<number[]>([]);
-	const [openAddRoom, setOpenAddRoom] = useState(false);
-	const [openAddDeviceRoom, setOpenAddDeviceRoom] = useState(false);
+	const {
+		rooms,
+		allDevices,
+		loading,
+		error,
+		loadingCommitIds,
+		fetchRooms,
+		fetchDevices,
+		handleCommit,
+		deleteRooms,
+		removeDeviceFromRoom,
+	} = useRooms();
+
+	const { searchTerm, setSearchTerm, filteredRooms } = useRoomFilters(rooms);
+
+	const {
+		selected,
+		setSelected,
+		isRoomActive,
+		anySelectedRoomActive,
+		toggleAll,
+		toggleOne,
+	} = useRoomSelection(filteredRooms);
 
 	const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
-	const [allDevices, setAllDevices] = useState<Device[]>([]);
 	const [loadingRemoving, setLoadingRemoving] = useState<
 		Record<number, boolean>
 	>({});
-
-	const [openReportModal, setOpenReportModal] = useState(false);
-	const [reportDeviceId, setReportDeviceId] = useState<number | null>(null);
-
-	// Pagination state
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(15);
 
-	const [loadingCommitIds, setLoadingCommitIds] = useState<number[]>([]);
+	// Modal states
+	const [openAddRoom, setOpenAddRoom] = useState(false);
+	const [openAddDeviceRoom, setOpenAddDeviceRoom] = useState(false);
+	const [openDeleteModal, setOpenDeleteModal] = useState(false);
+	const [openReportModal, setOpenReportModal] = useState(false);
+	const [reportDeviceId, setReportDeviceId] = useState<number | null>(null);
 
-	const fetchRooms = () => {
-		api
-			.get("/rooms/roomsDeviceCount")
-			.then((res) => {
-				if (Array.isArray(res.data.data)) {
-					setRooms(res.data.data);
-				} else {
-					console.error("API response data is not an array:", res.data);
-				}
-			})
-			.catch(console.error);
+	// Context menu state
+	const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+	const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+
+	// Calculate statistics
+	const stats: RoomStats = {
+		totalRooms: rooms.length,
+		activeRooms: rooms.filter((room) => room.aktivno).length,
+		assignedDevices: allDevices.filter((device) => device.soba_idsoba !== null)
+			.length,
+		unassignedDevices: allDevices.filter(
+			(device) => device.soba_idsoba === null
+		).length,
+		roomsWithUnsavedChanges: rooms.filter((room) => room.unsaved_changes)
+			.length,
 	};
 
-	const fetchDevices = () => {
-		api
-			.get("/devices/prikaz")
-			.then((res) => {
-				if (Array.isArray(res.data.data)) {
-					setAllDevices(res.data.data);
-				} else {
-					console.error("Devices response is not array:", res.data);
-				}
-			})
-			.catch(console.error);
-	};
-
-	useEffect(() => {
-		fetchRooms();
-		fetchDevices();
-	}, []);
-
-	const toggleAll = () =>
-		setSelected((sel) =>
-			sel.length === rooms.length ? [] : rooms.map((r) => r.idsoba)
-		);
-
-	const toggleOne = (id: number) =>
-		setSelected((sel) =>
-			sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]
-		);
-
-	const toggleRow = (id: number) => {
+	// Event handlers
+	const handleToggleRow = (id: number) => {
 		setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
 	};
 
-	const handleRemoveDevice = async (deviceId: number) => {
+	const handleRemoveDevice = async (deviceId: number, roomId: number) => {
+		if (isRoomActive(roomId, rooms)) {
+			alert("Cannot remove devices from active rooms.");
+			return;
+		}
+
 		setLoadingRemoving((prev) => ({ ...prev, [deviceId]: true }));
 		try {
-			await api.put(`/devices/${deviceId}`, { soba_idsoba: null });
-			await fetchDevices();
-			await fetchRooms();
+			await removeDeviceFromRoom(deviceId);
 		} catch (error) {
-			console.error("Error removing device from room", error);
 			alert("Failed to remove device from room.");
 		} finally {
 			setLoadingRemoving((prev) => ({ ...prev, [deviceId]: false }));
@@ -125,17 +98,27 @@ const OperationRooms: React.FC = () => {
 	};
 
 	const handleDelete = () => {
-		if (!selected.length) return alert("Choose at least one room.");
-		api
-			.delete("/rooms/deleteMultiple", { data: { ids: selected } })
-			.then(() => {
-				setSelected([]);
-				fetchRooms();
-			})
-			.catch((err) => {
-				console.error("Error deleting rooms:", err);
-				alert("Error deleting rooms.");
-			});
+		if (!selected.length) {
+			alert("Choose at least one room.");
+			return;
+		}
+
+		if (anySelectedRoomActive(rooms)) {
+			alert("Cannot delete active rooms. Please deselect active rooms.");
+			return;
+		}
+
+		setOpenDeleteModal(true);
+	};
+
+	const confirmDelete = async () => {
+		try {
+			await deleteRooms(selected);
+			setSelected([]);
+			setOpenDeleteModal(false);
+		} catch (error) {
+			alert("Error deleting rooms.");
+		}
 	};
 
 	const openAddDevice = () => {
@@ -143,34 +126,13 @@ const OperationRooms: React.FC = () => {
 			alert("Choose exactly one room.");
 			return;
 		}
-		setOpenAddDeviceRoom(true);
-	};
 
-	const closeAddRoom = () => setOpenAddRoom(false);
-	const closeAddDeviceRoom = () => setOpenAddDeviceRoom(false);
-
-	const onRoomAdded = () => {
-		fetchRooms();
-		closeAddRoom();
-	};
-
-	const onDeviceAdded = () => {
-		fetchRooms();
-		fetchDevices();
-		closeAddDeviceRoom();
-	};
-
-	const handleCommit = async (roomId: number) => {
-		setLoadingCommitIds((prev) => [...prev, roomId]);
-		try {
-			await api.post("/rooms/commitChanges", { id: roomId });
-			await fetchRooms();
-		} catch (err) {
-			console.error("Error committing changes for room:", err);
-			alert("Failed to commit changes.");
-		} finally {
-			setLoadingCommitIds((prev) => prev.filter((id) => id !== roomId));
+		if (isRoomActive(selected[0], rooms)) {
+			alert("Cannot add devices to active rooms.");
+			return;
 		}
+
+		setOpenAddDeviceRoom(true);
 	};
 
 	// Pagination handlers
@@ -181,283 +143,185 @@ const OperationRooms: React.FC = () => {
 	const handleChangeRowsPerPage = (
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
-		setRowsPerPage(parseInt(event.target.value, 10));
+		setRowsPerPage(Number.parseInt(event.target.value, 10));
 		setPage(0);
 	};
 
-	// Paginate rooms for current page
-	const paginatedRooms = rooms.slice(
-		page * rowsPerPage,
-		page * rowsPerPage + rowsPerPage
-	);
+	// Menu handlers
+	const handleMenuOpen = (
+		event: React.MouseEvent<HTMLElement>,
+		roomId: number
+	) => {
+		event.stopPropagation();
+		setMenuAnchorEl(event.currentTarget);
+		setSelectedRoomId(roomId);
+	};
+
+	const handleMenuClose = () => {
+		setMenuAnchorEl(null);
+		setSelectedRoomId(null);
+	};
+
+	const handleDeleteRoom = () => {
+		if (selectedRoomId) {
+			if (isRoomActive(selectedRoomId, rooms)) {
+				alert("Cannot delete active rooms.");
+				handleMenuClose();
+				return;
+			}
+
+			setSelected([selectedRoomId]);
+			setOpenDeleteModal(true);
+		}
+		handleMenuClose();
+	};
 
 	const handleShowReport = (deviceId: number) => {
 		setReportDeviceId(deviceId);
 		setOpenReportModal(true);
 	};
 
+	// Modal handlers
+	const onRoomAdded = () => {
+		fetchRooms();
+		setOpenAddRoom(false);
+	};
+
+	const onDeviceAdded = () => {
+		fetchRooms();
+		fetchDevices();
+		setOpenAddDeviceRoom(false);
+	};
+
+	// Paginate rooms for current page
+	const paginatedRooms = filteredRooms.slice(
+		page * rowsPerPage,
+		page * rowsPerPage + rowsPerPage
+	);
+
+	if (loading) {
+		return (
+			<MainLayout>
+				<Box
+					sx={{
+						p: 3,
+						display: "flex",
+						justifyContent: "center",
+						alignItems: "center",
+						minHeight: "400px",
+					}}
+				>
+					<CircularProgress />
+					<Typography sx={{ ml: 2 }}>Loading rooms...</Typography>
+				</Box>
+			</MainLayout>
+		);
+	}
+
+	if (error) {
+		return (
+			<MainLayout>
+				<Box sx={{ p: 3 }}>
+					<Alert severity="error">{error}</Alert>
+				</Box>
+			</MainLayout>
+		);
+	}
+
 	return (
 		<MainLayout>
-			<Typography variant="h4" gutterBottom sx={{ fontWeight: "600" }}>
-				OPERATION ROOMS
-			</Typography>
+			<RoomHeader />
 
-			<TableContainer component={Paper}>
-				<Table>
-					<TableHead sx={{ bgcolor: "#2C2D2D" }}>
-						<TableRow>
-							<TableCell padding="checkbox" sx={{ color: "white" }}>
-								<Checkbox
-									indeterminate={
-										selected.length > 0 && selected.length < rooms.length
-									}
-									checked={rooms.length > 0 && selected.length === rooms.length}
-									onChange={toggleAll}
-									sx={{ color: "white" }}
-								/>
-							</TableCell>
-							<TableCell sx={{ color: "white" }} />
-							<TableCell sx={{ color: "white" }}>Room Name</TableCell>
-							<TableCell sx={{ color: "white" }}>Location</TableCell>
-							<TableCell align="right" sx={{ color: "white" }}>
-								Device Count
-							</TableCell>
-							<TableCell align="center" sx={{ color: "white" }}>
-								Actions
-							</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{paginatedRooms.map((room) => {
-							const devicesInRoom = allDevices.filter(
-								(dev) => dev.soba_idsoba === room.idsoba
-							);
+			<RoomSummaryCards stats={stats} />
 
-							return (
-								<React.Fragment key={room.idsoba}>
-									<TableRow
-										sx={{
-											backgroundColor: room.unsaved_changes
-												? "rgba(255, 179, 71, 0.15)"
-												: "inherit",
-										}}
-									>
-										<TableCell padding="checkbox">
-											<Checkbox
-												checked={selected.includes(room.idsoba)}
-												onChange={() => toggleOne(room.idsoba)}
-											/>
-										</TableCell>
-										<TableCell padding="none" sx={{ width: 40 }}>
-											{devicesInRoom.length > 0 ? (
-												<IconButton
-													aria-label="expand row"
-													size="small"
-													onClick={() => toggleRow(room.idsoba)}
-												>
-													{openRows[room.idsoba] ? (
-														<KeyboardArrowUpIcon />
-													) : (
-														<KeyboardArrowDownIcon />
-													)}
-												</IconButton>
-											) : null}
-										</TableCell>
-										<TableCell>{room.naziv}</TableCell>
-										<TableCell>{room.lokacija}</TableCell>
-										<TableCell align="right">{room.st_naprav}</TableCell>
-										<TableCell align="center">
-											{room.unsaved_changes &&
-												(loadingCommitIds.includes(room.idsoba) ? (
-													<Button
-														variant="contained"
-														color="warning"
-														size="small"
-														disabled
-														loading
-													>
-														Commit
-													</Button>
-												) : (
-													<Button
-														variant="contained"
-														color="warning"
-														size="small"
-														onClick={() => handleCommit(room.idsoba)}
-													>
-														Commit
-													</Button>
-												))}
-										</TableCell>
-									</TableRow>
-									<TableRow>
-										<TableCell
-											style={{ paddingBottom: 0, paddingTop: 0 }}
-											colSpan={6}
-										>
-											<Collapse
-												in={!!openRows[room.idsoba] && devicesInRoom.length > 0}
-												timeout="auto"
-												unmountOnExit
-											>
-												<Box sx={{ margin: 1 }}>
-													<Table
-														size="small"
-														aria-label="devices-in-room"
-														stickyHeader
-													>
-														<TableHead>
-															<TableRow>
-																<TableCell>
-																	<strong>Device Name</strong>
-																</TableCell>
-																<TableCell>
-																	<strong>Device Type</strong>
-																</TableCell>
-																<TableCell align="right">
-																	<strong>Actions</strong>
-																</TableCell>
-															</TableRow>
-														</TableHead>
-														<TableBody>
-															{devicesInRoom.map((device, index) => (
-																<TableRow
-																	key={device.idnaprava}
-																	sx={{
-																		backgroundColor:
-																			index % 2 === 0 ? "white" : "#f5f5f5",
-																	}}
-																>
-																	<TableCell component="th" scope="row">
-																		{device.naprava}
-																	</TableCell>
-																	<TableCell>{device.tip_naprave}</TableCell>
-																	<TableCell
-																		align="right"
-																		sx={{
-																			display: "flex",
-																			gap: 2,
-																		}}
-																	>
-																		<Button
-																			size="small"
-																			variant="outlined"
-																			color="error"
-																			onClick={() =>
-																				handleRemoveDevice(device.idnaprava)
-																			}
-																			disabled={
-																				!!loadingRemoving[device.idnaprava]
-																			}
-																		>
-																			{loadingRemoving[device.idnaprava]
-																				? "Removing..."
-																				: "Remove"}
-																		</Button>
-																		<Button
-																			variant="outlined"
-																			size="small"
-																			startIcon={<PictureAsPdfIcon />}
-																			onClick={() =>
-																				handleShowReport(device.idnaprava)
-																			}
-																		>
-																			PDF
-																		</Button>
-																	</TableCell>
-																</TableRow>
-															))}
-														</TableBody>
-													</Table>
-												</Box>
-											</Collapse>
-										</TableCell>
-									</TableRow>
-								</React.Fragment>
-							);
-						})}
-					</TableBody>
-				</Table>
+			<RoomSearchAndActions
+				searchTerm={searchTerm}
+				onSearchChange={setSearchTerm}
+				onAddRoom={() => setOpenAddRoom(true)}
+			/>
+
+			<RoomActionButtons
+				selectedCount={selected.length}
+				canAddDevices={
+					selected.length === 1 && !isRoomActive(selected[0], rooms)
+				}
+				canDelete={selected.length >= 1 && !anySelectedRoomActive(rooms)}
+				onAddDevices={openAddDevice}
+				onDelete={handleDelete}
+			/>
+
+			<RoomTable
+				rooms={paginatedRooms}
+				allDevices={allDevices}
+				selected={selected}
+				openRows={openRows}
+				loadingCommitIds={loadingCommitIds}
+				loadingRemoving={loadingRemoving}
+				onToggleAll={() => toggleAll(rooms)}
+				onToggleOne={(id) => toggleOne(id, rooms)}
+				onToggleRow={handleToggleRow}
+				onCommit={handleCommit}
+				onMenuOpen={handleMenuOpen}
+				onShowReport={handleShowReport}
+				onRemoveDevice={handleRemoveDevice}
+				isRoomActive={(roomId) => isRoomActive(roomId, rooms)}
+			/>
+
+			<Box
+				sx={{
+					mt: 2,
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+				}}
+			>
+				<Typography variant="body2" color="text.secondary">
+					Showing {paginatedRooms.length} of {filteredRooms.length} rooms
+				</Typography>
 				<TablePagination
-					rowsPerPageOptions={[5, 10, 25]}
 					component="div"
-					count={rooms.length}
-					rowsPerPage={rowsPerPage}
+					count={filteredRooms.length}
 					page={page}
 					onPageChange={handleChangePage}
+					rowsPerPage={rowsPerPage}
 					onRowsPerPageChange={handleChangeRowsPerPage}
+					rowsPerPageOptions={[5, 10, 15, 25]}
 				/>
-			</TableContainer>
-
-			<Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-				<Stack direction="row" spacing={2}>
-					<Button variant="outlined" onClick={() => setOpenAddRoom(true)}>
-						Add room
-					</Button>
-					<Button
-						variant="outlined"
-						onClick={openAddDevice}
-						disabled={selected.length !== 1}
-					>
-						Add devices to room
-					</Button>
-					<Button
-						variant="outlined"
-						color="error"
-						onClick={handleDelete}
-						disabled={selected.length === 0}
-					>
-						Delete room
-					</Button>
-				</Stack>
 			</Box>
 
-			{/* Modal windows */}
-			<Dialog open={openAddRoom} onClose={closeAddRoom} fullWidth maxWidth="sm">
-				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Create new room
-					<IconButton
-						aria-label="close"
-						onClick={closeAddRoom}
-						sx={{ position: "absolute", right: 8, top: 8 }}
-					>
-						<CloseIcon />
-					</IconButton>
-				</DialogTitle>
-				<DialogContent dividers>
-					<AddRoom onClose={closeAddRoom} onAdded={onRoomAdded} />
-				</DialogContent>
-			</Dialog>
+			<RoomModals
+				openAddRoom={openAddRoom}
+				onCloseAddRoom={() => setOpenAddRoom(false)}
+				onRoomAdded={onRoomAdded}
+				openAddDeviceRoom={openAddDeviceRoom}
+				selectedRoomId={selected[0] || null}
+				onCloseAddDeviceRoom={() => setOpenAddDeviceRoom(false)}
+				onDeviceAdded={onDeviceAdded}
+				openDeleteModal={openDeleteModal}
+				selectedCount={selected.length}
+				onCloseDeleteModal={() => setOpenDeleteModal(false)}
+				onConfirmDelete={confirmDelete}
+				openReportModal={openReportModal}
+				reportDeviceId={reportDeviceId}
+				onCloseReportModal={() => setOpenReportModal(false)}
+			/>
 
-			<Dialog
-				open={openAddDeviceRoom}
-				onClose={closeAddDeviceRoom}
-				fullWidth
-				maxWidth="sm"
-			>
-				<DialogTitle sx={{ m: 0, p: 2 }}>
-					Add devices to room
-					<IconButton
-						aria-label="close"
-						onClick={closeAddDeviceRoom}
-						sx={{ position: "absolute", right: 8, top: 8 }}
-					>
-						<CloseIcon />
-					</IconButton>
-				</DialogTitle>
-				<DialogContent dividers>
-					<AddDeviceRoom
-						roomId={selected[0]}
-						onClose={closeAddDeviceRoom}
-						onAdded={onDeviceAdded}
-					/>
-				</DialogContent>
-			</Dialog>
-
-			<DeviceReportModal
-				open={openReportModal}
-				onClose={() => setOpenReportModal(false)}
-				deviceId={reportDeviceId}
+			<RoomContextMenu
+				anchorEl={menuAnchorEl}
+				open={Boolean(menuAnchorEl)}
+				selectedRoomId={selectedRoomId}
+				isRoomActive={
+					selectedRoomId ? isRoomActive(selectedRoomId, rooms) : false
+				}
+				onClose={handleMenuClose}
+				onAddDevices={() => {
+					if (selectedRoomId) {
+						setSelected([selectedRoomId]);
+						setOpenAddDeviceRoom(true);
+					}
+					handleMenuClose();
+				}}
+				onDeleteRoom={handleDeleteRoom}
 			/>
 		</MainLayout>
 	);
