@@ -1,7 +1,10 @@
-push:
-  branches:
-    - development
-    - optimizacija_k8s
+name: CI - MainMore actions
+
+on:
+  push:
+    branches:
+      - development
+      - optimizacija_k8s
 
 env:
   REGISTRY: docker.io
