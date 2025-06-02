@@ -18,8 +18,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    needs: build-test-push
-
     steps:
 
       - name: Checkout code
@@ -56,8 +54,6 @@ jobs:
   build-frontend1:
 
     runs-on: ubuntu-latest
-
-    needs: build-fastapi
 
     steps:
 
