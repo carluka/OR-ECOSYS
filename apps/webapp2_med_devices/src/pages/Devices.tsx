@@ -30,9 +30,13 @@ const Devices: React.FC = () => {
 		setFilterType,
 		filterServis,
 		setFilterServis,
+		filterActiveRoom,
+		setFilterActiveRoom,
 		searchTerm,
 		setSearchTerm,
 		fetchDevices,
+		isDeviceInActiveRoom,
+		anySelectedDeviceInActiveRoom,
 	} = useDevices();
 
 	const {
@@ -76,17 +80,31 @@ const Devices: React.FC = () => {
 	const [rowsPerPage, setRowsPerPage] = useState(15);
 
 	// Selection handlers
-	const toggleAll = () =>
-		setSelected((sel) =>
-			sel.length === filteredDevices.length
-				? []
-				: filteredDevices.map((d) => d.idnaprava)
+	const toggleAll = () => {
+		// Only allow selecting devices that are not in active rooms
+		const selectableDevices = filteredDevices.filter(
+			(device) => !isDeviceInActiveRoom(device)
 		);
 
-	const toggleOne = (id: number) =>
+		if (selected.length === selectableDevices.length) {
+			setSelected([]);
+		} else {
+			setSelected(selectableDevices.map((d) => d.idnaprava));
+		}
+	};
+
+	const toggleOne = (id: number) => {
+		// Don't allow selecting devices in active rooms
+		const device = devices.find((d) => d.idnaprava === id);
+		if (device && isDeviceInActiveRoom(device)) {
+			console.log(`Cannot select device ${id} - it's in an active room`);
+			return;
+		}
+
 		setSelected((sel) =>
 			sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]
 		);
+	};
 
 	// Expand/collapse handlers
 	const toggleExpand = (deviceId: number) => {
@@ -105,6 +123,15 @@ const Devices: React.FC = () => {
 	// Device CRUD operations
 	const handleDelete = () => {
 		if (!selected.length) return alert("Choose at least one device.");
+
+		// Check if any selected device is in an active room
+		if (anySelectedDeviceInActiveRoom(selected)) {
+			alert(
+				"Cannot delete devices that are in active rooms. Please deselect devices in active rooms."
+			);
+			return;
+		}
+
 		setOpenDeleteModal(true);
 	};
 
@@ -138,6 +165,12 @@ const Devices: React.FC = () => {
 
 	// Service operations
 	const handleDeleteServices = (deviceId: number) => {
+		const device = devices.find((d) => d.idnaprava === deviceId);
+		if (device && isDeviceInActiveRoom(device)) {
+			alert("Cannot delete services for devices in active rooms.");
+			return;
+		}
+
 		const serviceIds = selectedServices[deviceId] || [];
 		if (!serviceIds.length) {
 			alert("Choose at least one service.");
@@ -163,6 +196,12 @@ const Devices: React.FC = () => {
 	};
 
 	const handleAddService = (deviceId: number) => {
+		const device = devices.find((d) => d.idnaprava === deviceId);
+		if (device && isDeviceInActiveRoom(device)) {
+			alert("Cannot add services to devices in active rooms.");
+			return;
+		}
+
 		setAddServiceDeviceId(deviceId);
 		setOpenAddServiceModal(true);
 	};
@@ -176,7 +215,7 @@ const Devices: React.FC = () => {
 		setAddServiceDeviceId(null);
 	};
 
-	// Device report
+	// Report operations
 	const handleShowReport = (deviceId: number) => {
 		setReportDeviceId(deviceId);
 		setOpenReportModal(true);
@@ -199,6 +238,13 @@ const Devices: React.FC = () => {
 
 	const handleEditDevice = () => {
 		if (selectedDeviceId) {
+			const device = devices.find((d) => d.idnaprava === selectedDeviceId);
+			if (device && isDeviceInActiveRoom(device)) {
+				alert("Cannot edit devices that are in active rooms.");
+				handleMenuClose();
+				return;
+			}
+
 			api
 				.get<{ data: FullDevice }>(`/devices/${selectedDeviceId}`)
 				.then((res) => {
@@ -216,6 +262,13 @@ const Devices: React.FC = () => {
 
 	const handleDeleteDevice = () => {
 		if (selectedDeviceId) {
+			const device = devices.find((d) => d.idnaprava === selectedDeviceId);
+			if (device && isDeviceInActiveRoom(device)) {
+				alert("Cannot delete devices that are in active rooms.");
+				handleMenuClose();
+				return;
+			}
+
 			setSelected([selectedDeviceId]);
 			setOpenDeleteModal(true);
 		}
@@ -288,6 +341,8 @@ const Devices: React.FC = () => {
 				setFilterType={setFilterType}
 				filterServis={filterServis}
 				setFilterServis={setFilterServis}
+				filterActiveRoom={filterActiveRoom}
+				setFilterActiveRoom={setFilterActiveRoom}
 				tipiNaprave={tipiNaprave}
 				onAddDevice={openAdd}
 			/>
@@ -328,6 +383,7 @@ const Devices: React.FC = () => {
 				onToggleAllServices={toggleAllServices}
 				onDeleteServices={handleDeleteServices}
 				onAddService={handleAddService}
+				isDeviceInActiveRoom={isDeviceInActiveRoom}
 			/>
 
 			<Box
@@ -384,6 +440,16 @@ const Devices: React.FC = () => {
 			<DeviceContextMenu
 				anchorEl={menuAnchorEl}
 				open={Boolean(menuAnchorEl)}
+				isDeviceInActiveRoom={
+					selectedDeviceId
+						? (() => {
+								const device = devices.find(
+									(d) => d.idnaprava === selectedDeviceId
+								);
+								return device ? isDeviceInActiveRoom(device) : false;
+						  })()
+						: false
+				}
 				onClose={handleMenuClose}
 				onViewReport={handleViewReport}
 				onEditDevice={handleEditDevice}

@@ -13,47 +13,47 @@ import OperationsPage from "./pages/operations/Operations";
 import OperationDetailsPage from "./pages/operationDetails/OperationDetails";
 
 const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
-  {
-    loader: requireAuth,
-    errorElement: <NotFoundPage />,
-    children: [
-      {
-        element: <Layout />,
-        children: [
-          { index: true, element: <HomePage /> },
-          {
-            path: "/operation",
-            element: (
-              <DeviceProvider>
-                <OperationRoomPage />
-              </DeviceProvider>
-            ),
-          },
-          {
-            path: "/operation/:roomId",
-            element: (
-              <DeviceProvider>
-                <OperationRoomPage />
-              </DeviceProvider>
-            ),
-          },
-          { path: "/patients", element: <PatientsPage /> },
-          { path: "/patients/:id", element: <PatientDetailsPage /> },
-          { path: "/operations", element: <OperationsPage /> },
-          { path: "/operations/:id", element: <OperationDetailsPage /> },
-          { path: "*", element: <NotFoundPage /> },
-        ],
-      },
-    ],
-  },
+	{
+		path: "/login",
+		element: <LoginPage />,
+	},
+	{
+		loader: requireAuth,
+		errorElement: <NotFoundPage />,
+		children: [
+			{
+				element: <Layout />,
+				children: [
+					{ index: true, element: <HomePage /> },
+					{
+						path: "/operation",
+						element: (
+							<DeviceProvider>
+								<OperationRoomPage />
+							</DeviceProvider>
+						),
+					},
+					{
+						path: "/operation/:roomId",
+						element: (
+							<DeviceProvider>
+								<OperationRoomPage />
+							</DeviceProvider>
+						),
+					},
+					{ path: "/patients", element: <PatientsPage /> },
+					{ path: "/patients/:id", element: <PatientDetailsPage /> },
+					{ path: "/operations", element: <OperationsPage /> },
+					{ path: "/operations/:id", element: <OperationDetailsPage /> },
+					{ path: "*", element: <NotFoundPage /> },
+				],
+			},
+		],
+	},
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+	return <RouterProvider router={router} />;
 }
 
 export default App;
