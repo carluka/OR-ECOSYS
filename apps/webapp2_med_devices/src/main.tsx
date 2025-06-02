@@ -7,7 +7,6 @@ import { createTheme } from "@mui/material/styles";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 
 import Devices from "./pages/Devices";
-import DeviceServices from "./pages/DeviceServices";
 import OperationRooms from "./pages/OperationRooms";
 import UserHandling from "./pages/UserHandling";
 import { requireAuth } from "./auth";
@@ -24,7 +23,6 @@ export const router = createBrowserRouter([
 		errorElement: <NotFoundPage />,
 		children: [
 			{ index: true, element: <Devices /> },
-			{ path: "deviceServices", element: <DeviceServices /> },
 			{ path: "operationRooms", element: <OperationRooms /> },
 			{ path: "userHandling", element: <UserHandling /> },
 			{ path: "*", element: <NotFoundPage /> },
