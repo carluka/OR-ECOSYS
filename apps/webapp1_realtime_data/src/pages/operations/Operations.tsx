@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
@@ -72,8 +70,13 @@ const OperationsPage = () => {
         setError(null)
         const response = await api.get<ApiResponse>("/operations")
         console.log("Fetched operations:", response.data.data)
-        setOperations(response.data.data)
-        setFilteredOperations(response.data.data)
+        const sortedOperations = response.data.data.sort((a, b) => {
+          const dateA = new Date(`${a.datum}T${a.cas_zacetka}`)
+          const dateB = new Date(`${b.datum}T${b.cas_zacetka}`)
+          return dateB.getTime() - dateA.getTime()
+        })
+        setOperations(sortedOperations)
+        setFilteredOperations(sortedOperations)
       } catch (error) {
         console.error("Error fetching operations:", error)
         setError("Error loading operations data")
@@ -93,7 +96,12 @@ const OperationsPage = () => {
         operation.Soba?.naziv.toLowerCase().includes(searchTerm.toLowerCase()) ||
         operation.idoperacija.toString().includes(searchTerm),
     )
-    setFilteredOperations(filtered)
+    const sortedFiltered = filtered.sort((a, b) => {
+      const dateA = new Date(`${a.datum}T${a.cas_zacetka}`)
+      const dateB = new Date(`${b.datum}T${b.cas_zacetka}`)
+      return dateB.getTime() - dateA.getTime()
+    })
+    setFilteredOperations(sortedFiltered)
   }, [searchTerm, operations])
 
   const handleRowClick = (operationId: number) => {
@@ -101,18 +109,16 @@ const OperationsPage = () => {
   }
 
   const getOperationStatus = (startTime: string, endTime: string, date: string) => {
-    const now = new Date()
-    const operationDate = new Date(date)
-    const startDateTime = new Date(`${date}T${startTime}`)
-    const endDateTime = new Date(`${date}T${endTime}`)
-
-    if (now < startDateTime) {
-      return { status: "Scheduled", color: "info" as const }
-    } else if (now >= startDateTime && now <= endDateTime) {
+    // If operation has start time but no end time, it's in progress
+    if (startTime && (!endTime || endTime === "" || endTime === null)) {
       return { status: "In Progress", color: "warning" as const }
-    } else {
+    }
+    // If operation has both start and end time, it's completed
+    if (startTime && endTime) {
       return { status: "Completed", color: "success" as const }
     }
+    // Default case (shouldn't happen with valid data)
+    return { status: "Scheduled", color: "info" as const }
   }
 
   const formatDate = (dateString: string) => {
@@ -159,7 +165,6 @@ const OperationsPage = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
           <Assignment sx={{ mr: 1 }} color="primary" />
@@ -192,20 +197,6 @@ const OperationsPage = () => {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               In Progress
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card variant="outlined">
-          <CardContent sx={{ textAlign: "center", py: 2 }}>
-            <Typography variant="h4" color="info.main" fontWeight="bold">
-              {
-                operations.filter(
-                  (op) => getOperationStatus(op.cas_zacetka, op.cas_konca, op.datum).status === "Scheduled",
-                ).length
-              }
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Scheduled
             </Typography>
           </CardContent>
         </Card>
