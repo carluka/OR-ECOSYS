@@ -120,13 +120,14 @@ exports.startDevices = async (req, res, next) => {
     const nowPlus2 = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const startTime = nowPlus2.toTimeString().split(" ")[0];
 
-    operationService.createOperation({
-      pacient_idpacient: 1,
+    const newOperation = await operationService.createOperation({
+      pacient_idpacient: null,
       soba_idsoba: id,
       datum: date,
       cas_zacetka: startTime,
       cas_konca: null,
     });
+
     await kubectlScale(`${room.uuid}-consumer`, 1);
 
     for (const d of devices) {
@@ -136,7 +137,11 @@ exports.startDevices = async (req, res, next) => {
       );
     }
 
-    res.status(200).json({ status: "available", wsUuid: room.uuid });
+    res.status(200).json({
+      status: "available",
+      wsUuid: room.uuid,
+      operationID: newOperation.dataValues.idoperacija,
+    });
   } catch (err) {
     next(err);
   }

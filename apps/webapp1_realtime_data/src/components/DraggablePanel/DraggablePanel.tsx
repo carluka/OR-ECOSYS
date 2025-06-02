@@ -34,6 +34,7 @@ const DraggablePanel: React.FC<DraggablePanelProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     if ((e.target as HTMLElement).classList.contains("resize-handle")) return;
 
     setIsDragging(true);
