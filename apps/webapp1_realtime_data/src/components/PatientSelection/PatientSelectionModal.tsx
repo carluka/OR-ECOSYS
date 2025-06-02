@@ -60,7 +60,6 @@ const PatientSelectionModal: React.FC<PatientSelectionModalProps> = ({
     setError(null);
     try {
       const response = await api.get<ApiResponse>("/patients");
-      // Handle different possible response structures
       const patientsData =
         response.data?.patients || response.data?.data || response.data || [];
       setPatients(Array.isArray(patientsData) ? patientsData : []);
@@ -82,7 +81,7 @@ const PatientSelectionModal: React.FC<PatientSelectionModalProps> = ({
     setSubmitting(true);
     try {
       await api.put(`/operations/${operationID}`, {
-        patientId: selectedPatient.idpacient,
+        pacient_idpacient: selectedPatient.idpacient,
       });
 
       onPatientSelected?.(selectedPatient);
