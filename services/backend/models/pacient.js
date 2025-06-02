@@ -16,6 +16,7 @@ module.exports = (sequelize) => {
 			priimek: { type: DataTypes.STRING(45), allowNull: false },
 			fhir_info: { type: DataTypes.STRING(100), allowNull: true },
 			datum_rojstva: { type: DataTypes.DATEONLY, allowNull: true },
+			spol: { type: DataTypes.STRING(10), allowNull: true },
 		},
 		{
 			sequelize,

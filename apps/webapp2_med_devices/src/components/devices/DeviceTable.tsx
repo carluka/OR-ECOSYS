@@ -20,6 +20,7 @@ import {
 	ExpandLess,
 	PictureAsPdf,
 	MoreVert,
+	LockOutlined,
 } from "@mui/icons-material";
 import type { DeviceOverview } from "../../types/device.types";
 import DeviceServiceRow from "./DeviceServiceRow";
@@ -40,6 +41,7 @@ interface DeviceTableProps {
 	onToggleAllServices: (deviceId: number) => void;
 	onDeleteServices: (deviceId: number) => void;
 	onAddService: (deviceId: number) => void;
+	isDeviceInActiveRoom: (device: DeviceOverview) => boolean;
 }
 
 const DeviceTable: React.FC<DeviceTableProps> = ({
@@ -58,6 +60,7 @@ const DeviceTable: React.FC<DeviceTableProps> = ({
 	onToggleAllServices,
 	onDeleteServices,
 	onAddService,
+	isDeviceInActiveRoom,
 }) => {
 	return (
 		<Paper sx={{ overflow: "hidden" }}>
@@ -88,156 +91,199 @@ const DeviceTable: React.FC<DeviceTableProps> = ({
 					</TableHead>
 					<TableBody>
 						{devices.length > 0 ? (
-							devices.map((device) => (
-								<>
-									<TableRow
-										key={device.idnaprava}
-										sx={{
-											"&:hover": {
-												backgroundColor: "action.hover",
-											},
-											transition: "background-color 0.2s",
-										}}
-									>
-										<TableCell padding="checkbox">
-											<Checkbox
-												checked={selected.includes(device.idnaprava)}
-												onChange={() => onToggleOne(device.idnaprava)}
-												onClick={(e) => e.stopPropagation()}
-											/>
-										</TableCell>
-										<TableCell>
-											<IconButton
-												size="small"
-												onClick={() => onToggleExpand(device.idnaprava)}
-											>
-												{expandedDevices.has(device.idnaprava) ? (
-													<ExpandLess />
-												) : (
-													<ExpandMore />
-												)}
-											</IconButton>
-										</TableCell>
-										<TableCell>
-											<Chip
-												label={`#${device.idnaprava}`}
-												size="small"
-												variant="outlined"
-												color="primary"
-											/>
-										</TableCell>
-										<TableCell>
-											<Typography variant="body2" fontWeight="medium">
-												{device.naprava}
-											</Typography>
-										</TableCell>
-										<TableCell>
-											<Chip
-												label={device.tip_naprave}
-												size="small"
-												sx={{ bgcolor: "action.hover", color: "text.primary" }}
-											/>
-										</TableCell>
-										<TableCell>
-											{device.soba === "NO ROOM" ? (
-												<Chip
-													label="NO ROOM"
-													size="small"
-													color="error"
-													variant="outlined"
+							devices.map((device) => {
+								const isInActiveRoom = isDeviceInActiveRoom(device);
+
+								return (
+									<>
+										<TableRow
+											key={device.idnaprava}
+											sx={{
+												backgroundColor: isInActiveRoom
+													? "rgba(25, 118, 210, 0.08)"
+													: "inherit",
+												"&:hover": {
+													backgroundColor: isInActiveRoom
+														? "rgba(25, 118, 210, 0.12)"
+														: "action.hover",
+												},
+												transition: "background-color 0.2s",
+											}}
+										>
+											<TableCell padding="checkbox">
+												<Checkbox
+													checked={selected.includes(device.idnaprava)}
+													onChange={() => onToggleOne(device.idnaprava)}
+													onClick={(e) => e.stopPropagation()}
+													disabled={isInActiveRoom}
 												/>
-											) : (
-												<Typography variant="body2">
-													{device.soba_naziv}
-												</Typography>
-											)}
-										</TableCell>
-										<TableCell>
-											{device.soba === "NO ROOM" ? (
-												<Chip
-													label="NO ROOM"
+											</TableCell>
+											<TableCell>
+												<IconButton
 													size="small"
-													color="error"
+													onClick={() => onToggleExpand(device.idnaprava)}
+												>
+													{expandedDevices.has(device.idnaprava) ? (
+														<ExpandLess />
+													) : (
+														<ExpandMore />
+													)}
+												</IconButton>
+											</TableCell>
+											<TableCell>
+												<Chip
+													label={`#${device.idnaprava}`}
+													size="small"
 													variant="outlined"
+													color="primary"
 												/>
-											) : (
-												<Typography variant="body2">
-													{device.soba_lokacija}
-												</Typography>
-											)}
-										</TableCell>
-										<TableCell>
-											<Chip
-												label={device.servis ? "Serviced" : "Unserviced"}
-												size="small"
-												color={device.servis ? "success" : "warning"}
-												variant="outlined"
-											/>
-										</TableCell>
-										<TableCell>
-											<Box sx={{ display: "flex", gap: 1 }}>
-												<Tooltip title="View Report">
-													<IconButton
+											</TableCell>
+											<TableCell>
+												<Box
+													sx={{ display: "flex", alignItems: "center", gap: 1 }}
+												>
+													<Typography variant="body2" fontWeight="medium">
+														{device.naprava}
+													</Typography>
+													{isInActiveRoom && (
+														<Tooltip title="Device in Active Room - Cannot be modified">
+															<LockOutlined fontSize="small" color="info" />
+														</Tooltip>
+													)}
+												</Box>
+											</TableCell>
+											<TableCell>
+												<Chip
+													label={device.tip_naprave}
+													size="small"
+													sx={{
+														bgcolor: "action.hover",
+														color: "text.primary",
+													}}
+												/>
+											</TableCell>
+											<TableCell>
+												{device.soba === "NO ROOM" ? (
+													<Chip
+														label="NO ROOM"
 														size="small"
-														color="primary"
-														onClick={(e) => {
-															e.stopPropagation();
-															onShowReport(device.idnaprava);
+														color="error"
+														variant="outlined"
+													/>
+												) : (
+													<Box
+														sx={{
+															display: "flex",
+															alignItems: "center",
+															gap: 1,
 														}}
 													>
-														<PictureAsPdf fontSize="small" />
-													</IconButton>
-												</Tooltip>
-												<Tooltip title="More Options">
-													<IconButton
+														<Typography variant="body2">
+															{device.soba_naziv}
+														</Typography>
+														{isInActiveRoom && (
+															<Chip
+																label="Active"
+																size="small"
+																color="info"
+																variant="outlined"
+															/>
+														)}
+													</Box>
+												)}
+											</TableCell>
+											<TableCell>
+												{device.soba === "NO ROOM" ? (
+													<Chip
+														label="NO ROOM"
 														size="small"
-														onClick={(e) => onMenuOpen(e, device.idnaprava)}
-														aria-label="more options"
-													>
-														<MoreVert fontSize="small" />
-													</IconButton>
-												</Tooltip>
-											</Box>
-										</TableCell>
-									</TableRow>
-									{/* Expanded Services Row */}
-									<TableRow>
-										<TableCell
-											style={{ paddingBottom: 0, paddingTop: 0 }}
-											colSpan={9}
-										>
-											<Collapse
-												in={expandedDevices.has(device.idnaprava)}
-												timeout="auto"
-												unmountOnExit
-											>
-												<DeviceServiceRow
-													deviceId={device.idnaprava}
-													deviceName={device.naprava}
-													services={deviceServices[device.idnaprava] || []}
-													selectedServices={
-														selectedServices[device.idnaprava] || []
-													}
-													loading={loadingServices.has(device.idnaprava)}
-													onToggleServiceSelection={(serviceId) =>
-														onToggleServiceSelection(
-															device.idnaprava,
-															serviceId
-														)
-													}
-													onToggleAllServices={() =>
-														onToggleAllServices(device.idnaprava)
-													}
-													onDeleteServices={() =>
-														onDeleteServices(device.idnaprava)
-													}
-													onAddService={() => onAddService(device.idnaprava)}
+														color="error"
+														variant="outlined"
+													/>
+												) : (
+													<Typography variant="body2">
+														{device.soba_lokacija}
+													</Typography>
+												)}
+											</TableCell>
+											<TableCell>
+												<Chip
+													label={device.servis ? "Serviced" : "Unserviced"}
+													size="small"
+													color={device.servis ? "success" : "warning"}
+													variant="outlined"
 												/>
-											</Collapse>
-										</TableCell>
-									</TableRow>
-								</>
-							))
+											</TableCell>
+											<TableCell>
+												<Box sx={{ display: "flex", gap: 1 }}>
+													<Tooltip title="View Report">
+														<IconButton
+															size="small"
+															color="primary"
+															onClick={(e) => {
+																e.stopPropagation();
+																onShowReport(device.idnaprava);
+															}}
+														>
+															<PictureAsPdf fontSize="small" />
+														</IconButton>
+													</Tooltip>
+													<Tooltip
+														title={
+															isInActiveRoom ? "View Options" : "More Options"
+														}
+													>
+														<IconButton
+															size="small"
+															onClick={(e) => onMenuOpen(e, device.idnaprava)}
+															aria-label="more options"
+														>
+															<MoreVert fontSize="small" />
+														</IconButton>
+													</Tooltip>
+												</Box>
+											</TableCell>
+										</TableRow>
+										{/* Expanded Services Row */}
+										<TableRow>
+											<TableCell
+												style={{ paddingBottom: 0, paddingTop: 0 }}
+												colSpan={9}
+											>
+												<Collapse
+													in={expandedDevices.has(device.idnaprava)}
+													timeout="auto"
+													unmountOnExit
+												>
+													<DeviceServiceRow
+														deviceId={device.idnaprava}
+														deviceName={device.naprava}
+														services={deviceServices[device.idnaprava] || []}
+														selectedServices={
+															selectedServices[device.idnaprava] || []
+														}
+														loading={loadingServices.has(device.idnaprava)}
+														isInActiveRoom={isInActiveRoom}
+														onToggleServiceSelection={(serviceId) =>
+															onToggleServiceSelection(
+																device.idnaprava,
+																serviceId
+															)
+														}
+														onToggleAllServices={() =>
+															onToggleAllServices(device.idnaprava)
+														}
+														onDeleteServices={() =>
+															onDeleteServices(device.idnaprava)
+														}
+														onAddService={() => onAddService(device.idnaprava)}
+													/>
+												</Collapse>
+											</TableCell>
+										</TableRow>
+									</>
+								);
+							})
 						) : (
 							<TableRow>
 								<TableCell colSpan={9} sx={{ textAlign: "center", py: 4 }}>
