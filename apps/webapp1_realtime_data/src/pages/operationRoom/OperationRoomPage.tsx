@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useDeviceContext } from "../../context/DeviceContext";
@@ -14,6 +12,7 @@ import InfusionPump from "../../components/devices/InfusionPump";
 import Ventilator from "../../components/devices/Ventilator";
 
 import DraggablePanel from "../../components/DraggablePanel/DraggablePanel";
+import PatientSelectionModal from "../../components/PatientSelection/PatientSelectionModal";
 
 import api from "../../api";
 
@@ -40,9 +39,8 @@ import {
   RestartAlt as RestartAltIcon,
 } from "@mui/icons-material";
 
-import "./OperationRoomPage.css"; // ohrani, če imate še kakšne specifične CSS razrede
+import "./OperationRoomPage.css";
 
-// Tipizacije
 interface DataPoint {
   time: number;
   value: number;
@@ -69,7 +67,6 @@ interface ModuleVisibility {
   [key: string]: boolean;
 }
 
-// Seznam modulov in njihove oznake
 const MODULES = [
   { id: "temperature", label: "Temperature Gauge" },
   { id: "ekg", label: "EKG Module" },
@@ -80,7 +77,6 @@ const MODULES = [
   { id: "ventilator", label: "Ventilator" },
 ];
 
-// Konstantne
 const MAX_POINTS = 60;
 const GRID_SIZE = { cols: 12, rows: 16 };
 
@@ -124,10 +120,11 @@ const OperationRoomPageNew: React.FC = () => {
 
   const allMetricsRef = useRef<MetricMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
+  const [showPatientModal, setShowPatientModal] = useState(false);
+  const [operationID, setOperationID] = useState<number | null>(null);
 
   const theme = useTheme();
 
-  // Obdelava prejema metrike iz WebSocketa
   const handleMetric = (msg: MetricMessage) => {
     allMetricsRef.current.push(msg);
     updateDeviceData(msg);
@@ -144,7 +141,6 @@ const OperationRoomPageNew: React.FC = () => {
     }
   };
 
-  // Sprememba položaja draggable panela
   const handlePositionChange = (moduleId: string, position: GridPosition) => {
     setModuleLayout((prev) => ({
       ...prev,
@@ -152,7 +148,6 @@ const OperationRoomPageNew: React.FC = () => {
     }));
   };
 
-  // Sprememba vidljivosti posameznih modulov
   const handleVisibilityChange = (moduleId: string, visible: boolean) => {
     setModuleVisibility((prev) => ({
       ...prev,
@@ -160,13 +155,19 @@ const OperationRoomPageNew: React.FC = () => {
     }));
   };
 
-  // Ponastavitev na privzeti layout / vidljivosti
   const handleResetLayout = () => {
     setModuleLayout(DEFAULT_LAYOUT);
     setModuleVisibility(DEFAULT_VISIBILITY);
   };
 
-  // Preverjanje, ali je OR “aktiven” in pridobitev wsUuid
+  const handlePatientModalClose = () => {
+    setShowPatientModal(false);
+  };
+
+  const handlePatientSelected = (patient: any) => {
+    console.log("Patient selected:", patient);
+  };
+
   useEffect(() => {
     const fetchActiveStatus = async () => {
       try {
@@ -188,7 +189,6 @@ const OperationRoomPageNew: React.FC = () => {
     }
   }, [roomId]);
 
-  // Ob spremembi fullscreen načina (npr. pritisk F11 ali exit)
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -200,7 +200,6 @@ const OperationRoomPageNew: React.FC = () => {
     };
   }, []);
 
-  // Tipka F11 za preklop fullscreen
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "F11") {
@@ -214,7 +213,6 @@ const OperationRoomPageNew: React.FC = () => {
     };
   }, [isFullscreen]);
 
-  // Odpri WebSocket povezavo
   const openSocket = (uuid: string) => {
     const ws = new WebSocket(
       `wss://data.or-ecosystem.eu/ws/medical-device/${uuid}`
@@ -238,7 +236,6 @@ const OperationRoomPageNew: React.FC = () => {
     };
   };
 
-  // Funkcija za run/stop machines
   const handleMachines = async () => {
     if (isActive) {
       try {
@@ -258,6 +255,8 @@ const OperationRoomPageNew: React.FC = () => {
           setIsAvailable(true);
           setWsUuid(res.data.wsUuid);
           setIsActive(true);
+          setShowPatientModal(true);
+          setOperationID(res.data.operationID);
         }
       } catch (err) {
         console.error("Failed to deploy devices", err);
@@ -265,7 +264,6 @@ const OperationRoomPageNew: React.FC = () => {
     }
   };
 
-  // Poveži se na WebSocket
   const connectToWebSocket = async () => {
     if (connected || !wsUuid) return;
     try {
@@ -275,13 +273,11 @@ const OperationRoomPageNew: React.FC = () => {
     }
   };
 
-  // Prekini WebSocket
   const disconnect = () => {
     wsRef.current?.close();
     setConnected(false);
   };
 
-  // Če ni roomId, preusmeri
   if (!roomId) {
     return <Navigate to="/" replace />;
   }
@@ -300,15 +296,19 @@ const OperationRoomPageNew: React.FC = () => {
       "ecgWaveform.ch0.ecg_module"
     ];
   const ecgWaveform =
-    typeof waveformRaw === "string" ? JSON.parse(waveformRaw) : waveformRaw ?? [];
+    typeof waveformRaw === "string"
+      ? JSON.parse(waveformRaw)
+      : waveformRaw ?? [];
 
   const ekgData = {
     heartRate:
-      deviceData["heartRate.ch0.ecg_module"]?.metrics["heartRate.ch0.ecg_module"] ??
-      null,
+      deviceData["heartRate.ch0.ecg_module"]?.metrics[
+        "heartRate.ch0.ecg_module"
+      ] ?? null,
     rrInterval:
-      deviceData["rrInterval.ch0.ecg_module"]?.metrics["rrInterval.ch0.ecg_module"] ??
-      null,
+      deviceData["rrInterval.ch0.ecg_module"]?.metrics[
+        "rrInterval.ch0.ecg_module"
+      ] ?? null,
     qrsDuration:
       deviceData["qrsDuration.ch0.ecg_module"]?.metrics[
         "qrsDuration.ch0.ecg_module"
@@ -338,10 +338,13 @@ const OperationRoomPageNew: React.FC = () => {
 
   const infusionPumpData = {
     flowRate:
-      deviceData["flowRate.ch0.infusion_pump"]?.metrics["flowRate.ch0.infusion_pump"] ?? null,
+      deviceData["flowRate.ch0.infusion_pump"]?.metrics[
+        "flowRate.ch0.infusion_pump"
+      ] ?? null,
     volumeTotal:
-      deviceData["volumeTotal.ch0.infusion_pump"]?.metrics["volumeTotal.ch0.infusion_pump"] ??
-      null,
+      deviceData["volumeTotal.ch0.infusion_pump"]?.metrics[
+        "volumeTotal.ch0.infusion_pump"
+      ] ?? null,
   };
 
   const ventilatorData = {
@@ -430,7 +433,6 @@ const OperationRoomPageNew: React.FC = () => {
           height: "100%",
         }}
       >
-
         {!isFullscreen && (
           <Box
             className="header-container"
@@ -444,8 +446,10 @@ const OperationRoomPageNew: React.FC = () => {
               py: 2,
             }}
           >
-
-            <Box className="header-title" sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              className="header-title"
+              sx={{ display: "flex", alignItems: "center" }}
+            >
               <Box
                 className="header-icon"
                 sx={{
@@ -469,7 +473,10 @@ const OperationRoomPageNew: React.FC = () => {
               </Typography>
             </Box>
 
-            <Box className="header-controls" sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Box
+              className="header-controls"
+              sx={{ display: "flex", alignItems: "center", gap: 3 }}
+            >
               <Box
                 className="connection-status"
                 sx={{ display: "flex", alignItems: "center", gap: 1 }}
@@ -514,6 +521,12 @@ const OperationRoomPageNew: React.FC = () => {
                     {isActive ? "Stop" : "Run"}
                   </Button>
                 </Tooltip>
+                <PatientSelectionModal
+                  open={showPatientModal}
+                  onClose={handlePatientModalClose}
+                  onPatientSelected={handlePatientSelected}
+                  operationID={operationID}
+                />
 
                 <Tooltip title="Connect WebSocket">
                   <Button
@@ -528,7 +541,8 @@ const OperationRoomPageNew: React.FC = () => {
                       ...(!isAvailable || connected
                         ? {
                             color: theme.palette.action.disabled,
-                            borderColor: theme.palette.action.disabledBackground,
+                            borderColor:
+                              theme.palette.action.disabledBackground,
                           }
                         : {}),
                     }}
@@ -550,7 +564,8 @@ const OperationRoomPageNew: React.FC = () => {
                       ...(!connected
                         ? {
                             color: theme.palette.action.disabled,
-                            borderColor: theme.palette.action.disabledBackground,
+                            borderColor:
+                              theme.palette.action.disabledBackground,
                           }
                         : {}),
                     }}

@@ -137,7 +137,6 @@
   position: relative;
 }
 
-/* Fullscreen styles - brez temne teme */
 .operation-room-container.fullscreen {
   position: fixed;
   top: 0;

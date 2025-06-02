@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -29,7 +29,7 @@ import {
   MenuItem,
   ListItemIcon,
   Divider,
-} from "@mui/material"
+} from "@mui/material";
 import {
   People,
   Search,
@@ -44,93 +44,98 @@ import {
   Male,
   Female,
   HelpOutline,
-} from "@mui/icons-material"
-import api from "../../api"
+} from "@mui/icons-material";
+import api from "../../api";
 
 interface Patient {
-  idpacient: number
-  ime: string
-  priimek: string
-  gender?: string // Optional field that might be available
-  birthDate?: string // Optional field that might be available
+  idpacient: number;
+  ime: string;
+  priimek: string;
+  gender?: string;
+  birthDate?: string;
 }
 
 interface ApiResponse {
-  data: Patient[]
+  data: Patient[];
 }
 
 const PatientsPage = () => {
-  const [patients, setPatients] = useState<Patient[]>([])
-  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
-  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null)
-  const navigate = useNavigate()
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
+    null
+  );
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        const response = await api.get<ApiResponse>("/patients")
-        setPatients(response.data.data)
-        setFilteredPatients(response.data.data)
+        setLoading(true);
+        setError(null);
+        const response = await api.get<ApiResponse>("/patients");
+        setPatients(response.data.data);
+        setFilteredPatients(response.data.data);
       } catch (error) {
-        console.error("Error fetching patients:", error)
-        setError("Error loading patient data")
+        console.error("Error fetching patients:", error);
+        setError("Error loading patient data");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchPatients()
-  }, [])
+    fetchPatients();
+  }, []);
 
   useEffect(() => {
     const filtered = patients.filter(
       (patient) =>
         patient.ime.toLowerCase().includes(searchTerm.toLowerCase()) ||
         patient.priimek.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.idpacient.toString().includes(searchTerm),
-    )
-    setFilteredPatients(filtered)
-  }, [searchTerm, patients])
+        patient.idpacient.toString().includes(searchTerm)
+    );
+    setFilteredPatients(filtered);
+  }, [searchTerm, patients]);
 
   const handleRowClick = (patientId: number) => {
-    navigate(`/patients/${patientId}`)
-  }
+    navigate(`/patients/${patientId}`);
+  };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, patientId: number) => {
-    event.stopPropagation()
-    setMenuAnchorEl(event.currentTarget)
-    setSelectedPatientId(patientId)
-  }
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    patientId: number
+  ) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedPatientId(patientId);
+  };
 
   const handleMenuClose = () => {
-    setMenuAnchorEl(null)
-    setSelectedPatientId(null)
-  }
+    setMenuAnchorEl(null);
+    setSelectedPatientId(null);
+  };
 
   const handleViewPatient = () => {
     if (selectedPatientId) {
-      navigate(`/patients/${selectedPatientId}`)
+      navigate(`/patients/${selectedPatientId}`);
     }
-    handleMenuClose()
-  }
+    handleMenuClose();
+  };
 
   const handleEditPatient = (event: React.MouseEvent) => {
-    event.stopPropagation()
+    event.stopPropagation();
     if (selectedPatientId) {
-      navigate(`/patients/${selectedPatientId}/edit`)
+      navigate(`/patients/${selectedPatientId}/edit`);
     }
-    handleMenuClose()
-  }
+    handleMenuClose();
+  };
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
 
   const getRandomColor = (id: number) => {
     const colors = [
@@ -144,26 +149,34 @@ const PatientsPage = () => {
       "#673ab7",
       "#3f51b5",
       "#2196f3",
-    ]
-    return colors[id % colors.length]
-  }
+    ];
+    return colors[id % colors.length];
+  };
 
   const getGenderIcon = (gender?: string) => {
-    if (!gender) return <HelpOutline fontSize="small" />
+    if (!gender) return <HelpOutline fontSize="small" />;
     return gender.toLowerCase() === "female" ? (
       <Female fontSize="small" sx={{ color: "pink" }} />
     ) : (
       <Male fontSize="small" sx={{ color: "lightblue" }} />
-    )
-  }
+    );
+  };
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+      <Box
+        sx={{
+          p: 3,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
         <CircularProgress />
         <Typography sx={{ ml: 2 }}>Loading patients...</Typography>
       </Box>
-    )
+    );
   }
 
   if (error) {
@@ -171,13 +184,17 @@ const PatientsPage = () => {
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
       </Box>
-    )
+    );
   }
 
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ display: "flex", alignItems: "center" }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ display: "flex", alignItems: "center" }}
+        >
           <People sx={{ mr: 1 }} color="primary" />
           Patient Management
         </Typography>
@@ -186,7 +203,14 @@ const PatientsPage = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 2, mb: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Card variant="outlined">
           <CardContent sx={{ textAlign: "center", py: 2 }}>
             <Typography variant="h4" color="primary.main" fontWeight="bold">
@@ -199,8 +223,24 @@ const PatientsPage = () => {
         </Card>
       </Box>
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
-        <Paper sx={{ p: 1, display: "flex", alignItems: "center", flexGrow: 1, maxWidth: "500px" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 3,
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Paper
+          sx={{
+            p: 1,
+            display: "flex",
+            alignItems: "center",
+            flexGrow: 1,
+            maxWidth: "500px",
+          }}
+        >
           <TextField
             placeholder="Search patients..."
             value={searchTerm}
@@ -250,23 +290,42 @@ const PatientsPage = () => {
                     }}
                   >
                     <TableCell>
-                      <Chip label={`#${patient.idpacient}`} size="small" variant="outlined" color="primary" />
+                      <Chip
+                        label={`#${patient.idpacient}`}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                      />
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Avatar sx={{ bgcolor: getRandomColor(patient.idpacient) }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Avatar
+                          sx={{ bgcolor: getRandomColor(patient.idpacient) }}
+                        >
                           {getInitials(patient.ime, patient.priimek)}
                         </Avatar>
                         <Box sx={{ display: "flex", flexDirection: "column" }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
                             <Typography variant="body2" fontWeight="medium">
                               {patient.ime} {patient.priimek}
                             </Typography>
                             {patient.gender && getGenderIcon(patient.gender)}
                           </Box>
                           {patient.birthDate && (
-                            <Typography variant="caption" color="text.secondary">
-                              DOB: {new Date(patient.birthDate).toLocaleDateString()}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              DOB:{" "}
+                              {new Date(patient.birthDate).toLocaleDateString()}
                             </Typography>
                           )}
                         </Box>
@@ -284,8 +343,8 @@ const PatientsPage = () => {
                             size="small"
                             color="primary"
                             onClick={(e) => {
-                              e.stopPropagation()
-                              handleRowClick(patient.idpacient)
+                              e.stopPropagation();
+                              handleRowClick(patient.idpacient);
                             }}
                           >
                             <Visibility fontSize="small" />
@@ -294,7 +353,9 @@ const PatientsPage = () => {
                         <Tooltip title="More Options">
                           <IconButton
                             size="small"
-                            onClick={(e) => handleMenuOpen(e, patient.idpacient)}
+                            onClick={(e) =>
+                              handleMenuOpen(e, patient.idpacient)
+                            }
                             aria-label="more options"
                           >
                             <MoreVert fontSize="small" />
@@ -308,7 +369,9 @@ const PatientsPage = () => {
                 <TableRow>
                   <TableCell colSpan={4} sx={{ textAlign: "center", py: 4 }}>
                     <Typography variant="body1" color="text.secondary">
-                      {searchTerm ? "No patients found matching your search." : "No patients available."}
+                      {searchTerm
+                        ? "No patients found matching your search."
+                        : "No patients available."}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -319,15 +382,21 @@ const PatientsPage = () => {
       </Paper>
 
       {filteredPatients.length > 0 && (
-        <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box
+          sx={{
+            mt: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
             Showing {filteredPatients.length} of {patients.length} patients
           </Typography>
         </Box>
       )}
-
     </Box>
-  )
-}
+  );
+};
 
-export default PatientsPage
+export default PatientsPage;
