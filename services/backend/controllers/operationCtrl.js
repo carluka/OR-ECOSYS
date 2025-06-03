@@ -1,4 +1,4 @@
-const operationService = require('../services/operationService');
+const operationService = require("../services/operationService");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -47,7 +47,9 @@ exports.remove = async (req, res, next) => {
 
 exports.getWithMeasurements = async (req, res, next) => {
   try {
-    const data = await operationService.getOperationWithMeasurements(req.params.id);
+    const data = await operationService.getOperationWithMeasurements(
+      req.params.id
+    );
     res.json({ data });
   } catch (err) {
     next(err);
