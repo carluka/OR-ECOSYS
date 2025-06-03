@@ -28,6 +28,7 @@ interface RoomModalsProps {
 	// Delete Modal
 	openDeleteModal: boolean;
 	selectedCount: number;
+	loading: boolean;
 	onCloseDeleteModal: () => void;
 	onConfirmDelete: () => void;
 
@@ -52,6 +53,7 @@ export const RoomModals: React.FC<RoomModalsProps> = ({
 	openReportModal,
 	reportDeviceId,
 	onCloseReportModal,
+	loading,
 }) => {
 	return (
 		<>
@@ -148,14 +150,27 @@ export const RoomModals: React.FC<RoomModalsProps> = ({
 						<Button variant="outlined" onClick={onCloseDeleteModal}>
 							Cancel
 						</Button>
-						<Button
-							variant="contained"
-							color="error"
-							onClick={onConfirmDelete}
-							startIcon={<Delete />}
-						>
-							Delete
-						</Button>
+						{loading ? (
+							<Button
+								variant="contained"
+								color="error"
+								onClick={onConfirmDelete}
+								startIcon={<Delete />}
+								disabled
+								loading
+							>
+								Delete
+							</Button>
+						) : (
+							<Button
+								variant="contained"
+								color="error"
+								onClick={onConfirmDelete}
+								startIcon={<Delete />}
+							>
+								Delete
+							</Button>
+						)}
 					</Box>
 				</DialogContent>
 			</Dialog>

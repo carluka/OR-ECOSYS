@@ -304,6 +304,7 @@ const OperationRooms: React.FC = () => {
 				openReportModal={openReportModal}
 				reportDeviceId={reportDeviceId}
 				onCloseReportModal={() => setOpenReportModal(false)}
+				loading={loading}
 			/>
 
 			<RoomContextMenu
