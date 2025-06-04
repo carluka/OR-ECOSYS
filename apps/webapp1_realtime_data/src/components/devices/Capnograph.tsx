@@ -14,11 +14,27 @@ interface CapnographProps {
   co2: number | null;
   rf: number | null;
   co2History: { time: number; value: number }[];
+  size?: number;
 }
 
-const Capnograph: React.FC<CapnographProps> = ({ co2, rf, co2History }) => {
+const Capnograph: React.FC<CapnographProps> = ({
+  co2,
+  rf,
+  co2History,
+  size = 0,
+}) => {
+  const showChart = size >= 36; // 6x6 = 36
+
   return (
-    <div className="capnograph-module">
+    <div
+      className="capnograph-module"
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        padding: "0.5rem",
+      }}
+    >
       <h3 className="module-title">
         <span>Capnograph</span>
         <span className="module-badge">CO₂</span>
@@ -38,47 +54,62 @@ const Capnograph: React.FC<CapnographProps> = ({ co2, rf, co2History }) => {
         </div>
       </div>
 
-      <div className="capnograph-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={co2History}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eaeaea" />
-            <XAxis
-              dataKey="time"
-              hide
-              tickFormatter={(tick) => {
-                const date = new Date(tick);
-                return `${date.getHours()}:${String(date.getMinutes()).padStart(
-                  2,
-                  "0"
-                )}:${String(date.getSeconds()).padStart(2, "0")}`;
-              }}
-            />
-            <YAxis domain={[0, 60]} hide />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
-                borderRadius: "4px",
-              }}
-              formatter={(value) => [`${value} mmHg`, "CO₂"]}
-              labelFormatter={(label) => {
-                const date = new Date(label);
-                return `${date.getHours()}:${String(date.getMinutes()).padStart(
-                  2,
-                  "0"
-                )}:${String(date.getSeconds()).padStart(2, "0")}`;
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="#10b981"
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+      {showChart && (
+        <div
+          className="capnograph-chart"
+          style={{ flex: 1, minHeight: 0, margin: "0.5rem 0" }}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={co2History}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eaeaea" />
+              <XAxis
+                dataKey="time"
+                hide
+                tickFormatter={(tick) => {
+                  const date = new Date(tick);
+                  return `${date.getHours()}:${String(
+                    date.getMinutes()
+                  ).padStart(2, "0")}:${String(date.getSeconds()).padStart(
+                    2,
+                    "0"
+                  )}`;
+                }}
+              />
+              <YAxis
+                domain={[0, 60]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                width={30}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: "4px",
+                }}
+                formatter={(value) => [`${value} mmHg`, "CO₂"]}
+                labelFormatter={(label) => {
+                  const date = new Date(label);
+                  return `${date.getHours()}:${String(
+                    date.getMinutes()
+                  ).padStart(2, "0")}:${String(date.getSeconds()).padStart(
+                    2,
+                    "0"
+                  )}`;
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#10b981"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 };
