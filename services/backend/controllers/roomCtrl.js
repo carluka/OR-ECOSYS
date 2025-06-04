@@ -1,6 +1,6 @@
 const roomService = require("../services/roomService");
 const operationService = require("../services/operationService");
-const { Operacija, Soba } = require("../models");
+const { Operacija, Soba, Naprava, TipNaprave } = require("../models");
 const {
   generateIngress,
   deleteIngressRule,
@@ -198,15 +198,32 @@ exports.checkStatus = async (req, res, next) => {
         ["cas_zacetka", "DESC"],
       ],
     });
+
+    let active;
     if (!latestOperation) {
-      return res.status(200).json({ active: false });
+      active = false;
+    } else {
+      active = latestOperation.cas_konca === null;
     }
-    const active = latestOperation.cas_konca === null;
     const soba = await Soba.findOne({ where: { idsoba: id } });
 
-    const wsUuid = soba ? soba.uuid : null;
+    const devices = await Naprava.findAll({
+      where: { soba_idsoba: id },
+      include: [
+        {
+          model: TipNaprave,
+          attributes: ["naziv_k8s"],
+        },
+      ],
+    });
+    const deviceTypes = devices
+      .map((d) => (d.TipNaprave ? d.TipNaprave.naziv_k8s : null))
+      .filter((x) => x !== null);
 
-    res.status(200).json({ active, wsUuid });
+    const wsUuid = soba ? soba.uuid : null;
+    const name = soba.naziv;
+
+    res.status(200).json({ active, wsUuid, deviceTypes, name });
   } catch (err) {
     next(err);
   }

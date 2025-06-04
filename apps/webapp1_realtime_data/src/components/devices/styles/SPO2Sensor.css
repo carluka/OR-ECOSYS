@@ -1,5 +1,6 @@
 .spo2-module {
   width: 100%;
+  height: 100%;
 }
 
 .spo2-module .module-title {
@@ -85,8 +86,9 @@
 
 .spo2-module .spo2-status {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .spo2-module .status-badge {
@@ -116,15 +118,10 @@
   color: #dc2626;
 }
 
-.spo2-module .pulse-info {
-  font-size: 0.875rem;
-}
-
-.spo2-module .pulse-label {
-  color: #64748b;
-}
-
-.spo2-module .pulse-value {
-  font-weight: 500;
-  margin-left: 0.25rem;
+.spo2-chart {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
 }
