@@ -27,6 +27,9 @@ import {
   useTheme,
   Checkbox,
   FormControlLabel,
+  CircularProgress,
+  LinearProgress,
+  Paper,
 } from "@mui/material";
 import {
   Fullscreen as FullscreenIcon,
@@ -79,7 +82,6 @@ const MODULES = [
 
 const MAX_POINTS = 60;
 const GRID_SIZE = { cols: 12, rows: 16 };
-
 const DEFAULT_LAYOUT: ModuleLayout = {
   temperature: { x: 6, y: 8, width: 3, height: 4 },
   ekg: { x: 0, y: 0, width: 6, height: 6 },
@@ -100,6 +102,8 @@ const DEFAULT_VISIBILITY: ModuleVisibility = {
   ventilator: true,
 };
 
+const LOADING_DURATION = 35000; // 35 seconds
+
 const OperationRoomPageNew: React.FC = () => {
   const { roomId } = useParams();
   const { deviceData, updateDeviceData } = useDeviceContext();
@@ -109,6 +113,16 @@ const OperationRoomPageNew: React.FC = () => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [wsUuid, setWsUuid] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(false);
+
+  // Loading states
+  const [isRunLoading, setIsRunLoading] = useState(false);
+  const [isWaitingForModal, setIsWaitingForModal] = useState(false);
+  const [isStartupLoading, setIsStartupLoading] = useState(false);
+  const [isStopLoading, setIsStopLoading] = useState(false);
+  const [startupProgress, setStartupProgress] = useState(0);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,6 +136,7 @@ const OperationRoomPageNew: React.FC = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const [showPatientModal, setShowPatientModal] = useState(false);
   const [operationID, setOperationID] = useState<number | null>(null);
+  const loadingTimeoutRef = useRef<number | null>(null);
 
   const theme = useTheme();
 
@@ -162,6 +177,42 @@ const OperationRoomPageNew: React.FC = () => {
 
   const handlePatientModalClose = () => {
     setShowPatientModal(false);
+    setIsWaitingForModal(false);
+  };
+
+  const handlePatientSelection = () => {
+    // Called when patient is selected and confirmed
+    setShowPatientModal(false);
+    setIsWaitingForModal(false);
+    setIsStartupLoading(true);
+    setStartupProgress(0);
+
+    // Start progress tracking
+    const progressInterval = 100; // Update every 100ms
+    const totalDuration = LOADING_DURATION;
+    let elapsed = 0;
+
+    progressIntervalRef.current = setInterval(() => {
+      elapsed += progressInterval;
+      const progress = Math.min((elapsed / totalDuration) * 100, 100);
+      setStartupProgress(progress);
+
+      if (elapsed >= totalDuration) {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+        }
+      }
+    }, progressInterval);
+
+    // Start 35-second loading period
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsStartupLoading(false);
+      setIsRunLoading(false);
+      setStartupProgress(0);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    }, LOADING_DURATION);
   };
 
   useEffect(() => {
@@ -209,6 +260,18 @@ const OperationRoomPageNew: React.FC = () => {
     };
   }, [isFullscreen]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
+
   const openSocket = (uuid: string) => {
     const ws = new WebSocket(
       `wss://data.or-ecosystem.eu/ws/medical-device/${uuid}`
@@ -234,6 +297,8 @@ const OperationRoomPageNew: React.FC = () => {
 
   const handleMachines = async () => {
     if (isActive) {
+      // Stop machines
+      setIsStopLoading(true);
       try {
         await api.post(`/rooms/${roomId}/stopDevices`);
       } catch (err) {
@@ -244,7 +309,24 @@ const OperationRoomPageNew: React.FC = () => {
       setIsActive(false);
       setIsAvailable(false);
       setWsUuid(null);
+      setIsStopLoading(false);
+
+      // Clear any loading states
+      setIsRunLoading(false);
+      setIsWaitingForModal(false);
+      setIsStartupLoading(false);
+      setStartupProgress(0);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
     } else {
+      // Start machines
+      setIsRunLoading(true);
+      setIsWaitingForModal(true);
+
       try {
         const res = await api.post(`/rooms/${roomId}/startDevices`);
         if (res.data.status === "available" && res.data.wsUuid) {
@@ -256,6 +338,9 @@ const OperationRoomPageNew: React.FC = () => {
         }
       } catch (err) {
         console.error("Failed to deploy devices", err);
+        // Reset loading states on error
+        setIsRunLoading(false);
+        setIsWaitingForModal(false);
       }
     }
   };
@@ -390,6 +475,10 @@ const OperationRoomPageNew: React.FC = () => {
 
   const selectedModules = MODULES.filter((m) => moduleVisibility[m.id]);
 
+  // Determine if Connect button should be disabled
+  const isConnectDisabled =
+    !isAvailable || connected || isRunLoading || isStartupLoading;
+
   return (
     <Box
       ref={containerRef}
@@ -510,30 +599,54 @@ const OperationRoomPageNew: React.FC = () => {
                     onClick={handleMachines}
                     variant={isActive ? "outlined" : "contained"}
                     color={isActive ? "warning" : "primary"}
-                    startIcon={isActive ? <PowerOffIcon /> : <PowerIcon />}
+                    startIcon={
+                      isStopLoading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : isRunLoading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : isActive ? (
+                        <PowerOffIcon />
+                      ) : (
+                        <PowerIcon />
+                      )
+                    }
                     size="small"
-                    sx={{ textTransform: "none" }}
+                    sx={{
+                      textTransform: "none",
+                      minWidth: 100,
+                    }}
+                    disabled={isRunLoading || isStopLoading}
                   >
-                    {isActive ? "Stop" : "Run"}
+                    {isStopLoading
+                      ? "Stopping..."
+                      : isRunLoading
+                      ? isWaitingForModal
+                        ? "Loading..."
+                        : "Starting..."
+                      : isActive
+                      ? "Stop"
+                      : "Run"}
                   </Button>
                 </Tooltip>
+
                 <PatientSelectionModal
                   open={showPatientModal}
                   onClose={handlePatientModalClose}
+                  onPatientSelected={handlePatientSelection}
                   operationID={operationID}
                 />
 
                 <Tooltip title="Connect WebSocket">
                   <Button
                     onClick={connectToWebSocket}
-                    disabled={!isAvailable || connected}
+                    disabled={isConnectDisabled}
                     variant="outlined"
                     color="success"
                     startIcon={<LinkIcon />}
                     size="small"
                     sx={{
                       textTransform: "none",
-                      ...(!isAvailable || connected
+                      ...(isConnectDisabled
                         ? {
                             color: theme.palette.action.disabled,
                             borderColor:
@@ -571,6 +684,68 @@ const OperationRoomPageNew: React.FC = () => {
               </Box>
             </Box>
           </Box>
+        )}
+
+        {/* Progress Bar for Startup Loading */}
+        {isStartupLoading && !isFullscreen && (
+          <Paper
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor: "primary.50",
+              border: "1px solid",
+              borderColor: "primary.200",
+            }}
+          >
+            <Box sx={{ mb: 1 }}>
+              <Typography
+                variant="subtitle2"
+                color="primary.main"
+                sx={{ fontWeight: 600, mb: 1 }}
+              >
+                Starting Medical Devices...
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Please wait while the system initializes all medical monitoring
+                equipment.
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={startupProgress}
+                sx={{
+                  flexGrow: 1,
+                  height: 8,
+                  borderRadius: 4,
+                  bgcolor: "primary.100",
+                  "& .MuiLinearProgress-bar": {
+                    borderRadius: 4,
+                    bgcolor: "primary.main",
+                  },
+                }}
+              />
+              <Typography
+                variant="body2"
+                color="primary.main"
+                sx={{ fontWeight: 500, minWidth: 45 }}
+              >
+                {Math.round(startupProgress)}%
+              </Typography>
+            </Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1, display: "block" }}
+            >
+              Estimated time remaining:{" "}
+              {Math.max(
+                0,
+                Math.ceil((100 - startupProgress) * (LOADING_DURATION / 100000))
+              )}{" "}
+              seconds
+            </Typography>
+          </Paper>
         )}
 
         {!isFullscreen && (
