@@ -5,6 +5,7 @@ export interface DeviceOverview {
 	soba: string;
 	soba_naziv: string;
 	soba_lokacija: string;
+	soba_idsoba?: number | null;
 	servis: boolean;
 }
 

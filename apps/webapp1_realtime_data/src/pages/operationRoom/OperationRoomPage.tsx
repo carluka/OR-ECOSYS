@@ -30,7 +30,7 @@ import {
   CircularProgress,
   LinearProgress,
   Paper,
-} from "@mui/material"
+} from "@mui/material";
 import {
   Fullscreen as FullscreenIcon,
   FullscreenExit as FullscreenExitIcon,
@@ -80,8 +80,8 @@ const MODULES = [
   { id: "ventilator", label: "Ventilator" },
 ]
 
-const MAX_POINTS = 60
-const GRID_SIZE = { cols: 12, rows: 16 }
+const MAX_POINTS = 60;
+const GRID_SIZE = { cols: 12, rows: 16 };
 const DEFAULT_LAYOUT: ModuleLayout = {
   temperature: { x: 6, y: 8, width: 3, height: 4 },
   ekg: { x: 0, y: 0, width: 6, height: 6 },
@@ -100,39 +100,41 @@ const DEFAULT_VISIBILITY: ModuleVisibility = {
   nibp: true,
   infusion: true,
   ventilator: true,
-}
+};
 
-const LOADING_DURATION = 35000 // 35 seconds
+const LOADING_DURATION = 35000; // 35 seconds
 
 const OperationRoomPageNew: React.FC = () => {
   const { roomId } = useParams()
   const { deviceData, updateDeviceData } = useDeviceContext()
 
-  const [connected, setConnected] = useState(false)
-  const [co2History, setCo2History] = useState<DataPoint[]>([])
-  const [isAvailable, setIsAvailable] = useState(false)
-  const [wsUuid, setWsUuid] = useState<string | null>(null)
-  const [isActive, setIsActive] = useState(false)
+  const [connected, setConnected] = useState(false);
+  const [co2History, setCo2History] = useState<DataPoint[]>([]);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [wsUuid, setWsUuid] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(false);
 
   // Loading states
-  const [isRunLoading, setIsRunLoading] = useState(false)
-  const [isWaitingForModal, setIsWaitingForModal] = useState(false)
-  const [isStartupLoading, setIsStartupLoading] = useState(false)
-  const [isStopLoading, setIsStopLoading] = useState(false)
-  const [startupProgress, setStartupProgress] = useState(0)
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [isRunLoading, setIsRunLoading] = useState(false);
+  const [isWaitingForModal, setIsWaitingForModal] = useState(false);
+  const [isStartupLoading, setIsStartupLoading] = useState(false);
+  const [isStopLoading, setIsStopLoading] = useState(false);
+  const [startupProgress, setStartupProgress] = useState(0);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [moduleLayout, setModuleLayout] = useState<ModuleLayout>(DEFAULT_LAYOUT)
   const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>(DEFAULT_VISIBILITY)
 
-  const allMetricsRef = useRef<MetricMessage[]>([])
-  const wsRef = useRef<WebSocket | null>(null)
-  const [showPatientModal, setShowPatientModal] = useState(false)
-  const [operationID, setOperationID] = useState<number | null>(null)
-  const loadingTimeoutRef = useRef<number | null>(null)
+  const allMetricsRef = useRef<MetricMessage[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [showPatientModal, setShowPatientModal] = useState(false);
+  const [operationID, setOperationID] = useState<number | null>(null);
+  const loadingTimeoutRef = useRef<number | null>(null);
 
   const theme = useTheme()
 
@@ -170,44 +172,44 @@ const OperationRoomPageNew: React.FC = () => {
   }
 
   const handlePatientModalClose = () => {
-    setShowPatientModal(false)
-    setIsWaitingForModal(false)
-  }
+    setShowPatientModal(false);
+    setIsWaitingForModal(false);
+  };
 
   const handlePatientSelection = () => {
     // Called when patient is selected and confirmed
-    setShowPatientModal(false)
-    setIsWaitingForModal(false)
-    setIsStartupLoading(true)
-    setStartupProgress(0)
+    setShowPatientModal(false);
+    setIsWaitingForModal(false);
+    setIsStartupLoading(true);
+    setStartupProgress(0);
 
     // Start progress tracking
-    const progressInterval = 100 // Update every 100ms
-    const totalDuration = LOADING_DURATION
-    let elapsed = 0
+    const progressInterval = 100; // Update every 100ms
+    const totalDuration = LOADING_DURATION;
+    let elapsed = 0;
 
     progressIntervalRef.current = setInterval(() => {
-      elapsed += progressInterval
-      const progress = Math.min((elapsed / totalDuration) * 100, 100)
-      setStartupProgress(progress)
+      elapsed += progressInterval;
+      const progress = Math.min((elapsed / totalDuration) * 100, 100);
+      setStartupProgress(progress);
 
       if (elapsed >= totalDuration) {
         if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current)
+          clearInterval(progressIntervalRef.current);
         }
       }
-    }, progressInterval)
+    }, progressInterval);
 
     // Start 35-second loading period
     loadingTimeoutRef.current = setTimeout(() => {
-      setIsStartupLoading(false)
-      setIsRunLoading(false)
-      setStartupProgress(0)
+      setIsStartupLoading(false);
+      setIsRunLoading(false);
+      setStartupProgress(0);
       if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
+        clearInterval(progressIntervalRef.current);
       }
-    }, LOADING_DURATION)
-  }
+    }, LOADING_DURATION);
+  };
 
   useEffect(() => {
     const fetchActiveStatus = async () => {
@@ -250,21 +252,21 @@ const OperationRoomPageNew: React.FC = () => {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [isFullscreen])
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFullscreen]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current)
+        clearTimeout(loadingTimeoutRef.current);
       }
       if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
+        clearInterval(progressIntervalRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const openSocket = (uuid: string) => {
     const ws = new WebSocket(`wss://data.or-ecosystem.eu/ws/medical-device/${uuid}`)
@@ -290,34 +292,34 @@ const OperationRoomPageNew: React.FC = () => {
   const handleMachines = async () => {
     if (isActive) {
       // Stop machines
-      setIsStopLoading(true)
+      setIsStopLoading(true);
       try {
         await api.post(`/rooms/${roomId}/stopDevices`)
       } catch (err) {
         console.error("Failed to stop devices", err)
       }
-      wsRef.current?.close()
-      setConnected(false)
-      setIsActive(false)
-      setIsAvailable(false)
-      setWsUuid(null)
-      setIsStopLoading(false)
+      wsRef.current?.close();
+      setConnected(false);
+      setIsActive(false);
+      setIsAvailable(false);
+      setWsUuid(null);
+      setIsStopLoading(false);
 
       // Clear any loading states
-      setIsRunLoading(false)
-      setIsWaitingForModal(false)
-      setIsStartupLoading(false)
-      setStartupProgress(0)
+      setIsRunLoading(false);
+      setIsWaitingForModal(false);
+      setIsStartupLoading(false);
+      setStartupProgress(0);
       if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current)
+        clearTimeout(loadingTimeoutRef.current);
       }
       if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
+        clearInterval(progressIntervalRef.current);
       }
     } else {
       // Start machines
-      setIsRunLoading(true)
-      setIsWaitingForModal(true)
+      setIsRunLoading(true);
+      setIsWaitingForModal(true);
 
       try {
         const res = await api.post(`/rooms/${roomId}/startDevices`)
@@ -329,10 +331,10 @@ const OperationRoomPageNew: React.FC = () => {
           setOperationID(res.data.operationID)
         }
       } catch (err) {
-        console.error("Failed to deploy devices", err)
+        console.error("Failed to deploy devices", err);
         // Reset loading states on error
-        setIsRunLoading(false)
-        setIsWaitingForModal(false)
+        setIsRunLoading(false);
+        setIsWaitingForModal(false);
       }
     }
   }
@@ -416,10 +418,11 @@ const OperationRoomPageNew: React.FC = () => {
     }
   }
 
-  const selectedModules = MODULES.filter((m) => moduleVisibility[m.id])
+  const selectedModules = MODULES.filter((m) => moduleVisibility[m.id]);
 
   // Determine if Connect button should be disabled
-  const isConnectDisabled = !isAvailable || connected || isRunLoading || isStartupLoading
+  const isConnectDisabled =
+    !isAvailable || connected || isRunLoading || isStartupLoading;
 
   return (
     <Box
@@ -553,12 +556,12 @@ const OperationRoomPageNew: React.FC = () => {
                     {isStopLoading
                       ? "Stopping..."
                       : isRunLoading
-                        ? isWaitingForModal
-                          ? "Loading..."
-                          : "Starting..."
-                        : isActive
-                          ? "Stop"
-                          : "Run"}
+                      ? isWaitingForModal
+                        ? "Loading..."
+                        : "Starting..."
+                      : isActive
+                      ? "Stop"
+                      : "Run"}
                   </Button>
                 </Tooltip>
 
@@ -619,13 +622,26 @@ const OperationRoomPageNew: React.FC = () => {
 
         {/* Progress Bar for Startup Loading */}
         {isStartupLoading && !isFullscreen && (
-          <Paper sx={{ p: 2, mb: 2, bgcolor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
+          <Paper
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor: "primary.50",
+              border: "1px solid",
+              borderColor: "primary.200",
+            }}
+          >
             <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography
+                variant="subtitle2"
+                color="primary.main"
+                sx={{ fontWeight: 600, mb: 1 }}
+              >
                 Starting Medical Devices...
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Please wait while the system initializes all medical monitoring equipment.
+                Please wait while the system initializes all medical monitoring
+                equipment.
               </Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -643,12 +659,24 @@ const OperationRoomPageNew: React.FC = () => {
                   },
                 }}
               />
-              <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500, minWidth: 45 }}>
+              <Typography
+                variant="body2"
+                color="primary.main"
+                sx={{ fontWeight: 500, minWidth: 45 }}
+              >
                 {Math.round(startupProgress)}%
               </Typography>
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
-              Estimated time remaining: {Math.max(0, Math.ceil((100 - startupProgress) * (LOADING_DURATION / 100000)))}{" "}
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1, display: "block" }}
+            >
+              Estimated time remaining:{" "}
+              {Math.max(
+                0,
+                Math.ceil((100 - startupProgress) * (LOADING_DURATION / 100000))
+              )}{" "}
               seconds
             </Typography>
           </Paper>

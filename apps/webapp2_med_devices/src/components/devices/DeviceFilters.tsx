@@ -22,6 +22,8 @@ interface DeviceFiltersProps {
 	setFilterType: (type: string) => void;
 	filterServis: "all" | "yes" | "no";
 	setFilterServis: (servis: "all" | "yes" | "no") => void;
+	filterActiveRoom: "all" | "active" | "inactive";
+	setFilterActiveRoom: (activeRoom: "all" | "active" | "inactive") => void;
 	tipiNaprave: DeviceType[];
 	onAddDevice: () => void;
 }
@@ -33,6 +35,8 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
 	setFilterType,
 	filterServis,
 	setFilterServis,
+	filterActiveRoom,
+	setFilterActiveRoom,
 	tipiNaprave,
 	onAddDevice,
 }) => {
@@ -55,7 +59,8 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
 					display: "flex",
 					alignItems: "center",
 					flexGrow: 1,
-					maxWidth: "500px",
+					maxWidth: "700px",
+					gap: 2,
 				}}
 			>
 				<TextField
@@ -136,6 +141,40 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
 								<MenuItem value="all">All Service</MenuItem>
 								<MenuItem value="yes">Serviced</MenuItem>
 								<MenuItem value="no">Unserviced</MenuItem>
+							</Select>
+						</FormControl>
+					</Tooltip>
+					<Tooltip
+						title="Filter by Room Status"
+						open={tooltipOpen && !menuOpen}
+						onOpen={() => setTooltipOpen(true)}
+						onClose={() => setTooltipOpen(false)}
+						disableFocusListener
+						disableTouchListener
+						arrow
+					>
+						<FormControl
+							size="small"
+							sx={{ minWidth: 120 }}
+							onMouseEnter={() => setTooltipOpen(true)}
+							onMouseLeave={() => setTooltipOpen(false)}
+						>
+							<Select
+								value={filterActiveRoom}
+								onChange={(e: SelectChangeEvent) =>
+									setFilterActiveRoom(
+										e.target.value as "all" | "active" | "inactive"
+									)
+								}
+								displayEmpty
+								variant="standard"
+								sx={{ fontSize: "0.875rem" }}
+								onOpen={() => setMenuOpen(true)}
+								onClose={() => setMenuOpen(false)}
+							>
+								<MenuItem value="all">All Devices</MenuItem>
+								<MenuItem value="active">Active Devices</MenuItem>
+								<MenuItem value="inactive">Inactive Devices</MenuItem>
 							</Select>
 						</FormControl>
 					</Tooltip>
