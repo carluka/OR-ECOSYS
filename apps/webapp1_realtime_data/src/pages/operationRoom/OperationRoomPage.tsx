@@ -1,20 +1,20 @@
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import { useDeviceContext } from "../../context/DeviceContext";
-import { useParams, Navigate } from "react-router-dom";
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
+import { useDeviceContext } from "../../context/DeviceContext"
+import { useParams, Navigate } from "react-router-dom"
 
-import NibpModule from "../../components/devices/NIBPModule";
-import EKGModule from "../../components/devices/EKGModule";
-import SPO2Sensor from "../../components/devices/SPO2Sensor";
-import Capnograph from "../../components/devices/Capnograph";
-import TemperatureGauge from "../../components/devices/TemperatureGauge";
-import InfusionPump from "../../components/devices/InfusionPump";
-import Ventilator from "../../components/devices/Ventilator";
+import NibpModule from "../../components/devices/NIBPModule"
+import EKGModule from "../../components/devices/EKGModule"
+import SPO2Sensor from "../../components/devices/SPO2Sensor"
+import Capnograph from "../../components/devices/Capnograph"
+import TemperatureGauge from "../../components/devices/TemperatureGauge"
+import InfusionPump from "../../components/devices/InfusionPump"
+import Ventilator from "../../components/devices/Ventilator"
 
-import DraggablePanel from "../../components/DraggablePanel/DraggablePanel";
-import PatientSelectionModal from "../../components/PatientSelection/PatientSelectionModal";
+import DraggablePanel from "../../components/DraggablePanel/DraggablePanel"
+import PatientSelectionModal from "../../components/PatientSelection/PatientSelectionModal"
 
-import api from "../../api";
+import api from "../../api"
 
 import {
   Box,
@@ -27,7 +27,10 @@ import {
   useTheme,
   Checkbox,
   FormControlLabel,
-} from "@mui/material";
+  CircularProgress,
+  LinearProgress,
+  Paper,
+} from "@mui/material"
 import {
   Fullscreen as FullscreenIcon,
   FullscreenExit as FullscreenExitIcon,
@@ -37,34 +40,34 @@ import {
   LinkOff as LinkOffIcon,
   Circle as CircleIcon,
   RestartAlt as RestartAltIcon,
-} from "@mui/icons-material";
+} from "@mui/icons-material"
 
-import "./OperationRoomPage.css";
+import "./OperationRoomPage.css"
 
 interface DataPoint {
-  time: number;
-  value: number;
+  time: number
+  value: number
 }
 
 interface MetricMessage {
-  timestamp: string;
-  metrics: Record<string, number | number[]>;
-  device_id: string;
+  timestamp: string
+  metrics: Record<string, number | number[]>
+  device_id: string
 }
 
 interface GridPosition {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 interface ModuleLayout {
-  [key: string]: GridPosition;
+  [key: string]: GridPosition
 }
 
 interface ModuleVisibility {
-  [key: string]: boolean;
+  [key: string]: boolean
 }
 
 const MODULES = [
@@ -75,11 +78,10 @@ const MODULES = [
   { id: "nibp", label: "NIBP Module" },
   { id: "infusion", label: "Infusion Pump" },
   { id: "ventilator", label: "Ventilator" },
-];
+]
 
-const MAX_POINTS = 60;
-const GRID_SIZE = { cols: 12, rows: 16 };
-
+const MAX_POINTS = 60
+const GRID_SIZE = { cols: 12, rows: 16 }
 const DEFAULT_LAYOUT: ModuleLayout = {
   temperature: { x: 6, y: 8, width: 3, height: 4 },
   ekg: { x: 0, y: 0, width: 6, height: 6 },
@@ -88,7 +90,7 @@ const DEFAULT_LAYOUT: ModuleLayout = {
   nibp: { x: 6, y: 0, width: 3, height: 3 },
   infusion: { x: 9, y: 0, width: 3, height: 3 },
   ventilator: { x: 9, y: 3, width: 3, height: 6 },
-};
+}
 
 const DEFAULT_VISIBILITY: ModuleVisibility = {
   temperature: true,
@@ -98,273 +100,303 @@ const DEFAULT_VISIBILITY: ModuleVisibility = {
   nibp: true,
   infusion: true,
   ventilator: true,
-};
+}
+
+const LOADING_DURATION = 35000 // 35 seconds
 
 const OperationRoomPageNew: React.FC = () => {
-  const { roomId } = useParams();
-  const { deviceData, updateDeviceData } = useDeviceContext();
+  const { roomId } = useParams()
+  const { deviceData, updateDeviceData } = useDeviceContext()
 
-  const [connected, setConnected] = useState(false);
-  const [co2History, setCo2History] = useState<DataPoint[]>([]);
-  const [isAvailable, setIsAvailable] = useState(false);
-  const [wsUuid, setWsUuid] = useState<string | null>(null);
-  const [isActive, setIsActive] = useState(false);
+  const [connected, setConnected] = useState(false)
+  const [co2History, setCo2History] = useState<DataPoint[]>([])
+  const [isAvailable, setIsAvailable] = useState(false)
+  const [wsUuid, setWsUuid] = useState<string | null>(null)
+  const [isActive, setIsActive] = useState(false)
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Loading states
+  const [isRunLoading, setIsRunLoading] = useState(false)
+  const [isWaitingForModal, setIsWaitingForModal] = useState(false)
+  const [isStartupLoading, setIsStartupLoading] = useState(false)
+  const [isStopLoading, setIsStopLoading] = useState(false)
+  const [startupProgress, setStartupProgress] = useState(0)
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const [moduleLayout, setModuleLayout] =
-    useState<ModuleLayout>(DEFAULT_LAYOUT);
-  const [moduleVisibility, setModuleVisibility] =
-    useState<ModuleVisibility>(DEFAULT_VISIBILITY);
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  const allMetricsRef = useRef<MetricMessage[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const [showPatientModal, setShowPatientModal] = useState(false);
-  const [operationID, setOperationID] = useState<number | null>(null);
+  const [moduleLayout, setModuleLayout] = useState<ModuleLayout>(DEFAULT_LAYOUT)
+  const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>(DEFAULT_VISIBILITY)
 
-  const theme = useTheme();
+  const allMetricsRef = useRef<MetricMessage[]>([])
+  const wsRef = useRef<WebSocket | null>(null)
+  const [showPatientModal, setShowPatientModal] = useState(false)
+  const [operationID, setOperationID] = useState<number | null>(null)
+  const loadingTimeoutRef = useRef<number | null>(null)
+
+  const theme = useTheme()
 
   const handleMetric = (msg: MetricMessage) => {
-    allMetricsRef.current.push(msg);
-    updateDeviceData(msg);
+    allMetricsRef.current.push(msg)
+    updateDeviceData(msg)
 
-    const ts = new Date(msg.timestamp).getTime();
+    const ts = new Date(msg.timestamp).getTime()
     if (msg.device_id === "co2.ch0.capnograph") {
-      const value = msg.metrics["co2.ch0.capnograph"] as number;
+      const value = msg.metrics["co2.ch0.capnograph"] as number
       setCo2History((prev) => {
-        const next = [...prev, { time: ts, value }];
-        return next.length > MAX_POINTS
-          ? next.slice(next.length - MAX_POINTS)
-          : next;
-      });
+        const next = [...prev, { time: ts, value }]
+        return next.length > MAX_POINTS ? next.slice(next.length - MAX_POINTS) : next
+      })
     }
-  };
+  }
 
   const handlePositionChange = (moduleId: string, position: GridPosition) => {
     setModuleLayout((prev) => ({
       ...prev,
       [moduleId]: position,
-    }));
-  };
+    }))
+  }
 
   const handleVisibilityChange = (moduleId: string, visible: boolean) => {
     setModuleVisibility((prev) => ({
       ...prev,
       [moduleId]: visible,
-    }));
-  };
+    }))
+  }
 
   const handleResetLayout = () => {
-    setModuleLayout(DEFAULT_LAYOUT);
-    setModuleVisibility(DEFAULT_VISIBILITY);
-  };
+    setModuleLayout(DEFAULT_LAYOUT)
+    setModuleVisibility(DEFAULT_VISIBILITY)
+  }
 
   const handlePatientModalClose = () => {
-    setShowPatientModal(false);
-  };
+    setShowPatientModal(false)
+    setIsWaitingForModal(false)
+  }
+
+  const handlePatientSelection = () => {
+    // Called when patient is selected and confirmed
+    setShowPatientModal(false)
+    setIsWaitingForModal(false)
+    setIsStartupLoading(true)
+    setStartupProgress(0)
+
+    // Start progress tracking
+    const progressInterval = 100 // Update every 100ms
+    const totalDuration = LOADING_DURATION
+    let elapsed = 0
+
+    progressIntervalRef.current = setInterval(() => {
+      elapsed += progressInterval
+      const progress = Math.min((elapsed / totalDuration) * 100, 100)
+      setStartupProgress(progress)
+
+      if (elapsed >= totalDuration) {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+        }
+      }
+    }, progressInterval)
+
+    // Start 35-second loading period
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsStartupLoading(false)
+      setIsRunLoading(false)
+      setStartupProgress(0)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    }, LOADING_DURATION)
+  }
 
   useEffect(() => {
     const fetchActiveStatus = async () => {
       try {
-        const res = await api.get(`/rooms/${roomId}/status`);
+        const res = await api.get(`/rooms/${roomId}/status`)
         if (res.data && typeof res.data.active === "boolean") {
-          setIsActive(res.data.active);
+          setIsActive(res.data.active)
           if (res.data.active && res.data.wsUuid) {
-            setIsAvailable(true);
-            setWsUuid(res.data.wsUuid);
+            setIsAvailable(true)
+            setWsUuid(res.data.wsUuid)
           }
         }
       } catch (err) {
-        console.error("Failed to fetch active status", err);
+        console.error("Failed to fetch active status", err)
       }
-    };
+    }
 
     if (roomId) {
-      fetchActiveStatus();
+      fetchActiveStatus()
     }
-  }, [roomId]);
+  }, [roomId])
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+      setIsFullscreen(!!document.fullscreenElement)
+    }
 
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange)
     return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    };
-  }, []);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange)
+    }
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "F11") {
-        event.preventDefault();
-        toggleFullscreen();
+        event.preventDefault()
+        toggleFullscreen()
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
+    }
+    window.addEventListener("keydown", handleKeyDown)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isFullscreen]);
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isFullscreen])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    }
+  }, [])
 
   const openSocket = (uuid: string) => {
-    const ws = new WebSocket(
-      `wss://data.or-ecosystem.eu/ws/medical-device/${uuid}`
-    );
-    wsRef.current = ws;
+    const ws = new WebSocket(`wss://data.or-ecosystem.eu/ws/medical-device/${uuid}`)
+    wsRef.current = ws
 
-    ws.onopen = () => setConnected(true);
+    ws.onopen = () => setConnected(true)
     ws.onmessage = (e: MessageEvent) => {
       try {
-        const data = JSON.parse(e.data);
-        const messages = Array.isArray(data) ? data : [data];
-        messages.forEach(handleMetric);
+        const data = JSON.parse(e.data)
+        const messages = Array.isArray(data) ? data : [data]
+        messages.forEach(handleMetric)
       } catch (err) {
-        console.error("Failed to parse message", err);
+        console.error("Failed to parse message", err)
       }
-    };
-    ws.onerror = () => ws.close();
+    }
+    ws.onerror = () => ws.close()
     ws.onclose = () => {
-      setConnected(false);
-      wsRef.current = null;
-    };
-  };
+      setConnected(false)
+      wsRef.current = null
+    }
+  }
 
   const handleMachines = async () => {
     if (isActive) {
+      // Stop machines
+      setIsStopLoading(true)
       try {
-        await api.post(`/rooms/${roomId}/stopDevices`);
+        await api.post(`/rooms/${roomId}/stopDevices`)
       } catch (err) {
-        console.error("Failed to stop devices", err);
+        console.error("Failed to stop devices", err)
       }
-      wsRef.current?.close();
-      setConnected(false);
-      setIsActive(false);
-      setIsAvailable(false);
-      setWsUuid(null);
+      wsRef.current?.close()
+      setConnected(false)
+      setIsActive(false)
+      setIsAvailable(false)
+      setWsUuid(null)
+      setIsStopLoading(false)
+
+      // Clear any loading states
+      setIsRunLoading(false)
+      setIsWaitingForModal(false)
+      setIsStartupLoading(false)
+      setStartupProgress(0)
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
     } else {
+      // Start machines
+      setIsRunLoading(true)
+      setIsWaitingForModal(true)
+
       try {
-        const res = await api.post(`/rooms/${roomId}/startDevices`);
+        const res = await api.post(`/rooms/${roomId}/startDevices`)
         if (res.data.status === "available" && res.data.wsUuid) {
-          setIsAvailable(true);
-          setWsUuid(res.data.wsUuid);
-          setIsActive(true);
-          setShowPatientModal(true);
-          setOperationID(res.data.operationID);
+          setIsAvailable(true)
+          setWsUuid(res.data.wsUuid)
+          setIsActive(true)
+          setShowPatientModal(true)
+          setOperationID(res.data.operationID)
         }
       } catch (err) {
-        console.error("Failed to deploy devices", err);
+        console.error("Failed to deploy devices", err)
+        // Reset loading states on error
+        setIsRunLoading(false)
+        setIsWaitingForModal(false)
       }
     }
-  };
+  }
 
   const connectToWebSocket = async () => {
-    if (connected || !wsUuid) return;
+    if (connected || !wsUuid) return
     try {
-      openSocket(wsUuid);
+      openSocket(wsUuid)
     } catch (err) {
-      console.error("Failed to connect", err);
+      console.error("Failed to connect", err)
     }
-  };
+  }
 
   const disconnect = () => {
-    wsRef.current?.close();
-    setConnected(false);
-  };
+    wsRef.current?.close()
+    setConnected(false)
+  }
 
   if (!roomId) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace />
   }
 
   const nibpData = {
-    systolic:
-      deviceData["bps.ch0.nibp_module"]?.metrics["bps.ch0.nibp_module"] ?? null,
-    diastolic:
-      deviceData["bpd.ch0.nibp_module"]?.metrics["bpd.ch0.nibp_module"] ?? null,
-    map:
-      deviceData["bpa.ch0.nibp_module"]?.metrics["bpa.ch0.nibp_module"] ?? null,
-  };
+    systolic: deviceData["bps.ch0.nibp_module"]?.metrics["bps.ch0.nibp_module"] ?? null,
+    diastolic: deviceData["bpd.ch0.nibp_module"]?.metrics["bpd.ch0.nibp_module"] ?? null,
+    map: deviceData["bpa.ch0.nibp_module"]?.metrics["bpa.ch0.nibp_module"] ?? null,
+  }
 
-  const waveformRaw =
-    deviceData["ecgWaveform.ch0.ecg_module"]?.metrics[
-      "ecgWaveform.ch0.ecg_module"
-    ];
-  const ecgWaveform =
-    typeof waveformRaw === "string"
-      ? JSON.parse(waveformRaw)
-      : waveformRaw ?? [];
+  const waveformRaw = deviceData["ecgWaveform.ch0.ecg_module"]?.metrics["ecgWaveform.ch0.ecg_module"]
+  const ecgWaveform = typeof waveformRaw === "string" ? JSON.parse(waveformRaw) : (waveformRaw ?? [])
 
   const ekgData = {
-    heartRate:
-      deviceData["heartRate.ch0.ecg_module"]?.metrics[
-        "heartRate.ch0.ecg_module"
-      ] ?? null,
-    rrInterval:
-      deviceData["rrInterval.ch0.ecg_module"]?.metrics[
-        "rrInterval.ch0.ecg_module"
-      ] ?? null,
-    qrsDuration:
-      deviceData["qrsDuration.ch0.ecg_module"]?.metrics[
-        "qrsDuration.ch0.ecg_module"
-      ] ?? null,
+    heartRate: deviceData["heartRate.ch0.ecg_module"]?.metrics["heartRate.ch0.ecg_module"] ?? null,
+    rrInterval: deviceData["rrInterval.ch0.ecg_module"]?.metrics["rrInterval.ch0.ecg_module"] ?? null,
+    qrsDuration: deviceData["qrsDuration.ch0.ecg_module"]?.metrics["qrsDuration.ch0.ecg_module"] ?? null,
     ecgWaveform,
-  };
+  }
 
   const spo2SensorData = {
-    oxygenSaturation:
-      deviceData["oxygen_saturation.ch0.spo2"]?.metrics[
-        "oxygen_saturation.ch0.spo2"
-      ] ?? null,
+    oxygenSaturation: deviceData["oxygen_saturation.ch0.spo2"]?.metrics["oxygen_saturation.ch0.spo2"] ?? null,
     pulse: deviceData["pulse.ch0.spo2"]?.metrics["pulse.ch0.spo2"] ?? null,
-  };
+  }
 
   const capnographData = {
-    co2:
-      deviceData["co2.ch0.capnograph"]?.metrics["co2.ch0.capnograph"] ?? null,
+    co2: deviceData["co2.ch0.capnograph"]?.metrics["co2.ch0.capnograph"] ?? null,
     rf: deviceData["rf.ch0.capnograph"]?.metrics["rf.ch0.capnograph"] ?? null,
     co2History,
-  };
+  }
 
   const temperature =
-    deviceData["temperature.ch0.temperature_gauge"]?.metrics[
-      "temperature.ch0.temperature_gauge"
-    ] ?? null;
+    deviceData["temperature.ch0.temperature_gauge"]?.metrics["temperature.ch0.temperature_gauge"] ?? null
 
   const infusionPumpData = {
-    flowRate:
-      deviceData["flowRate.ch0.infusion_pump"]?.metrics[
-        "flowRate.ch0.infusion_pump"
-      ] ?? null,
-    volumeTotal:
-      deviceData["volumeTotal.ch0.infusion_pump"]?.metrics[
-        "volumeTotal.ch0.infusion_pump"
-      ] ?? null,
-  };
+    flowRate: deviceData["flowRate.ch0.infusion_pump"]?.metrics["flowRate.ch0.infusion_pump"] ?? null,
+    volumeTotal: deviceData["volumeTotal.ch0.infusion_pump"]?.metrics["volumeTotal.ch0.infusion_pump"] ?? null,
+  }
 
   const ventilatorData = {
-    tidalVolume:
-      deviceData["vol.ch0.mechanical_ventilator"]?.metrics[
-        "vol.ch0.mechanical_ventilator"
-      ] ?? null,
-    respiratoryRate:
-      deviceData["rf.ch0.mechanical_ventilator"]?.metrics[
-        "rf.ch0.mechanical_ventilator"
-      ] ?? null,
-    fio2:
-      deviceData["ox_con.ch0.mechanical_ventilator"]?.metrics[
-        "ox_con.ch0.mechanical_ventilator"
-      ] ?? null,
-    pip:
-      deviceData["pip.ch0.mechanical_ventilator"]?.metrics[
-        "pip.ch0.mechanical_ventilator"
-      ] ?? null,
-    peep:
-      deviceData["peep.ch0.mechanical_ventilator"]?.metrics[
-        "peep.ch0.mechanical_ventilator"
-      ] ?? null,
-  };
+    tidalVolume: deviceData["vol.ch0.mechanical_ventilator"]?.metrics["vol.ch0.mechanical_ventilator"] ?? null,
+    respiratoryRate: deviceData["rf.ch0.mechanical_ventilator"]?.metrics["rf.ch0.mechanical_ventilator"] ?? null,
+    fio2: deviceData["ox_con.ch0.mechanical_ventilator"]?.metrics["ox_con.ch0.mechanical_ventilator"] ?? null,
+    pip: deviceData["pip.ch0.mechanical_ventilator"]?.metrics["pip.ch0.mechanical_ventilator"] ?? null,
+    peep: deviceData["peep.ch0.mechanical_ventilator"]?.metrics["peep.ch0.mechanical_ventilator"] ?? null,
+  }
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -372,23 +404,22 @@ const OperationRoomPageNew: React.FC = () => {
         containerRef.current
           .requestFullscreen()
           .then(() => setIsFullscreen(true))
-          .catch((err) =>
-            console.error(`Error enabling fullscreen: ${err.message}`)
-          );
+          .catch((err) => console.error(`Error enabling fullscreen: ${err.message}`))
       }
     } else {
       if (document.exitFullscreen) {
         document
           .exitFullscreen()
           .then(() => setIsFullscreen(false))
-          .catch((err) =>
-            console.error(`Error exiting fullscreen: ${err.message}`)
-          );
+          .catch((err) => console.error(`Error exiting fullscreen: ${err.message}`))
       }
     }
-  };
+  }
 
-  const selectedModules = MODULES.filter((m) => moduleVisibility[m.id]);
+  const selectedModules = MODULES.filter((m) => moduleVisibility[m.id])
+
+  // Determine if Connect button should be disabled
+  const isConnectDisabled = !isAvailable || connected || isRunLoading || isStartupLoading
 
   return (
     <Box
@@ -442,10 +473,7 @@ const OperationRoomPageNew: React.FC = () => {
               py: 2,
             }}
           >
-            <Box
-              className="header-title"
-              sx={{ display: "flex", alignItems: "center" }}
-            >
+            <Box className="header-title" sx={{ display: "flex", alignItems: "center" }}>
               <Box
                 className="header-icon"
                 sx={{
@@ -469,14 +497,8 @@ const OperationRoomPageNew: React.FC = () => {
               </Typography>
             </Box>
 
-            <Box
-              className="header-controls"
-              sx={{ display: "flex", alignItems: "center", gap: 3 }}
-            >
-              <Box
-                className="connection-status"
-                sx={{ display: "flex", alignItems: "center", gap: 1 }}
-              >
+            <Box className="header-controls" sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box className="connection-status" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <CircleIcon
                   fontSize="small"
                   sx={{
@@ -510,34 +532,57 @@ const OperationRoomPageNew: React.FC = () => {
                     onClick={handleMachines}
                     variant={isActive ? "outlined" : "contained"}
                     color={isActive ? "warning" : "primary"}
-                    startIcon={isActive ? <PowerOffIcon /> : <PowerIcon />}
+                    startIcon={
+                      isStopLoading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : isRunLoading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : isActive ? (
+                        <PowerOffIcon />
+                      ) : (
+                        <PowerIcon />
+                      )
+                    }
                     size="small"
-                    sx={{ textTransform: "none" }}
+                    sx={{
+                      textTransform: "none",
+                      minWidth: 100,
+                    }}
+                    disabled={isRunLoading || isStopLoading}
                   >
-                    {isActive ? "Stop" : "Run"}
+                    {isStopLoading
+                      ? "Stopping..."
+                      : isRunLoading
+                        ? isWaitingForModal
+                          ? "Loading..."
+                          : "Starting..."
+                        : isActive
+                          ? "Stop"
+                          : "Run"}
                   </Button>
                 </Tooltip>
+
                 <PatientSelectionModal
                   open={showPatientModal}
                   onClose={handlePatientModalClose}
+                  onPatientSelected={handlePatientSelection}
                   operationID={operationID}
                 />
 
                 <Tooltip title="Connect WebSocket">
                   <Button
                     onClick={connectToWebSocket}
-                    disabled={!isAvailable || connected}
+                    disabled={isConnectDisabled}
                     variant="outlined"
                     color="success"
                     startIcon={<LinkIcon />}
                     size="small"
                     sx={{
                       textTransform: "none",
-                      ...(!isAvailable || connected
+                      ...(isConnectDisabled
                         ? {
                             color: theme.palette.action.disabled,
-                            borderColor:
-                              theme.palette.action.disabledBackground,
+                            borderColor: theme.palette.action.disabledBackground,
                           }
                         : {}),
                     }}
@@ -559,8 +604,7 @@ const OperationRoomPageNew: React.FC = () => {
                       ...(!connected
                         ? {
                             color: theme.palette.action.disabled,
-                            borderColor:
-                              theme.palette.action.disabledBackground,
+                            borderColor: theme.palette.action.disabledBackground,
                           }
                         : {}),
                     }}
@@ -571,6 +615,43 @@ const OperationRoomPageNew: React.FC = () => {
               </Box>
             </Box>
           </Box>
+        )}
+
+        {/* Progress Bar for Startup Loading */}
+        {isStartupLoading && !isFullscreen && (
+          <Paper sx={{ p: 2, mb: 2, bgcolor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" color="primary.main" sx={{ fontWeight: 600, mb: 1 }}>
+                Starting Medical Devices...
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Please wait while the system initializes all medical monitoring equipment.
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={startupProgress}
+                sx={{
+                  flexGrow: 1,
+                  height: 8,
+                  borderRadius: 4,
+                  bgcolor: "primary.100",
+                  "& .MuiLinearProgress-bar": {
+                    borderRadius: 4,
+                    bgcolor: "primary.main",
+                  },
+                }}
+              />
+              <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500, minWidth: 45 }}>
+                {Math.round(startupProgress)}%
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+              Estimated time remaining: {Math.max(0, Math.ceil((100 - startupProgress) * (LOADING_DURATION / 100000)))}{" "}
+              seconds
+            </Typography>
+          </Paper>
         )}
 
         {!isFullscreen && (
@@ -610,9 +691,9 @@ const OperationRoomPageNew: React.FC = () => {
                   onClick={() => {
                     MODULES.forEach((m) => {
                       if (!moduleVisibility[m.id]) {
-                        handleVisibilityChange(m.id, true);
+                        handleVisibilityChange(m.id, true)
                       }
-                    });
+                    })
                   }}
                   sx={{
                     textTransform: "none",
@@ -630,9 +711,9 @@ const OperationRoomPageNew: React.FC = () => {
                   onClick={() => {
                     MODULES.forEach((m) => {
                       if (moduleVisibility[m.id]) {
-                        handleVisibilityChange(m.id, false);
+                        handleVisibilityChange(m.id, false)
                       }
-                    });
+                    })
                   }}
                   sx={{
                     textTransform: "none",
@@ -699,9 +780,7 @@ const OperationRoomPageNew: React.FC = () => {
                   control={
                     <Checkbox
                       checked={moduleVisibility[m.id]}
-                      onChange={() =>
-                        handleVisibilityChange(m.id, !moduleVisibility[m.id])
-                      }
+                      onChange={() => handleVisibilityChange(m.id, !moduleVisibility[m.id])}
                     />
                   }
                   label={m.label}
@@ -718,9 +797,7 @@ const OperationRoomPageNew: React.FC = () => {
             flexGrow: 1,
             display: "grid",
             gridTemplateColumns: `repeat(${GRID_SIZE.cols}, 1fr)`,
-            gridTemplateRows: `repeat(${GRID_SIZE.rows}, ${
-              isFullscreen ? "80px" : "60px"
-            })`,
+            gridTemplateRows: `repeat(${GRID_SIZE.rows}, ${isFullscreen ? "80px" : "60px"})`,
             gap: 1,
             p: 1,
             position: "relative",
@@ -812,7 +889,7 @@ const OperationRoomPageNew: React.FC = () => {
         </Box>
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default OperationRoomPageNew;
+export default OperationRoomPageNew

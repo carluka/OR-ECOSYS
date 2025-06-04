@@ -92,56 +92,76 @@ const OperationDetailsPage = () => {
     return deviceMappings[deviceName] || deviceName
   }
 
-  // Funkcija, ki določi pravilno enoto glede na field
-  const getProperUnit = (group: MeasurementGroup): string => {
-    const f = group.field.toLowerCase()
-    // NIBP modulus
-    if (f.startsWith("bps") || f.startsWith("bpd") || f.startsWith("bpa")) {
-      return "mmHg"
-    }
-    // Capnograph CO2 (v mmHg običajno)
-    if (f.includes("co2")) {
-      return "mmHg"
-    }
-    // Spo2 / pulse oximeter
-    if (f.includes("oxygen_saturation") || f.includes("pulse")) {
-      return "%"
-    }
-    // Temperature (predpostavimo °C)
-    if (f.includes("temperature")) {
-      return "°C"
-    }
-    // ECG: heartRate, rrInterval, qrsDuration
-    if (f.includes("heartrate")) {
-      return "bpm"
-    }
-    if (f.includes("rrinterval") || f.includes("qrsduration")) {
-      return "ms"
-    }
-    // Infusion Pump
-    if (f.includes("flowrate")) {
-      return "mL/h"
-    }
-    if (f.includes("volumetotal")) {
-      return "mL"
-    }
-    // Ventilator
-    if (f.includes("vol.ch0.mechanical_ventilator") || f.includes("tidalvolume")) {
-      return "mL"
-    }
-    if (f.includes("rf.ch0.mechanical_ventilator") || f.includes("respiratoryrate")) {
-      return "bpm"
-    }
-    if (f.includes("fio2") || f.includes("ox_con")) {
-      return "%"
-    }
-    if (f.includes("pip") || f.includes("peep")) {
-      return "cmH₂O"
-    }
-    // V primeru, da ni specifične enote v kodi, uporabimo tisto iz API-ja ali pustimo prazno
-    return group.unit || ""
+ const getProperUnit = (group: MeasurementGroup): string => {
+  const f = group.field.toLowerCase();
+
+    // NIBP 
+  if (
+    f.includes("metrics_bps.ch0.nibp_module") || 
+    f.includes("metrics_bpd.ch0.nibp_module") ||
+    f.includes("metrics_bpa.ch0.nibp_module")   
+  ) {
+    return "mmHg";
   }
 
+  // Capnograph 
+  if (f.includes("metrics_co2.ch0.capnograph")) {
+    return "mmHg";  
+  }
+  if (f.includes("metrics_rf.ch0.capnograph")) {
+    return "bpm";   
+  }
+
+  // ECG 
+  if (f.includes("metrics_heartrate.ch0.ecg_module")) {
+    return "bpm";   
+  }
+  if (
+    f.includes("metrics_rrinterval.ch0.ecg_module") || 
+    f.includes("metrics_qrsduration.ch0.ecg_module")   
+  ) {
+    return "ms";
+  }
+
+  // Spo2 
+  if (f.includes("metrics_oxygen_saturation.ch0.spo2")) {
+    return "%";
+  }
+
+  // Temperature
+  if (f.includes("metrics_temperature.ch0.temperature_gauge")) {
+    return "°C";
+  }
+
+  // Infusion Pump 
+  if (f.includes("metrics_flowrate.ch0.infusion_pump")) {
+    return "mL/h";  
+  }
+  if (f.includes("metrics_volumetotal.ch0.infusion_pump")) {
+    return "mL"; 
+  }
+
+  // Mechanical Ventilator 
+  if (f.includes("metrics_vol.ch0.mechanical_ventilator")) {
+    return "mL";  
+  }
+  if (f.includes("metrics_rf.ch0.mechanical_ventilator")) {
+    return "bpm";   
+  }
+  if (
+    f.includes("metrics_ox_con.ch0.mechanical_ventilator") || 
+    f.includes("metrics_ox_con") 
+  ) {
+    return "%";
+  }
+  if (
+    f.includes("metrics_pip.ch0.mechanical_ventilator") || 
+    f.includes("metrics_peep.ch0.mechanical_ventilator")  
+  ) {
+    return "cmH₂O";
+  }
+  return group.unit || "";
+};
   useEffect(() => {
     const fetchOperationDetails = async () => {
       try {
