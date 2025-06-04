@@ -64,12 +64,16 @@ export const useRooms = () => {
 	};
 
 	const deleteRooms = async (roomIds: number[]) => {
+		setLoading(true);
 		try {
 			await api.delete("/rooms/deleteMultiple", { data: { ids: roomIds } });
 			await fetchRooms();
+			setLoading(false);
 		} catch (err) {
 			console.error("Error deleting rooms:", err);
 			throw new Error("Error deleting rooms.");
+		} finally {
+			setLoading(false);
 		}
 	};
 
