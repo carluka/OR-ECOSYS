@@ -38,24 +38,38 @@ jobs:
     if: success() # Only runs if the 'test' job succeeds
 
     steps:
+      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Ensure that all branches are fetched (especially `main` or `master`)
+      - name: Fetch all branches
+        run: |
+          git fetch --all
+
+      # Create a new branch (auto-pr-branch) from the latest commit on main
       - name: Create new branch for PR
         run: |
-          # Create a new branch (auto-pr-branch) from main
+          # Checkout the main branch (adjust 'main' to 'master' if needed)
           git checkout main
-          git pull origin main
+          git pull origin main  # Ensure the latest changes from 'main' are pulled
+
+          # Create a new branch from main
           git checkout -b auto-pr-branch
 
+          # Merge test branch into the auto-pr-branch
+          git merge origin/test --no-ff --commit --strategy-option=theirs
+
+      # Create the pull request (from 'auto-pr-branch' to 'main')
       - name: Raise PR
         uses: peter-evans/create-pull-request@v3
         with:
           title: "Automated PR for Main"
           body: "This pull request is automatically created after passing tests on the test branch."
-          branch: auto-pr-branch
-          base: main
-          committer: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          branch: auto-pr-branch # PR is from the 'auto-pr-branch'
+          base: main # Target branch is 'main'
+          committer: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>" # Set bot as committer
+          author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>" # Set bot as author
           token: ${{ secrets.GITHUB_TOKEN }}
-          delete-branch: true
+          delete-branch: true # Optionally delete the 'auto-pr-branch' after the PR is merged
+
