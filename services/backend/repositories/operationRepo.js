@@ -1,15 +1,15 @@
-const { models } = require('../db/database');
+const { models } = require("../db/database");
 
 class OperationRepo {
   async findAll() {
     return models.Operacija.findAll({
-      include: [ models.Pacient, models.Soba, models.Uporabnik ]
+      include: [models.Pacient, models.Soba, models.Uporabnik],
     });
   }
 
   async findById(id) {
     return models.Operacija.findByPk(id, {
-      include: [ models.Pacient, models.Soba, models.Uporabnik ]
+      include: [models.Pacient, models.Soba, models.Uporabnik],
     });
   }
 
@@ -18,11 +18,12 @@ class OperationRepo {
   }
 
   async update(id, data) {
-    // TODO: implement update logic
+    await models.Operacija.update(data, { where: { idoperacija: id } });
+    return;
   }
 
   async delete(id) {
-    // TODO: implement delete logic
+    // TODO
   }
 }
 

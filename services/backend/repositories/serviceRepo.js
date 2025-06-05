@@ -15,11 +15,11 @@ class ServiceRepo {
 	}
 
 	async update(id, data) {
-		// TODO: implement update logic
+		// TODO
 	}
 
 	async delete(id) {
-		// TODO: implement delete logic
+		// TODO
 	}
 
 	async findByDeviceId(id) {
@@ -45,7 +45,8 @@ class ServiceRepo {
 					ura,
 					komentar,
 					(datum >= (CURRENT_DATE - INTERVAL '2 months')) AS servis
-				FROM servis;
+				FROM servis
+				ORDER BY datum;
 			`;
 
 			const [results] = await sequelize.query(sql, {

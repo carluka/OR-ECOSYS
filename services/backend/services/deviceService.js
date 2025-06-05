@@ -10,32 +10,32 @@ class DeviceService {
 	}
 
 	async createDevice(payload) {
-		// TODO: validate payload (e.g. serial number unique)
 		return deviceRepo.create(payload);
 	}
 
 	async updateDevice(id, payload) {
-		// TODO: business rules (e.g. prevent changing room if active)
 		return deviceRepo.update(id, payload);
 	}
 
 	async deleteDevice(id) {
-		// TODO: check for active operations before delete
 		return deviceRepo.delete(id);
 	}
 
 	async togglePower(id, action) {
-		// TODO: integrate with simulatorRepo or SDC provider
+		// TODO
 		return deviceRepo.togglePower(id, action);
 	}
 
 	async deleteDevices(ids) {
-		// TODO: check for active operations before delete
 		return deviceRepo.deleteMultiple(ids);
 	}
 
 	async getDevices(filters = {}) {
 		return deviceRepo.getDevices(filters);
+	}
+
+	async getDeviceReportData(id) {
+		return deviceRepo.getReportData(id);
 	}
 }
 

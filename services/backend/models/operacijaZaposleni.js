@@ -1,4 +1,3 @@
-// models/operacijaZaposleni.js
 const { Model, DataTypes } = require("sequelize");
 module.exports = (sequelize) => {
 	class OperacijaZaposleni extends Model {

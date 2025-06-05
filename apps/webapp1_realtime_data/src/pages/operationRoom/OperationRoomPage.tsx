@@ -1,254 +1,344 @@
 import type React from "react";
-import { useState, useRef } from "react";
-import { useDeviceContext } from "../../context/DeviceContext";
-import NibpModule from "../../components/devices/NIBPModule";
-import EKGModule from "../../components/devices/EKGModule";
-import SPO2Sensor from "../../components/devices/SPO2Sensor";
-import Capnograph from "../../components/devices/Capnograph";
-import TemperatureGauge from "../../components/devices/TemperatureGauge";
-import InfusionPump from "../../components/devices/InfusionPump";
-import Ventilator from "../../components/devices/Ventilator";
+import { useState, useRef, useEffect } from "react";
+import { useParams, Navigate } from "react-router-dom";
+import { Box, Typography, useTheme } from "@mui/material";
+
+import PatientSelectionModal from "../../components/PatientSelection/PatientSelectionModal";
+import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import ModuleSelector from "../../components/dashboard/ModuleSelector";
+import StartupProgress from "../../components/dashboard/StartupProgress";
+import NoDevicesWarning from "../../components/dashboard/NoDeviceWarning";
+import DeviceGrid from "../../components/dashboard/DeviceGrid";
+
+import { useFullscreen } from "../../hooks/useFullScreen";
+import { useWebSocket } from "../../hooks/useWebSocket";
+import { useDeviceData } from "../../hooks/useDeviceData";
+import { generateDynamicLayout } from "../../utils/grid-layout";
+import {
+	ALL_MODULES,
+	type DeviceModule,
+	type ModuleVisibility,
+} from "../../types/device-types";
+import type { ModuleLayout, GridPosition } from "../../utils/grid-layout";
+
+import api from "../../api";
 import "./OperationRoomPage.css";
 
-interface DataPoint {
-  time: number;
-  value: number;
-}
+const LOADING_DURATION = 35000;
 
-interface MetricMessage {
-  timestamp: string;
-  metrics: Record<string, number | number[]>;
-  device_id: string;
-}
+const OperationRoomPageNew: React.FC = () => {
+	const { roomId } = useParams();
+	const theme = useTheme();
+	const containerRef = useRef<HTMLDivElement>(null);
 
-const MAX_POINTS = 60;
+	const [roomName, setRoomName] = useState<string>("Room");
+	const [isAvailable, setIsAvailable] = useState(false);
+	const [wsUuid, setWsUuid] = useState<string | null>(null);
+	const [isActive, setIsActive] = useState(false);
 
-const OperationRoomPage: React.FC = () => {
-  const { deviceData, updateDeviceData } = useDeviceContext();
-  const [connected, setConnected] = useState<boolean>(false);
-  const [co2History, setCo2History] = useState<DataPoint[]>([]);
+	const [isRunLoading, setIsRunLoading] = useState(false);
+	const [isWaitingForModal, setIsWaitingForModal] = useState(false);
+	const [isStartupLoading, setIsStartupLoading] = useState(false);
+	const [isStopLoading, setIsStopLoading] = useState(false);
+	const [startupProgress, setStartupProgress] = useState(0);
 
-  const allMetricsRef = useRef<MetricMessage[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
+	const [availableModules, setAvailableModules] = useState<DeviceModule[]>([]);
+	const [moduleLayout, setModuleLayout] = useState<ModuleLayout>({});
+	const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>(
+		{}
+	);
 
-  const handleMetric = (msg: MetricMessage) => {
-    allMetricsRef.current.push(msg);
-    updateDeviceData(msg);
+	const [showPatientModal, setShowPatientModal] = useState(false);
+	const [operationID, setOperationID] = useState<number | null>(null);
 
-    const ts = new Date(msg.timestamp).getTime();
-    if (msg.device_id === "co2.ch0.capnograph") {
-      const value = msg.metrics["co2.ch0.capnograph"] as number;
-      setCo2History((prev) => {
-        const next = [...prev, { time: ts, value }];
-        return next.length > MAX_POINTS
-          ? next.slice(next.length - MAX_POINTS)
-          : next;
-      });
-    }
-  };
+	const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+		null
+	);
+	const loadingTimeoutRef = useRef<number | null>(null);
 
-  const connect = () => {
-    wsRef.current?.close();
-    const ws = new WebSocket("wss://data.or-ecosystem.eu/ws/medical-device");
-    wsRef.current = ws;
+	const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
+	const { handleMetric, processDeviceData } = useDeviceData();
+	const { connected, openSocket, disconnect } = useWebSocket({
+		onMessage: handleMetric,
+	});
 
-    ws.onopen = () => setConnected(true);
-    ws.onmessage = (e: MessageEvent) => {
-      try {
-        const data = JSON.parse(e.data);
-        const messages = Array.isArray(data) ? data : [data];
-        messages.forEach(handleMetric);
-      } catch (err) {
-        console.error("Failed to parse message", err);
-      }
-    };
-    ws.onclose = () => {
-      setConnected(false);
-      wsRef.current = null;
-    };
-  };
+	const {
+		nibpData,
+		ekgData,
+		spo2SensorData,
+		capnographData,
+		temperatureData,
+		infusionPumpData,
+		ventilatorData,
+	} = processDeviceData();
 
-  const disconnect = () => {
-    wsRef.current?.close();
-  };
+	const handlePositionChange = (moduleId: string, position: GridPosition) => {
+		setModuleLayout((prev) => ({
+			...prev,
+			[moduleId]: position,
+		}));
+	};
 
-  const nibpData = {
-    systolic:
-      deviceData["bps.ch0.nibp_module"]?.metrics["bps.ch0.nibp_module"] ?? null,
-    diastolic:
-      deviceData["bpd.ch0.nibp_module"]?.metrics["bpd.ch0.nibp_module"] ?? null,
-    map:
-      deviceData["bpa.ch0.nibp_module"]?.metrics["bpa.ch0.nibp_module"] ?? null,
-  };
+	const handleVisibilityChange = (moduleId: string, visible: boolean) => {
+		setModuleVisibility((prev) => ({
+			...prev,
+			[moduleId]: visible,
+		}));
+	};
 
-  const waveformRaw =
-    deviceData["ecgWaveform.ch0.ecg_module"]?.metrics[
-      "ecgWaveform.ch0.ecg_module"
-    ];
-  const ecgWaveform =
-    typeof waveformRaw === "string"
-      ? JSON.parse(waveformRaw)
-      : waveformRaw ?? [];
+	const connect = () => {
+		wsRef.current?.close();
+		const ws = new WebSocket("wss://data.or-ecosystem.eu/ws/medical-device");
+		wsRef.current = ws;
 
-  const ekgData = {
-    heartRate:
-      deviceData["heartRate.ch0.ecg_module"]?.metrics[
-        "heartRate.ch0.ecg_module"
-      ] ?? null,
-    rrInterval:
-      deviceData["rrInterval.ch0.ecg_module"]?.metrics[
-        "rrInterval.ch0.ecg_module"
-      ] ?? null,
-    qrsDuration:
-      deviceData["qrsDuration.ch0.ecg_module"]?.metrics[
-        "qrsDuration.ch0.ecg_module"
-      ] ?? null,
-    ecgWaveform,
-  };
+		ws.onopen = () => setConnected(true);
+		ws.onmessage = (e: MessageEvent) => {
+			try {
+				const data = JSON.parse(e.data);
+				const messages = Array.isArray(data) ? data : [data];
+				messages.forEach(handleMetric);
+			} catch (err) {
+				console.error("Failed to parse message", err);
+			}
+		};
+		ws.onclose = () => {
+			setConnected(false);
+			wsRef.current = null;
+		};
+	};
 
-  const spo2SensorData = {
-    oxygenSaturation:
-      deviceData["oxygen_saturation.ch0.spo2"]?.metrics[
-        "oxygen_saturation.ch0.spo2"
-      ] ?? null,
-    pulse: deviceData["pulse.ch0.spo2"]?.metrics["pulse.ch0.spo2"] ?? null,
-  };
+	const connectToWebSocket = async () => {
+		if (connected || !wsUuid) return;
+		try {
+			openSocket(wsUuid);
+		} catch (err) {
+			console.error("Failed to connect", err);
+		}
+	};
 
-  const capnographData = {
-    co2:
-      deviceData["co2.ch0.capnograph"]?.metrics["co2.ch0.capnograph"] ?? null,
-    rf: deviceData["rf.ch0.capnograph"]?.metrics["rf.ch0.capnograph"] ?? null,
-    co2History: co2History,
-  };
+	const handleMachines = async () => {
+		if (isActive) {
+			setIsStopLoading(true);
+			try {
+				await api.post(`/rooms/${roomId}/stopDevices`);
+			} catch (err) {
+				console.error("Failed to stop devices", err);
+			}
+			disconnect();
+			setIsActive(false);
+			setIsAvailable(false);
+			setWsUuid(null);
+			setIsStopLoading(false);
 
-  const temperature =
-    deviceData["temperature.ch0.temperature_gauge"]?.metrics[
-      "temperature.ch0.temperature_gauge"
-    ] ?? null;
+			setIsRunLoading(false);
+			setIsWaitingForModal(false);
+			setIsStartupLoading(false);
+			setStartupProgress(0);
+			if (loadingTimeoutRef.current) {
+				clearTimeout(loadingTimeoutRef.current);
+			}
+			if (progressIntervalRef.current) {
+				clearInterval(progressIntervalRef.current);
+			}
+		} else {
+			setIsRunLoading(true);
+			setIsWaitingForModal(true);
 
-  const infusionPumpData = {
-    flowRate:
-      deviceData["flowRate.ch0.infusion_pump"]?.metrics[
-        "flowRate.ch0.infusion_pump"
-      ] ?? null,
-    volumeTotal:
-      deviceData["volumeTotal.ch0.infusion_pump"]?.metrics[
-        "volumeTotal.ch0.infusion_pump"
-      ] ?? null,
-  };
+			try {
+				const res = await api.post(`/rooms/${roomId}/startDevices`);
+				if (res.data.status === "available" && res.data.wsUuid) {
+					setIsAvailable(true);
+					setWsUuid(res.data.wsUuid);
+					setIsActive(true);
+					setShowPatientModal(true);
+					setOperationID(res.data.operationID);
+				}
+			} catch (err) {
+				console.error("Failed to deploy devices", err);
+				setIsRunLoading(false);
+				setIsWaitingForModal(false);
+			}
+		}
+	};
 
-  const ventilatorData = {
-    tidalVolume:
-      deviceData["vol.ch0.mechanical_ventilator"]?.metrics[
-        "vol.ch0.mechanical_ventilator"
-      ] ?? null,
-    respiratoryRate:
-      deviceData["rf.ch0.mechanical_ventilator"]?.metrics[
-        "rf.ch0.mechanical_ventilator"
-      ] ?? null,
-    fio2:
-      deviceData["ox_con.ch0.mechanical_ventilator"]?.metrics[
-        "ox_con.ch0.mechanical_ventilator"
-      ] ?? null,
-    pip:
-      deviceData["pip.ch0.mechanical_ventilator"]?.metrics[
-        "pip.ch0.mechanical_ventilator"
-      ] ?? null,
-    peep:
-      deviceData["peep.ch0.mechanical_ventilator"]?.metrics[
-        "peep.ch0.mechanical_ventilator"
-      ] ?? null,
-  };
+	useEffect(() => {
+		const fetchActiveStatus = async () => {
+			try {
+				const res = await api.get(`/rooms/${roomId}/status`);
+				if (res.data && typeof res.data.active === "boolean") {
+					setRoomName(res.data.name);
+					setIsActive(res.data.active);
+					if (res.data.active && res.data.wsUuid) {
+						setIsAvailable(true);
+						setWsUuid(res.data.wsUuid);
+					}
 
-  return (
-    <div className="operation-room-container">
-      <div className="operation-room-content">
-        <div className="header-container">
-          <div className="header-title">
-            <div className="header-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </div>
-            <h1>Operation Room - Dashboard</h1>
-          </div>
+					if (res.data.deviceTypes && Array.isArray(res.data.deviceTypes)) {
+						const deviceTypes = res.data.deviceTypes;
+						const availableDeviceModules: DeviceModule[] = [];
+						const initialVisibility: ModuleVisibility = {};
 
-          <div className="header-controls">
-            <div className="connection-status">
-              <div
-                className={`status-indicator ${
-                  connected ? "connected" : "disconnected"
-                }`}
-              ></div>
-              <span>Status: {connected ? "Connected" : "Disconnected"}</span>
-            </div>
+						deviceTypes.forEach((deviceType: string) => {
+							const module = ALL_MODULES.find((m) => m.id === deviceType);
+							if (
+								module &&
+								!availableDeviceModules.find((m) => m.id === deviceType)
+							) {
+								availableDeviceModules.push(module);
+								initialVisibility[deviceType] = true;
+							}
+						});
 
-            <div className="action-buttons">
-              <button
-                onClick={connect}
-                disabled={connected}
-                className={`connect-btn ${connected ? "disabled" : ""}`}
-              >
-                Connect
-              </button>
-              <button
-                onClick={disconnect}
-                disabled={!connected}
-                className={`disconnect-btn ${!connected ? "disabled" : ""}`}
-              >
-                Disconnect
-              </button>
-            </div>
-          </div>
-        </div>
+						setAvailableModules(availableDeviceModules);
+						setModuleVisibility(initialVisibility);
 
-        <div className="dashboard-grid">
-          <div className="vital-signs-column">
-            <div className="module-row">
-              <div className="module-card temperature-card">
-                <TemperatureGauge temperature={temperature} />
-              </div>
-              <div className="module-card ekg-card">
-                <EKGModule {...ekgData} />
-              </div>
-            </div>
+						const dynamicLayout = generateDynamicLayout(availableDeviceModules);
+						setModuleLayout(dynamicLayout);
+					}
+				}
+			} catch (err) {
+				console.error("Failed to fetch active status", err);
+			}
+		};
 
-            <div className="module-row">
-              <div className="module-card spo2-card">
-                <SPO2Sensor {...spo2SensorData} />
-              </div>
-              <div className="module-card capnograph-card">
-                <Capnograph {...capnographData} />
-              </div>
-            </div>
-          </div>
+		if (roomId) {
+			fetchActiveStatus();
+		}
+	}, [roomId]);
 
-          <div className="other-devices-column">
-            <div className="module-card nibp-card">
-              <NibpModule {...nibpData} />
-            </div>
+	useEffect(() => {
+		return () => {
+			if (loadingTimeoutRef.current) {
+				clearTimeout(loadingTimeoutRef.current);
+			}
+			if (progressIntervalRef.current) {
+				clearInterval(progressIntervalRef.current);
+			}
+		};
+	}, []);
 
-            <div className="module-card infusion-card">
-              <InfusionPump {...infusionPumpData} />
-            </div>
-            <div className="module-card ventilator-card">
-              <Ventilator {...ventilatorData} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+	if (!roomId) {
+		return <Navigate to="/" replace />;
+	}
+
+	const selectedModules = availableModules.filter(
+		(m) => moduleVisibility[m.id]
+	);
+	const isConnectDisabled =
+		!isAvailable || connected || isRunLoading || isStartupLoading;
+
+	return (
+		<Box
+			ref={containerRef}
+			sx={{
+				position: "relative",
+				width: "100%",
+				height: isFullscreen ? "100vh" : "100%",
+				backgroundColor: theme.palette.grey[50],
+				overflow: "hidden",
+				...(isFullscreen && {
+					position: "fixed",
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					zIndex: 1200,
+				}),
+			}}
+		>
+			{isFullscreen && (
+				<Box
+					sx={{
+						position: "absolute",
+						top: 16,
+						left: "50%",
+						transform: "translateX(-50%)",
+						bgcolor: "rgba(0,0,0,0.6)",
+						borderRadius: 1,
+						px: 2,
+						py: 1,
+						zIndex: 1300,
+					}}
+				>
+					<Typography variant="body2" color="common.white">
+						Press F11 or click Exit Fullscreen to return
+					</Typography>
+				</Box>
+			)}
+
+			<Box
+				className={`operation-room-content${isFullscreen ? " fullscreen" : ""}`}
+				sx={{
+					display: "flex",
+					flexDirection: "column",
+					height: isFullscreen ? "100vh" : "100%",
+					...(isFullscreen && {
+						maxWidth: "none",
+						margin: 0,
+						padding: 0,
+					}),
+				}}
+			>
+				{!isFullscreen && (
+					<DashboardHeader
+						roomId={roomId}
+						roomName={roomName}
+						connected={connected}
+						isActive={isActive}
+						isRunLoading={isRunLoading}
+						isStopLoading={isStopLoading}
+						isWaitingForModal={isWaitingForModal}
+						isConnectDisabled={isConnectDisabled}
+						toggleFullscreen={toggleFullscreen}
+						handleMachines={handleMachines}
+						connectToWebSocket={connectToWebSocket}
+						disconnect={disconnect}
+						isFullscreen={isFullscreen}
+					/>
+				)}
+
+				{isStartupLoading && !isFullscreen && (
+					<StartupProgress
+						startupProgress={startupProgress}
+						loadingDuration={LOADING_DURATION}
+					/>
+				)}
+
+				{!isFullscreen && availableModules.length > 0 && (
+					<ModuleSelector
+						availableModules={availableModules}
+						moduleVisibility={moduleVisibility}
+						handleVisibilityChange={handleVisibilityChange}
+						handleResetLayout={handleResetLayout}
+					/>
+				)}
+
+				{availableModules.length === 0 && !isRunLoading && <NoDevicesWarning />}
+
+				<DeviceGrid
+					isFullscreen={isFullscreen}
+					moduleVisibility={moduleVisibility}
+					availableModules={availableModules}
+					moduleLayout={moduleLayout}
+					handlePositionChange={handlePositionChange}
+					nibpData={nibpData}
+					ekgData={ekgData}
+					spo2SensorData={spo2SensorData}
+					capnographData={capnographData}
+					temperatureData={temperatureData}
+					infusionPumpData={infusionPumpData}
+					ventilatorData={ventilatorData}
+				/>
+			</Box>
+
+			<PatientSelectionModal
+				open={showPatientModal}
+				onClose={handlePatientModalClose}
+				onPatientSelected={handlePatientSelection}
+				operationID={operationID}
+			/>
+		</Box>
+	);
 };
 
-export default OperationRoomPage;
+export default OperationRoomPageNew;

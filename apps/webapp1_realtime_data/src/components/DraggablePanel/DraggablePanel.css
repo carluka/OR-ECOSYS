@@ -1,0 +1,101 @@
+.draggable-panel {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  cursor: move;
+  transition: box-shadow 0.2s ease;
+  overflow: hidden;
+  border: 2px solid transparent;
+  user-select: none;
+}
+
+.draggable-panel:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #e2e8f0;
+}
+
+.draggable-panel.dragging {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  transform: rotate(2deg);
+  z-index: 1000;
+  border-color: #3b82f6;
+}
+
+.draggable-panel.resizing {
+  border-color: #10b981;
+}
+
+.panel-content {
+  padding: 1.25rem;
+  padding-right: 2.5rem;
+  height: 85%;
+  pointer-events: none;
+}
+
+.draggable-panel:not(.dragging) .panel-content {
+  pointer-events: auto;
+}
+
+.resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: se-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.draggable-panel:hover .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle:hover {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-radius: 0 0 0.5rem 0;
+}
+
+.dashboard-grid-container {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  min-height: 600px;
+  position: relative;
+}
+
+.dashboard-grid-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+    linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+  background-size: 100px 100px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dashboard-grid-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+body.dragging-active,
+body.resizing-active {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}

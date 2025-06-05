@@ -1,4 +1,4 @@
-const operationService = require('../services/operationService');
+const operationService = require("../services/operationService");
 
 exports.getAll = async (req, res, next) => {
   try {
@@ -40,6 +40,17 @@ exports.remove = async (req, res, next) => {
   try {
     await operationService.deleteOperation(req.params.id);
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getWithMeasurements = async (req, res, next) => {
+  try {
+    const data = await operationService.getOperationWithMeasurements(
+      req.params.id
+    );
+    res.json({ data });
   } catch (err) {
     next(err);
   }

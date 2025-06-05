@@ -24,7 +24,6 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
 .infusion-module .value-card {
@@ -48,30 +47,4 @@
 .infusion-module .value-unit {
   font-size: 0.75rem;
   color: #64748b;
-}
-
-.infusion-module .volume-progress {
-  margin-top: 1rem;
-}
-
-.infusion-module .progress-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-.infusion-module .progress-bar {
-  width: 100%;
-  height: 0.625rem;
-  background-color: #e2e8f0;
-  border-radius: 9999px;
-  overflow: hidden;
-}
-
-.infusion-module .progress-fill {
-  height: 100%;
-  background-color: #8b5cf6;
-  border-radius: 9999px;
 }
