@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import { Box, useTheme } from "@mui/material";
 import DraggablePanel from "../../components/DraggablePanel/DraggablePanel";
@@ -81,6 +79,14 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
           zIndex: 1200,
           backgroundColor: theme.palette.grey[50],
         }),
+        "& .dragging": {
+          "& *": {
+            userSelect: "none !important",
+            WebkitUserSelect: "none !important",
+            MozUserSelect: "none !important",
+            msUserSelect: "none !important",
+            pointerEvents: "none !important",
+          },
       }}
     >
       {moduleVisibility.temperature &&
