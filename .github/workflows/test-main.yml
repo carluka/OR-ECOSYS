@@ -53,18 +53,21 @@ jobs:
         run: |
           git fetch --all
 
-      # Create a new branch (auto-pr-branch) from the latest commit on main
-      - name: Create new branch for PR
+      # Checkout the main branch and create the new branch auto-pr-branch
+      - name: Create a new branch for PR
         run: |
           # Checkout the main branch (adjust 'main' to 'master' if needed)
           git checkout main
           git pull origin main  # Ensure the latest changes from 'main' are pulled
 
-          # Create a new branch from main
+          # Create a new branch auto-pr-branch from main
           git checkout -b auto-pr-branch
 
-          # Merge test branch into the auto-pr-branch using --allow-unrelated-histories
+          # Merge test branch into auto-pr-branch using --allow-unrelated-histories
           git merge origin/test --no-ff --commit --strategy-option=theirs --allow-unrelated-histories
+
+          # Push auto-pr-branch to the remote
+          git push -u origin auto-pr-branch
 
       # Create the pull request (from 'auto-pr-branch' to 'main')
       - name: Raise PR
