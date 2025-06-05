@@ -2,7 +2,9 @@ const roomCtrl = require("../../controllers/roomCtrl");
 const roomService = require("../../services/roomService");
 const { generateIngress } = require("../../utils/generateIngress");
 const { kubectlApply, kubectlScale } = require("../../utils/kubectl");
+const operationService = require("../../services/operationService");
 
+jest.mock("../../services/operationService");
 jest.mock("../../services/roomService");
 jest.mock("../../utils/generateIngress");
 jest.mock("../../utils/kubectl");
@@ -73,7 +75,7 @@ describe("roomCtrl", () => {
 			await roomCtrl.create(req, res, mockNext);
 
 			expect(roomService.createRoom).toHaveBeenCalledWith(req.body);
-			expect(generateIngress).toHaveBeenCalledWith("abc", 8002);
+			expect(generateIngress).toHaveBeenCalledWith("abc");
 			expect(kubectlApply).toHaveBeenCalledWith("some-path", "or-ecosys");
 			expect(res.status).toHaveBeenCalledWith(201);
 			expect(res.json).toHaveBeenCalledWith({ data: newRoom });
@@ -168,18 +170,19 @@ describe("roomCtrl", () => {
 
 	describe("startDevices", () => {
 		it("should start devices and return status", async () => {
-			roomService.commitChanges.mockResolvedValue();
 			const room = { uuid: "room-uuid" };
 			const devices = [{ tipnaprave: "TYPE1" }, { tipnaprave: "TYPE2" }];
 			roomService.getById.mockResolvedValue(room);
 			roomService.getDevices.mockResolvedValue(devices);
+			operationService.createOperation.mockResolvedValue({
+				dataValues: { idoperacija: 123 },
+			});
 			kubectlScale.mockResolvedValue();
 			const req = { params: { id: 1 } };
 			const res = mockRes();
 
 			await roomCtrl.startDevices(req, res, mockNext);
 
-			expect(roomService.commitChanges).toHaveBeenCalledWith(1);
 			expect(roomService.getById).toHaveBeenCalledWith(1);
 			expect(roomService.getDevices).toHaveBeenCalledWith(1);
 			expect(kubectlScale).toHaveBeenCalledWith("room-uuid-consumer", 1);
@@ -189,6 +192,7 @@ describe("roomCtrl", () => {
 			expect(res.json).toHaveBeenCalledWith({
 				status: "available",
 				wsUuid: "room-uuid",
+				operationID: 123,
 			});
 		});
 	});
@@ -203,7 +207,7 @@ describe("roomCtrl", () => {
 			const req = { params: { id: 1 } };
 			const res = mockRes();
 
-			await roomCtrl.disconnectRoom(req, res, mockNext);
+			await roomCtrl.stopDevices(req, res, mockNext);
 
 			expect(roomService.getById).toHaveBeenCalledWith(1);
 			expect(roomService.getDevices).toHaveBeenCalledWith(1);

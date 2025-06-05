@@ -75,12 +75,13 @@ describe("DeviceRepo", () => {
 
 		models.Naprava.update.mockResolvedValue(mockUpdateResult);
 
-		const result = await DeviceRepo.update(id, data);
+		await DeviceRepo.update(id, data);
 
 		expect(models.Naprava.update).toHaveBeenCalledWith(data, {
 			where: { idnaprava: id },
 		});
-		expect(result).toBe(mockUpdateResult);
+
+		expect(models.Naprava.update).toHaveBeenCalledTimes(1);
 	});
 
 	test("deleteMultiple calls Naprava.destroy with ids", async () => {

@@ -6,7 +6,6 @@ jest.mock("../../db/database", () => ({
 			findAll: jest.fn(),
 			findByPk: jest.fn(),
 			create: jest.fn(),
-			// we still have to implement update and delete
 		},
 	},
 }));
@@ -49,6 +48,17 @@ describe("RoomRepo", () => {
 		expect(result).toBe(mockCreated);
 	});
 
-	test.skip("update - to be implemented", () => {});
-	test.skip("delete - to be implemented", () => {});
+	test("deleteMultiple calls Soba.destroy with correct ids", async () => {
+		models.Soba.destroy = jest.fn().mockResolvedValue(2);
+		const ids = [1, 2, 3];
+
+		const result = await RoomRepo.deleteMultiple(ids);
+
+		expect(models.Soba.destroy).toHaveBeenCalledWith({
+			where: {
+				idsoba: ids,
+			},
+		});
+		expect(result).toBe(2);
+	});
 });

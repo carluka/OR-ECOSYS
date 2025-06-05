@@ -1,5 +1,7 @@
 const roomService = require("../../services/roomService");
 const roomRepo = require("../../repositories/roomRepo");
+const influx = require("../../utils/influx");
+const { models } = require("../../db/database");
 
 // Mocking the repository
 jest.mock("../../repositories/roomRepo");
@@ -63,15 +65,41 @@ describe("RoomService", () => {
 	});
 
 	describe("deleteRooms", () => {
-		test("should delete multiple rooms", async () => {
+		test("should delete multiple rooms (calls repo and cleans up)", async () => {
 			const ids = [1, 2, 3];
-			const mockDeleted = 3;
-			roomRepo.deleteMultiple.mockResolvedValue(mockDeleted);
+			const mockRooms = [
+				{ id: 1, uuid: "uuid-1" },
+				{ id: 2, uuid: "uuid-2" },
+				{ id: 3, uuid: "uuid-3" },
+			];
+			const mockOperations = [
+				[{ idoperacija: 10 }, { idoperacija: 11 }],
+				[],
+				[{ idoperacija: 12 }],
+			];
+
+			jest
+				.spyOn(roomRepo, "findById")
+				.mockImplementation((id) =>
+					Promise.resolve(mockRooms.find((r) => r.id === id))
+				);
+			jest
+				.spyOn(roomService, "findOperationsByRoomId")
+				.mockImplementation((id) =>
+					Promise.resolve(mockOperations[ids.indexOf(id)])
+				);
+			jest.spyOn(models.Operacija, "destroy").mockResolvedValue(1);
+			jest.spyOn(influx, "deleteRoomData").mockResolvedValue();
+			jest.spyOn(models.Soba, "destroy").mockResolvedValue(1);
 
 			const result = await roomService.deleteRooms(ids);
 
-			expect(roomRepo.deleteMultiple).toHaveBeenCalledWith(ids);
-			expect(result).toEqual(mockDeleted);
+			expect(roomRepo.findById).toHaveBeenCalledTimes(3);
+			expect(roomService.findOperationsByRoomId).toHaveBeenCalledTimes(3);
+			expect(models.Operacija.destroy).toHaveBeenCalledTimes(3);
+			expect(influx.deleteRoomData).toHaveBeenCalledTimes(3);
+			expect(models.Soba.destroy).toHaveBeenCalledTimes(3);
+			expect(result).toEqual([1, 1, 1]);
 		});
 	});
 });
