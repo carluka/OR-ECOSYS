@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react";
 import { Box, useTheme } from "@mui/material";
 import DraggablePanel from "../../components/DraggablePanel/DraggablePanel";

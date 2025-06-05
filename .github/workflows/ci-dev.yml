@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        device: [capnograph, ecg, infusion, ventilator, nibp, spo2, temperature]
+        device: [capnograph, ekg, infusion, ventilator, nibp, spo2, temperature]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
