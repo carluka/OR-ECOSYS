@@ -108,16 +108,23 @@ const OperationsPage = () => {
     navigate(`/operations/${operationId}`)
   }
 
+  const hasValidEndTime = (endTime: string) => {
+    return endTime && endTime !== "" && endTime !== null && endTime !== undefined
+  }
+
   const getOperationStatus = (startTime: string, endTime: string, date: string) => {
-    // If operation has start time but no end time, it's in progress
-    if (startTime && (!endTime || endTime === "" || endTime === null)) {
+    if (!startTime) {
+      return { status: "Scheduled", color: "info" as const }
+    }
+
+    if (startTime && !hasValidEndTime(endTime)) {
       return { status: "In Progress", color: "warning" as const }
     }
-    // If operation has both start and end time, it's completed
-    if (startTime && endTime) {
+
+    if (startTime && hasValidEndTime(endTime)) {
       return { status: "Completed", color: "success" as const }
     }
-    // Default case (shouldn't happen with valid data)
+
     return { status: "Scheduled", color: "info" as const }
   }
 
@@ -137,12 +144,26 @@ const OperationsPage = () => {
     })
   }
 
-  const calculateDuration = (startTime: string, endTime: string) => {
-    const start = new Date(`2000-01-01T${startTime}`)
-    const end = new Date(`2000-01-01T${endTime}`)
-    const diffMs = end.getTime() - start.getTime()
+  const calculateDuration = (startTime: string, endTime: string, operationDate: string) => {
+    const startDateTime = new Date(`${operationDate}T${startTime}`)
+
+    let endDateTime: Date
+
+    if (!hasValidEndTime(endTime)) {
+      endDateTime = new Date()
+    } else {
+      endDateTime = new Date(`${operationDate}T${endTime}`)
+    }
+
+    const diffMs = endDateTime.getTime() - startDateTime.getTime()
+
+    if (diffMs < 0) {
+      return "0h 0m"
+    }
+
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+
     return `${diffHours}h ${diffMinutes}m`
   }
 
@@ -319,7 +340,9 @@ const OperationsPage = () => {
                             <Typography variant="caption" color="text.secondary">
                               End:
                             </Typography>
-                            <Typography variant="body2">{formatTime(operation.cas_konca)}</Typography>
+                            <Typography variant="body2">
+                              {hasValidEndTime(operation.cas_konca) ? formatTime(operation.cas_konca) : "In Progress"}
+                            </Typography>
                           </Box>
                         </Stack>
                       </TableCell>
@@ -327,7 +350,7 @@ const OperationsPage = () => {
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           <Schedule fontSize="small" color="action" />
                           <Typography variant="body2">
-                            {calculateDuration(operation.cas_zacetka, operation.cas_konca)}
+                            {calculateDuration(operation.cas_zacetka, operation.cas_konca, operation.datum)}
                           </Typography>
                         </Box>
                       </TableCell>
