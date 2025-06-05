@@ -41,14 +41,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Extract git commit data
-        uses: respinasse/git-commit-data-action@v1.x
-
-      - name: Update author information
-        run: |
-          echo "github-actions[bot]" > AUTHOR
-          echo "github-actions[bot]@users.noreply.github.com" >> AUTHOR
-
       - name: Raise PR
         uses: peter-evans/create-pull-request@v3
         with:
