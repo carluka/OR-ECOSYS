@@ -34,39 +34,47 @@ jobs:
           cd services/backend
           npm test
 
+      - name: Check if PR already exists
+        id: check-pr
+        run: |
+          PR_EXISTS=$(gh pr list --base main --head test --json number | jq length)
+          echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Pull Request
-        if: success() # Izvede se samo, če so vsi prejšnji koraki uspešni
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
-          head: test
-          title: "🚀 Auto PR: Test → Main"
-          body: |
-            ## 🎯 Automated Pull Request
+        if: success() && env.PR_EXISTS == '0'
+        run: |
+          gh pr create \
+            --base main \
+            --head test \
+            --title "🚀 Auto PR: Test → Main" \
+            --body "## 🎯 Automated Pull Request
 
-            This PR was automatically created after successful tests on the `test` branch.
-
+            This PR was automatically created after successful tests on the \`test\` branch.
+            
             ### ✅ Tests Status
             - All backend tests passed successfully
             - Ready for review and merge to main
-
+            
             ### 📋 Changes
             - Latest changes from test branch
             - All tests are passing ✅
-
+            
             ### 🔍 Review Checklist
             - [ ] Code review completed
             - [ ] No breaking changes
             - [ ] Documentation updated (if needed)
-
+            
             ---
-            *This PR was created automatically by GitHub Actions*
-          draft: false
-          delete-branch: false
+            *This PR was created automatically by GitHub Actions*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Comment on PR (if created)
-        if: success()
+      - name: Comment on existing PR
+        if: success() && env.PR_EXISTS != '0'
         run: |
-          echo "✅ Pull request created successfully!"
-          echo "🔗 Check the Pull Requests tab to review and merge"
+          PR_NUMBER=$(gh pr list --base main --head test --json number --jq '.[0].number')
+          gh pr comment $PR_NUMBER --body "✅ Tests passed on latest push to test branch!"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
