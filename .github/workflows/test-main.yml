@@ -36,6 +36,12 @@ jobs:
           cd services/backend
           npm test
 
+
+
+
+          # do sem so testni
+          # ======================================================== dalje je nekaj kar ne dela za pr (pull request)
+
       - name: Create Pull Request
         if: success()
         uses: repo-sync/pull-request@v2
