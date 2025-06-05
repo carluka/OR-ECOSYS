@@ -57,8 +57,8 @@ jobs:
           # Create a new branch from main
           git checkout -b auto-pr-branch
 
-          # Merge test branch into the auto-pr-branch
-          git merge origin/test --no-ff --commit --strategy-option=theirs
+          # Merge test branch into the auto-pr-branch using --allow-unrelated-histories
+          git merge origin/test --no-ff --commit --strategy-option=theirs --allow-unrelated-histories
 
       # Create the pull request (from 'auto-pr-branch' to 'main')
       - name: Raise PR
