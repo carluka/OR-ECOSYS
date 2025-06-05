@@ -216,6 +216,12 @@ describe("roomCtrl", () => {
 			roomService.getById.mockResolvedValue(room);
 			roomService.getDevices.mockResolvedValue(devices);
 			kubectlScale.mockResolvedValue();
+
+			const mockSave = jest.fn().mockResolvedValue();
+			const mockOperation = { cas_konca: null, save: mockSave };
+			const Operacija = require("../../models").Operacija;
+			jest.spyOn(Operacija, "findOne").mockResolvedValue(mockOperation);
+
 			const req = { params: { id: 1 } };
 			const res = mockRes();
 
