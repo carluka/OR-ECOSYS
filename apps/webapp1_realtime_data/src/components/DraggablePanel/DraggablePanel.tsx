@@ -42,6 +42,8 @@ const DraggablePanel: React.FC<DraggablePanelProps> = ({
       x: e.clientX - gridPosition.x * 100,
       y: e.clientY - gridPosition.y * 100,
     });
+
+    document.body.classList.add("dragging-active");
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
@@ -53,6 +55,8 @@ const DraggablePanel: React.FC<DraggablePanelProps> = ({
       width: gridPosition.width,
       height: gridPosition.height,
     });
+
+    document.body.classList.add("resizing-active");
   };
 
   useEffect(() => {
@@ -109,6 +113,9 @@ const DraggablePanel: React.FC<DraggablePanelProps> = ({
     const handleMouseUp = () => {
       setIsDragging(false);
       setIsResizing(false);
+
+      document.body.classList.remove("dragging-active");
+      document.body.classList.remove("resizing-active");
     };
 
     if (isDragging || isResizing) {
@@ -119,6 +126,8 @@ const DraggablePanel: React.FC<DraggablePanelProps> = ({
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.body.classList.remove("dragging-active");
+      document.body.classList.remove("resizing-active");
     };
   }, [
     isDragging,

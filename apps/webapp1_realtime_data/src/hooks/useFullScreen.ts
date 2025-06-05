@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, type RefObject } from "react";
 
 export const useFullscreen = (containerRef: RefObject<HTMLElement | null>) => {
