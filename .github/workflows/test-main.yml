@@ -9,6 +9,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      INFLUXDB_URL: ${{ secrets.INFLUX_URL }}
+      INFLUXDB_TOKEN: ${{ secrets.INFLUX_TOKEN }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
