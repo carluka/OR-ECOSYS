@@ -15,9 +15,9 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 import { useDeviceData } from "../../hooks/useDeviceData";
 import { generateDynamicLayout } from "../../utils/grid-layout";
 import {
-  ALL_MODULES,
-  type DeviceModule,
-  type ModuleVisibility,
+	ALL_MODULES,
+	type DeviceModule,
+	type ModuleVisibility,
 } from "../../types/device-types";
 import type { ModuleLayout, GridPosition } from "../../utils/grid-layout";
 
@@ -27,344 +27,318 @@ import "./OperationRoomPage.css";
 const LOADING_DURATION = 35000;
 
 const OperationRoomPageNew: React.FC = () => {
-  const { roomId } = useParams();
-  const theme = useTheme();
-  const containerRef = useRef<HTMLDivElement>(null);
+	const { roomId } = useParams();
+	const theme = useTheme();
+	const containerRef = useRef<HTMLDivElement>(null);
 
-  const [roomName, setRoomName] = useState<string>("Room");
-  const [isAvailable, setIsAvailable] = useState(false);
-  const [wsUuid, setWsUuid] = useState<string | null>(null);
-  const [isActive, setIsActive] = useState(false);
+	const [roomName, setRoomName] = useState<string>("Room");
+	const [isAvailable, setIsAvailable] = useState(false);
+	const [wsUuid, setWsUuid] = useState<string | null>(null);
+	const [isActive, setIsActive] = useState(false);
 
-  const [isRunLoading, setIsRunLoading] = useState(false);
-  const [isWaitingForModal, setIsWaitingForModal] = useState(false);
-  const [isStartupLoading, setIsStartupLoading] = useState(false);
-  const [isStopLoading, setIsStopLoading] = useState(false);
-  const [startupProgress, setStartupProgress] = useState(0);
+	const [isRunLoading, setIsRunLoading] = useState(false);
+	const [isWaitingForModal, setIsWaitingForModal] = useState(false);
+	const [isStartupLoading, setIsStartupLoading] = useState(false);
+	const [isStopLoading, setIsStopLoading] = useState(false);
+	const [startupProgress, setStartupProgress] = useState(0);
 
-  const [availableModules, setAvailableModules] = useState<DeviceModule[]>([]);
-  const [moduleLayout, setModuleLayout] = useState<ModuleLayout>({});
-  const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>(
-    {}
-  );
+	const [availableModules, setAvailableModules] = useState<DeviceModule[]>([]);
+	const [moduleLayout, setModuleLayout] = useState<ModuleLayout>({});
+	const [moduleVisibility, setModuleVisibility] = useState<ModuleVisibility>(
+		{}
+	);
 
-  const [showPatientModal, setShowPatientModal] = useState(false);
-  const [operationID, setOperationID] = useState<number | null>(null);
+	const [showPatientModal, setShowPatientModal] = useState(false);
+	const [operationID, setOperationID] = useState<number | null>(null);
 
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null
-  );
-  const loadingTimeoutRef = useRef<number | null>(null);
+	const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+		null
+	);
+	const loadingTimeoutRef = useRef<number | null>(null);
 
-  const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
-  const { handleMetric, processDeviceData } = useDeviceData();
-  const { connected, openSocket, disconnect } = useWebSocket({
-    onMessage: handleMetric,
-  });
+	const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
+	const { handleMetric, processDeviceData } = useDeviceData();
+	const { connected, openSocket, disconnect } = useWebSocket({
+		onMessage: handleMetric,
+	});
 
-  const {
-    nibpData,
-    ekgData,
-    spo2SensorData,
-    capnographData,
-    temperatureData,
-    infusionPumpData,
-    ventilatorData,
-  } = processDeviceData();
+	const {
+		nibpData,
+		ekgData,
+		spo2SensorData,
+		capnographData,
+		temperatureData,
+		infusionPumpData,
+		ventilatorData,
+	} = processDeviceData();
 
-  const handlePositionChange = (moduleId: string, position: GridPosition) => {
-    setModuleLayout((prev) => ({
-      ...prev,
-      [moduleId]: position,
-    }));
-  };
+	const handlePositionChange = (moduleId: string, position: GridPosition) => {
+		setModuleLayout((prev) => ({
+			...prev,
+			[moduleId]: position,
+		}));
+	};
 
-  const handleVisibilityChange = (moduleId: string, visible: boolean) => {
-    setModuleVisibility((prev) => ({
-      ...prev,
-      [moduleId]: visible,
-    }));
-  };
+	const handleVisibilityChange = (moduleId: string, visible: boolean) => {
+		setModuleVisibility((prev) => ({
+			...prev,
+			[moduleId]: visible,
+		}));
+	};
 
-  const handleResetLayout = () => {
-    const dynamicLayout = generateDynamicLayout(availableModules);
-    setModuleLayout(dynamicLayout);
-    const defaultVisibility: ModuleVisibility = {};
-    availableModules.forEach((module) => {
-      defaultVisibility[module.id] = true;
-    });
-    setModuleVisibility(defaultVisibility);
-  };
+	const connect = () => {
+		wsRef.current?.close();
+		const ws = new WebSocket("wss://data.or-ecosystem.eu/ws/medical-device");
+		wsRef.current = ws;
 
-  const handlePatientModalClose = () => {
-    setShowPatientModal(false);
-    setIsWaitingForModal(false);
-  };
+		ws.onopen = () => setConnected(true);
+		ws.onmessage = (e: MessageEvent) => {
+			try {
+				const data = JSON.parse(e.data);
+				const messages = Array.isArray(data) ? data : [data];
+				messages.forEach(handleMetric);
+			} catch (err) {
+				console.error("Failed to parse message", err);
+			}
+		};
+		ws.onclose = () => {
+			setConnected(false);
+			wsRef.current = null;
+		};
+	};
 
-  const handlePatientSelection = () => {
-    setShowPatientModal(false);
-    setIsWaitingForModal(false);
-    setIsStartupLoading(true);
-    setStartupProgress(0);
+	const connectToWebSocket = async () => {
+		if (connected || !wsUuid) return;
+		try {
+			openSocket(wsUuid);
+		} catch (err) {
+			console.error("Failed to connect", err);
+		}
+	};
 
-    const progressInterval = 100;
-    const totalDuration = LOADING_DURATION;
-    let elapsed = 0;
+	const handleMachines = async () => {
+		if (isActive) {
+			setIsStopLoading(true);
+			try {
+				await api.post(`/rooms/${roomId}/stopDevices`);
+			} catch (err) {
+				console.error("Failed to stop devices", err);
+			}
+			disconnect();
+			setIsActive(false);
+			setIsAvailable(false);
+			setWsUuid(null);
+			setIsStopLoading(false);
 
-    progressIntervalRef.current = setInterval(() => {
-      elapsed += progressInterval;
-      const progress = Math.min((elapsed / totalDuration) * 100, 100);
-      setStartupProgress(progress);
+			setIsRunLoading(false);
+			setIsWaitingForModal(false);
+			setIsStartupLoading(false);
+			setStartupProgress(0);
+			if (loadingTimeoutRef.current) {
+				clearTimeout(loadingTimeoutRef.current);
+			}
+			if (progressIntervalRef.current) {
+				clearInterval(progressIntervalRef.current);
+			}
+		} else {
+			setIsRunLoading(true);
+			setIsWaitingForModal(true);
 
-      if (elapsed >= totalDuration) {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
-      }
-    }, progressInterval);
+			try {
+				const res = await api.post(`/rooms/${roomId}/startDevices`);
+				if (res.data.status === "available" && res.data.wsUuid) {
+					setIsAvailable(true);
+					setWsUuid(res.data.wsUuid);
+					setIsActive(true);
+					setShowPatientModal(true);
+					setOperationID(res.data.operationID);
+				}
+			} catch (err) {
+				console.error("Failed to deploy devices", err);
+				setIsRunLoading(false);
+				setIsWaitingForModal(false);
+			}
+		}
+	};
 
-    loadingTimeoutRef.current = setTimeout(() => {
-      setIsStartupLoading(false);
-      setIsRunLoading(false);
-      setStartupProgress(0);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    }, LOADING_DURATION);
-  };
+	useEffect(() => {
+		const fetchActiveStatus = async () => {
+			try {
+				const res = await api.get(`/rooms/${roomId}/status`);
+				if (res.data && typeof res.data.active === "boolean") {
+					setRoomName(res.data.name);
+					setIsActive(res.data.active);
+					if (res.data.active && res.data.wsUuid) {
+						setIsAvailable(true);
+						setWsUuid(res.data.wsUuid);
+					}
 
-  const connectToWebSocket = async () => {
-    if (connected || !wsUuid) return;
-    try {
-      openSocket(wsUuid);
-    } catch (err) {
-      console.error("Failed to connect", err);
-    }
-  };
+					if (res.data.deviceTypes && Array.isArray(res.data.deviceTypes)) {
+						const deviceTypes = res.data.deviceTypes;
+						const availableDeviceModules: DeviceModule[] = [];
+						const initialVisibility: ModuleVisibility = {};
 
-  const handleMachines = async () => {
-    if (isActive) {
-      setIsStopLoading(true);
-      try {
-        await api.post(`/rooms/${roomId}/stopDevices`);
-      } catch (err) {
-        console.error("Failed to stop devices", err);
-      }
-      disconnect();
-      setIsActive(false);
-      setIsAvailable(false);
-      setWsUuid(null);
-      setIsStopLoading(false);
+						deviceTypes.forEach((deviceType: string) => {
+							const module = ALL_MODULES.find((m) => m.id === deviceType);
+							if (
+								module &&
+								!availableDeviceModules.find((m) => m.id === deviceType)
+							) {
+								availableDeviceModules.push(module);
+								initialVisibility[deviceType] = true;
+							}
+						});
 
-      setIsRunLoading(false);
-      setIsWaitingForModal(false);
-      setIsStartupLoading(false);
-      setStartupProgress(0);
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    } else {
-      setIsRunLoading(true);
-      setIsWaitingForModal(true);
+						setAvailableModules(availableDeviceModules);
+						setModuleVisibility(initialVisibility);
 
-      try {
-        const res = await api.post(`/rooms/${roomId}/startDevices`);
-        if (res.data.status === "available" && res.data.wsUuid) {
-          setIsAvailable(true);
-          setWsUuid(res.data.wsUuid);
-          setIsActive(true);
-          setShowPatientModal(true);
-          setOperationID(res.data.operationID);
-        }
-      } catch (err) {
-        console.error("Failed to deploy devices", err);
-        setIsRunLoading(false);
-        setIsWaitingForModal(false);
-      }
-    }
-  };
+						const dynamicLayout = generateDynamicLayout(availableDeviceModules);
+						setModuleLayout(dynamicLayout);
+					}
+				}
+			} catch (err) {
+				console.error("Failed to fetch active status", err);
+			}
+		};
 
-  useEffect(() => {
-    const fetchActiveStatus = async () => {
-      try {
-        const res = await api.get(`/rooms/${roomId}/status`);
-        if (res.data && typeof res.data.active === "boolean") {
-          setRoomName(res.data.name);
-          setIsActive(res.data.active);
-          if (res.data.active && res.data.wsUuid) {
-            setIsAvailable(true);
-            setWsUuid(res.data.wsUuid);
-          }
+		if (roomId) {
+			fetchActiveStatus();
+		}
+	}, [roomId]);
 
-          if (res.data.deviceTypes && Array.isArray(res.data.deviceTypes)) {
-            const deviceTypes = res.data.deviceTypes;
-            const availableDeviceModules: DeviceModule[] = [];
-            const initialVisibility: ModuleVisibility = {};
+	useEffect(() => {
+		return () => {
+			if (loadingTimeoutRef.current) {
+				clearTimeout(loadingTimeoutRef.current);
+			}
+			if (progressIntervalRef.current) {
+				clearInterval(progressIntervalRef.current);
+			}
+		};
+	}, []);
 
-            deviceTypes.forEach((deviceType: string) => {
-              const module = ALL_MODULES.find((m) => m.id === deviceType);
-              if (
-                module &&
-                !availableDeviceModules.find((m) => m.id === deviceType)
-              ) {
-                availableDeviceModules.push(module);
-                initialVisibility[deviceType] = true;
-              }
-            });
+	if (!roomId) {
+		return <Navigate to="/" replace />;
+	}
 
-            setAvailableModules(availableDeviceModules);
-            setModuleVisibility(initialVisibility);
+	const selectedModules = availableModules.filter(
+		(m) => moduleVisibility[m.id]
+	);
+	const isConnectDisabled =
+		!isAvailable || connected || isRunLoading || isStartupLoading;
 
-            const dynamicLayout = generateDynamicLayout(availableDeviceModules);
-            setModuleLayout(dynamicLayout);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch active status", err);
-      }
-    };
+	return (
+		<Box
+			ref={containerRef}
+			sx={{
+				position: "relative",
+				width: "100%",
+				height: isFullscreen ? "100vh" : "100%",
+				backgroundColor: theme.palette.grey[50],
+				overflow: "hidden",
+				...(isFullscreen && {
+					position: "fixed",
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					zIndex: 1200,
+				}),
+			}}
+		>
+			{isFullscreen && (
+				<Box
+					sx={{
+						position: "absolute",
+						top: 16,
+						left: "50%",
+						transform: "translateX(-50%)",
+						bgcolor: "rgba(0,0,0,0.6)",
+						borderRadius: 1,
+						px: 2,
+						py: 1,
+						zIndex: 1300,
+					}}
+				>
+					<Typography variant="body2" color="common.white">
+						Press F11 or click Exit Fullscreen to return
+					</Typography>
+				</Box>
+			)}
 
-    if (roomId) {
-      fetchActiveStatus();
-    }
-  }, [roomId]);
+			<Box
+				className={`operation-room-content${isFullscreen ? " fullscreen" : ""}`}
+				sx={{
+					display: "flex",
+					flexDirection: "column",
+					height: isFullscreen ? "100vh" : "100%",
+					...(isFullscreen && {
+						maxWidth: "none",
+						margin: 0,
+						padding: 0,
+					}),
+				}}
+			>
+				{!isFullscreen && (
+					<DashboardHeader
+						roomId={roomId}
+						roomName={roomName}
+						connected={connected}
+						isActive={isActive}
+						isRunLoading={isRunLoading}
+						isStopLoading={isStopLoading}
+						isWaitingForModal={isWaitingForModal}
+						isConnectDisabled={isConnectDisabled}
+						toggleFullscreen={toggleFullscreen}
+						handleMachines={handleMachines}
+						connectToWebSocket={connectToWebSocket}
+						disconnect={disconnect}
+						isFullscreen={isFullscreen}
+					/>
+				)}
 
-  useEffect(() => {
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, []);
+				{isStartupLoading && !isFullscreen && (
+					<StartupProgress
+						startupProgress={startupProgress}
+						loadingDuration={LOADING_DURATION}
+					/>
+				)}
 
-  if (!roomId) {
-    return <Navigate to="/" replace />;
-  }
+				{!isFullscreen && availableModules.length > 0 && (
+					<ModuleSelector
+						availableModules={availableModules}
+						moduleVisibility={moduleVisibility}
+						handleVisibilityChange={handleVisibilityChange}
+						handleResetLayout={handleResetLayout}
+					/>
+				)}
 
-  const selectedModules = availableModules.filter(
-    (m) => moduleVisibility[m.id]
-  );
-  const isConnectDisabled =
-    !isAvailable || connected || isRunLoading || isStartupLoading;
+				{availableModules.length === 0 && !isRunLoading && <NoDevicesWarning />}
 
-  return (
-    <Box
-      ref={containerRef}
-      sx={{
-        position: "relative",
-        width: "100%",
-        height: isFullscreen ? "100vh" : "100%",
-        backgroundColor: theme.palette.grey[50],
-        overflow: "hidden",
-        ...(isFullscreen && {
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1200,
-        }),
-      }}
-    >
-      {isFullscreen && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 16,
-            left: "50%",
-            transform: "translateX(-50%)",
-            bgcolor: "rgba(0,0,0,0.6)",
-            borderRadius: 1,
-            px: 2,
-            py: 1,
-            zIndex: 1300,
-          }}
-        >
-          <Typography variant="body2" color="common.white">
-            Press F11 or click Exit Fullscreen to return
-          </Typography>
-        </Box>
-      )}
+				<DeviceGrid
+					isFullscreen={isFullscreen}
+					moduleVisibility={moduleVisibility}
+					availableModules={availableModules}
+					moduleLayout={moduleLayout}
+					handlePositionChange={handlePositionChange}
+					nibpData={nibpData}
+					ekgData={ekgData}
+					spo2SensorData={spo2SensorData}
+					capnographData={capnographData}
+					temperatureData={temperatureData}
+					infusionPumpData={infusionPumpData}
+					ventilatorData={ventilatorData}
+				/>
+			</Box>
 
-      <Box
-        className={`operation-room-content${isFullscreen ? " fullscreen" : ""}`}
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: isFullscreen ? "100vh" : "100%",
-          ...(isFullscreen && {
-            maxWidth: "none",
-            margin: 0,
-            padding: 0,
-          }),
-        }}
-      >
-        {!isFullscreen && (
-          <DashboardHeader
-            roomId={roomId}
-            roomName={roomName}
-            connected={connected}
-            isActive={isActive}
-            isRunLoading={isRunLoading}
-            isStopLoading={isStopLoading}
-            isWaitingForModal={isWaitingForModal}
-            isConnectDisabled={isConnectDisabled}
-            toggleFullscreen={toggleFullscreen}
-            handleMachines={handleMachines}
-            connectToWebSocket={connectToWebSocket}
-            disconnect={disconnect}
-            isFullscreen={isFullscreen}
-          />
-        )}
-
-        {isStartupLoading && !isFullscreen && (
-          <StartupProgress
-            startupProgress={startupProgress}
-            loadingDuration={LOADING_DURATION}
-          />
-        )}
-
-        {!isFullscreen && availableModules.length > 0 && (
-          <ModuleSelector
-            availableModules={availableModules}
-            moduleVisibility={moduleVisibility}
-            handleVisibilityChange={handleVisibilityChange}
-            handleResetLayout={handleResetLayout}
-          />
-        )}
-
-        {availableModules.length === 0 && !isRunLoading && <NoDevicesWarning />}
-
-        <DeviceGrid
-          isFullscreen={isFullscreen}
-          moduleVisibility={moduleVisibility}
-          availableModules={availableModules}
-          moduleLayout={moduleLayout}
-          handlePositionChange={handlePositionChange}
-          nibpData={nibpData}
-          ekgData={ekgData}
-          spo2SensorData={spo2SensorData}
-          capnographData={capnographData}
-          temperatureData={temperatureData}
-          infusionPumpData={infusionPumpData}
-          ventilatorData={ventilatorData}
-        />
-      </Box>
-
-      <PatientSelectionModal
-        open={showPatientModal}
-        onClose={handlePatientModalClose}
-        onPatientSelected={handlePatientSelection}
-        operationID={operationID}
-      />
-    </Box>
-  );
+			<PatientSelectionModal
+				open={showPatientModal}
+				onClose={handlePatientModalClose}
+				onPatientSelected={handlePatientSelection}
+				operationID={operationID}
+			/>
+		</Box>
+	);
 };
 
 export default OperationRoomPageNew;
