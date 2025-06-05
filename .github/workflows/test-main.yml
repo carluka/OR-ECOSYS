@@ -35,22 +35,28 @@ jobs:
   create_pull_request:
     runs-on: ubuntu-latest
     needs: test
-    if: success() # Only runs if the 'test' job succeeds
+    if: success()
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Git credentials
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Extract git commit data
+        uses: respinasse/git-commit-data-action@v1.x
 
-      - name: Create Pull Request to Main
+      - name: Update author information
+        run: |
+          echo "github-actions[bot]" > AUTHOR
+          echo "github-actions[bot]@users.noreply.github.com" >> AUTHOR
+
+      - name: Raise PR
         uses: peter-evans/create-pull-request@v3
         with:
           title: "Automated PR for Main"
           body: "This pull request is automatically created after passing tests on the test branch."
-          branch: test
+          branch: "auto-pr-branch"
           base: main
+          committer: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
           token: ${{ secrets.GITHUB_TOKEN }}
+          delete-branch: true
