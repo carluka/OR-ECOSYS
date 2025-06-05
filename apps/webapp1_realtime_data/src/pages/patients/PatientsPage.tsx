@@ -1,5 +1,4 @@
 import type React from "react";
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -22,23 +21,13 @@ import {
 	Alert,
 	CircularProgress,
 	Avatar,
-	Button,
-	Menu,
-	MenuItem,
-	ListItemIcon,
-	Divider,
 } from "@mui/material";
 import {
 	People,
 	Search,
 	Visibility,
-	Add,
 	FilterList,
 	MoreVert,
-	Edit,
-	Delete,
-	Download,
-	Print,
 	Male,
 	Female,
 	HelpOutline,

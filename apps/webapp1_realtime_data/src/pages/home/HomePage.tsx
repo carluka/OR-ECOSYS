@@ -28,7 +28,6 @@ import {
 import {
 	LocalHospital,
 	Search,
-	FilterList,
 	Visibility,
 	MoreVert,
 	MeetingRoom,
@@ -282,11 +281,6 @@ const OperationRoomsPage = () => {
 						size="small"
 						variant="standard"
 					/>
-					<Tooltip title="Advanced Filters">
-						<IconButton>
-							<FilterList />
-						</IconButton>
-					</Tooltip>
 				</Paper>
 			</Box>
 

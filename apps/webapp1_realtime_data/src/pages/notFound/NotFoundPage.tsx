@@ -1,10 +1,9 @@
 import React from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 export default function NotFoundPage() {
-  const theme = useTheme();
 
   return (
     <Box

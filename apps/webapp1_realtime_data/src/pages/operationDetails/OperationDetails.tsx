@@ -91,8 +91,8 @@ const OperationDetailsPage = () => {
 			nibp_module: "NIBP Monitor (Blood Pressure)",
 			capnograph: "Capnograph (CO2)",
 			ecg_module: "ECG Monitor",
-			pulse_oximeter: "Pulse Oximeter (SpO2)",
-			temperature_sensor: "Temperature Sensor",
+			spo2: "Pulse Oximeter (SpO2)",
+			temperature_gauge: "Temperature Sensor",
 			mechanical_ventilator: "Mechanical Ventilator",
 			infusion_pump: "Infusion Pump",
 		};
@@ -697,7 +697,6 @@ const OperationDetailsPage = () => {
 															interval="preserveStartEnd"
 															height={50}
 															label={{
-																value: "Time",
 																position: "insideBottom",
 																offset: -10,
 															}}
