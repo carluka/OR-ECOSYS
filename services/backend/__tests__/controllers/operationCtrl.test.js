@@ -3,6 +3,18 @@ const operationCtrl = require("../../controllers/operationCtrl");
 
 jest.mock("../../services/operationService");
 
+jest.mock("@influxdata/influxdb-client", () => {
+	return {
+		InfluxDB: jest.fn().mockImplementation(() => {
+			return {
+				getQueryApi: jest.fn().mockReturnValue({
+					queryRows: jest.fn().mockResolvedValue([]),
+				}),
+			};
+		}),
+	};
+});
+
 describe("operationCtrl", () => {
 	let req, res, next;
 

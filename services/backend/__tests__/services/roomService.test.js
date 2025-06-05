@@ -6,6 +6,18 @@ const { models } = require("../../db/database");
 // Mocking the repository
 jest.mock("../../repositories/roomRepo");
 
+jest.mock("@influxdata/influxdb-client", () => {
+	return {
+		InfluxDB: jest.fn().mockImplementation(() => {
+			return {
+				getQueryApi: jest.fn().mockReturnValue({
+					queryRows: jest.fn().mockResolvedValue([]),
+				}),
+			};
+		}),
+	};
+});
+
 // Test cases for RoomService
 describe("RoomService", () => {
 	// Clear mocks after each test

@@ -4,6 +4,18 @@ const operationRepo = require("../../repositories/operationRepo");
 // Mocking the repository
 jest.mock("../../repositories/operationRepo");
 
+jest.mock("@influxdata/influxdb-client", () => {
+	return {
+		InfluxDB: jest.fn().mockImplementation(() => {
+			return {
+				getQueryApi: jest.fn().mockReturnValue({
+					queryRows: jest.fn().mockResolvedValue([]),
+				}),
+			};
+		}),
+	};
+});
+
 // Test cases for OperationService
 describe("OperationService", () => {
 	// Clear mocks after each test

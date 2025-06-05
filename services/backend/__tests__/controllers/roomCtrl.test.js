@@ -9,6 +9,18 @@ jest.mock("../../services/roomService");
 jest.mock("../../utils/generateIngress");
 jest.mock("../../utils/kubectl");
 
+jest.mock("@influxdata/influxdb-client", () => {
+	return {
+		InfluxDB: jest.fn().mockImplementation(() => {
+			return {
+				getQueryApi: jest.fn().mockReturnValue({
+					queryRows: jest.fn().mockResolvedValue([]),
+				}),
+			};
+		}),
+	};
+});
+
 const mockRes = () => {
 	const res = {};
 	res.json = jest.fn().mockReturnValue(res);
