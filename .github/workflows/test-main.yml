@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: read
 
 jobs:
   test:
@@ -17,7 +18,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Potrebno za primerjavo med branchi
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -34,47 +36,33 @@ jobs:
           cd services/backend
           npm test
 
-      - name: Check if PR already exists
-        id: check-pr
-        run: |
-          PR_EXISTS=$(gh pr list --base main --head test --json number | jq length)
-          echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create Pull Request
-        if: success() && env.PR_EXISTS == '0'
-        run: |
-          gh pr create \
-            --base main \
-            --head test \
-            --title "🚀 Auto PR: Test → Main" \
-            --body "## 🎯 Automated Pull Request
+        if: success()
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "test"
+          destination_branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_title: "🚀 Auto PR: Test → Main"
+          pr_body: |
+            ## 🎯 Automated Pull Request
 
-            This PR was automatically created after successful tests on the \`test\` branch.
-            
+            This PR was automatically created after successful tests on the `test` branch.
+
             ### ✅ Tests Status
             - All backend tests passed successfully
             - Ready for review and merge to main
-            
+
             ### 📋 Changes
             - Latest changes from test branch
             - All tests are passing ✅
-            
+
             ### 🔍 Review Checklist
             - [ ] Code review completed
             - [ ] No breaking changes
             - [ ] Documentation updated (if needed)
-            
-            ---
-            *This PR was created automatically by GitHub Actions*"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Comment on existing PR
-        if: success() && env.PR_EXISTS != '0'
-        run: |
-          PR_NUMBER=$(gh pr list --base main --head test --json number --jq '.[0].number')
-          gh pr comment $PR_NUMBER --body "✅ Tests passed on latest push to test branch!"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            ---
+            *This PR was created automatically by GitHub Actions*
+          pr_draft: false
+          pr_allow_empty: true
