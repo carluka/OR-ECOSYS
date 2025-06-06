@@ -1,0 +1,42 @@
+name: Test and Create PR for Main Branch
+
+on:
+  workflow_run:
+    workflows: ["Merge development into test"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "23.5.0"
+
+      - name: Install dependencies
+        run: |
+          cd services/backend
+          npm install
+
+      - name: Run tests
+        run: |
+          cd services/backend
+          npm test
+      - name: create pull request
+        run: gh pr create -B main -H test --title 'Merge test into main' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
