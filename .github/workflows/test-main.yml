@@ -3,9 +3,7 @@ name: Test and Create PR for Main Branch
 on:
   workflow_run:
     workflows: ["Merge development into test"]
-    types:
-      - completed
-    status: success
+    types: [completed]
 
 permissions:
   contents: write
