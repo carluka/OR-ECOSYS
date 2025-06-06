@@ -35,16 +35,8 @@ jobs:
         run: |
           cd services/backend
           npm test
-
-      - name: Create Pull Request to main
-        if: ${{ success() }}
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Avtomatski commit: posodobitve po uspešnih testih"
-          branch: auto/pr-from-test
-          base: main
-          title: "Automatski PR: merge test → main"
-          body: |
-            Ta PR je bil ustvarjen avtomatsko, ker so testi bili uspešni.
-            Preveri spremembe in združi v `main`, če je vse v redu.
+      - name: create pull request
+        run: gh pr create -B main -H test --title 'Merge test into main' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     
