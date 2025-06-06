@@ -1,9 +1,10 @@
-name: Test and Create PR for Main Branch 
+name: Test and Create PR for Main Branch
 
 on:
-  push:
-    branches:
-      - test
+  workflow_run:
+    workflows: ["Merge development into test"]
+    types:
+      - completed
 
 permissions:
   contents: write
@@ -39,4 +40,3 @@ jobs:
         run: gh pr create -B main -H test --title 'Merge test into main' --body 'Created by Github action'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-     

@@ -1,4 +1,4 @@
-name: CI - DockerHub and redeploy
+name: Create new images
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   DOCKERHUB_REPO: rokfonovic
 
 jobs:
-  build-test-push:
+  build-providers:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,7 +28,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Gradnja in potiskanje provider slik za vsako napravo
       - name: Build and push provider image ${{ matrix.device }}
         run: |
           docker build \
