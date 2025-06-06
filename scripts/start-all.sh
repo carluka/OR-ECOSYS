@@ -4,7 +4,7 @@
 python /app/providers/provider_spo2.py & 
 python /app/providers/provider_temperature.py &
 python /app/providers/provider_infusion.py &
-python /app/providers/provider_ecg.py &
+python /app/providers/provider_ekg.py &
 python /app/providers/provider_nibp.py &
 python /app/providers/provider_capnograph.py &
 python /app/providers/provider_ventilator.py &
