@@ -1,35 +1,33 @@
-# .github/workflows/deploy-prod.yml
-name: CD - Production Deploy
+name: Deploy to Server
 
 on:
   push:
     branches:
-      - production
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Setup Kubeconfig
+      - name: Set up SSH key
         run: |
-          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Preprečimo interaktivno vprašanje ob prvi povezavi z strežnikom
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy all services on Kubernetes
+      - name: SSH into server and execute command
         run: |
-          kubectl apply -f k8s/namespace.yaml
-          kubectl apply -f k8s/backend-deployment.yaml
-          kubectl apply -f k8s/providers-deployments.yaml
-          kubectl apply -f k8s/frontend1-deployment.yaml
-          kubectl apply -f k8s/frontend2-deployment.yaml
-          kubectl apply -f k8s/kafka-deployment.yaml
-          kubectl apply -f k8s/zookeeper-deployment.yaml
-          kubectl apply -f k8s/telegraf-deployment.yaml
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            echo "Povezano z strežnikom!"
+            # Tukaj lahko dodaš ukaze, ki jih želiš izvesti na strežniku, npr. kubectl ali restart storitve
+            sudo kubectl rollout restart deployment/my-app -n my-namespace
+          EOF
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
