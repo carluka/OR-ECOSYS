@@ -36,39 +36,15 @@ jobs:
           cd services/backend
           npm test
 
-
-
-
-          # do sem so testni
-          # ======================================================== dalje je nekaj kar ne dela za pr (pull request)
-
-      - name: Create Pull Request
-        if: success()
-        uses: repo-sync/pull-request@v2
+      - name: Create Pull Request to main
+        if: ${{ success() }}
+        uses: peter-evans/create-pull-request@v5
         with:
-          source_branch: "test"
-          destination_branch: "main"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_title: "🚀 Auto PR: Test → Main"
-          pr_body: |
-            ## 🎯 Automated Pull Request
-
-            This PR was automatically created after successful tests on the `test` branch.
-
-            ### ✅ Tests Status
-            - All backend tests passed successfully
-            - Ready for review and merge to main
-
-            ### 📋 Changes
-            - Latest changes from test branch
-            - All tests are passing ✅
-
-            ### 🔍 Review Checklist
-            - [ ] Code review completed
-            - [ ] No breaking changes
-            - [ ] Documentation updated (if needed)
-
-            ---
-            *This PR was created automatically by GitHub Actions*
-          pr_draft: false
-          pr_allow_empty: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Avtomatski commit: posodobitve po uspešnih testih"
+          branch: auto/pr-from-test
+          base: main
+          title: "Automatski PR: merge test → main"
+          body: |
+            Ta PR je bil ustvarjen avtomatsko, ker so testi bili uspešni.
+            Preveri spremembe in združi v `main`, če je vse v redu.
