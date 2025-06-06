@@ -5,6 +5,7 @@ on:
     workflows: ["Merge development into test"]
     types:
       - completed
+    status: success
 
 permissions:
   contents: write
