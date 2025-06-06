@@ -23,32 +23,6 @@ The OR-Ecosystems project aims to develop a comprehensive ecosystem that allows 
 ## Use Case diagram
 ![DPU](https://github.com/user-attachments/assets/dfca13ff-a05c-42ef-9453-fa4fc1dc9b8f)
 
-## Installation
-
-Clone the project
-
-```bash
-git clone https://link-to-project
-```
-
-Go to the project directory
-
-```bash
-cd my-project
-```
-
-Install dependencies
-
-```bash
-npm install
-```
-
-Start the server
-
-```bash
-npm run start
-```
-
 ## Running Tests
 
 To run tests, run the following command in "./services/backend"
