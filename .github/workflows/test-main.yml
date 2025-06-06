@@ -1,9 +1,9 @@
 name: Test and Create PR for Main Branch
 
 on:
-  push:
-    branches:
-      - test
+  workflow_run:
+    workflows: ["Merge development into test"]
+    types: [completed]
 
 permissions:
   contents: write
@@ -35,40 +35,7 @@ jobs:
         run: |
           cd services/backend
           npm test
-
-
-
-
-          # do sem so testni
-          # ======================================================== dalje je nekaj kar ne dela za pr (pull request)
-
-      - name: Create Pull Request
-        if: success()
-        uses: repo-sync/pull-request@v2
-        with:
-          source_branch: "test"
-          destination_branch: "main"
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_title: "🚀 Auto PR: Test → Main"
-          pr_body: |
-            ## 🎯 Automated Pull Request
-
-            This PR was automatically created after successful tests on the `test` branch.
-
-            ### ✅ Tests Status
-            - All backend tests passed successfully
-            - Ready for review and merge to main
-
-            ### 📋 Changes
-            - Latest changes from test branch
-            - All tests are passing ✅
-
-            ### 🔍 Review Checklist
-            - [ ] Code review completed
-            - [ ] No breaking changes
-            - [ ] Documentation updated (if needed)
-
-            ---
-            *This PR was created automatically by GitHub Actions*
-          pr_draft: false
-          pr_allow_empty: true
+      - name: create pull request
+        run: gh pr create -B main -H test --title 'Merge test into main' --body 'Created by Github action'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
