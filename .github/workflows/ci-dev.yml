@@ -1,10 +1,9 @@
-name: CI - MainMore actions
+name: CI - DockerHub and redeploy
 
 on:
   push:
     branches:
-      - development
-      - optimizacija_k8s
+      - main
 
 env:
   REGISTRY: docker.io
