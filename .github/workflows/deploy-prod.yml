@@ -17,15 +17,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Preprečimo interaktivno vprašanje ob prvi povezavi z strežnikom
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: SSH into server and execute command
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -T ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             echo "Povezano z strežnikom!"
-            # Tukaj lahko dodaš ukaze, ki jih želiš izvesti na strežniku, npr. kubectl ali restart storitve
-            sudo kubectl rollout restart deployment/my-app -n my-namespace
+            kubectl rollout restart deployment/frontend-a -n or-ecosys
+            kubectl rollout restart deployment/frontend-admin -n or-ecosys
+            kubectl rollout restart deployment/backend -n or-ecosys
           EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
