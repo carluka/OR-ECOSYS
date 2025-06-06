@@ -1,9 +1,11 @@
 name: Test and Create PR for Main Branch
 
 on:
-  push:
-    branches:
-      - test
+  workflow_run:
+    workflows:
+      - Merge development into test
+    types:
+      - completed
 
 permissions:
   contents: write
