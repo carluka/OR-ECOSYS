@@ -1,4 +1,6 @@
 ![Logo](https://github.com/user-attachments/assets/aa8b5d8c-ed0f-418c-b30c-4ee4582de264)
+<img src="https://github.com/user-attachments/assets/aa8b5d8c-ed0f-418c-b30c-4ee4582de264" width="300" height="300" />
+<img src="https://github.com/user-attachments/assets/aa8b5d8c-ed0f-418c-b30c-4ee4582de264" width="200" height="200" /> 
 
 
 # OR-ECOSYSTEM
