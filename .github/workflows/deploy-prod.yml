@@ -22,7 +22,7 @@ jobs:
 
       - name: SSH into server and execute command
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -T ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             echo "Povezano z strežnikom!"
             # Tukaj lahko dodaš ukaze, ki jih želiš izvesti na strežniku, npr. kubectl ali restart storitve
             sudo kubectl rollout restart deployment/my-app -n my-namespace
